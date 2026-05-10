@@ -16,7 +16,7 @@ class ClientList extends Component
 
     public function updatedSearch(): void { $this->resetPage(); }
 
-    public function delete(int $id): void
+    public function deleteRecord(int $id): void
     {
         Client::findOrFail($id)->delete();
         $this->dispatch('toast', message: 'تم حذف العميل');

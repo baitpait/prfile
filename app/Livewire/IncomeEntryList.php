@@ -14,24 +14,12 @@ class IncomeEntryList extends Component
     #[Url(as: 'q')]
     public string $search = '';
 
-    public ?int $confirmDeleteId = null;
-
     public function updatedSearch(): void { $this->resetPage(); }
 
-    public function confirmDelete(int $id): void
+    public function delete(int $id): void
     {
-        $this->confirmDeleteId = $id;
-    }
-
-    public function cancelDelete(): void { $this->confirmDeleteId = null; }
-
-    public function delete(): void
-    {
-        if ($this->confirmDeleteId) {
-            IncomeEntry::findOrFail($this->confirmDeleteId)->delete();
-            $this->confirmDeleteId = null;
-            $this->dispatch('toast', message: 'تم حذف الإيراد');
-        }
+        IncomeEntry::findOrFail($id)->delete();
+        $this->dispatch('toast', message: 'تم حذف الإيراد');
     }
 
     public function render()

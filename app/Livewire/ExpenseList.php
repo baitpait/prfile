@@ -14,24 +14,12 @@ class ExpenseList extends Component
     #[Url(as: 'q')]
     public string $search = '';
 
-    public ?int $confirmDeleteId = null;
-
     public function updatedSearch(): void { $this->resetPage(); }
 
-    public function confirmDelete(int $id): void
+public function delete(int $id): void
     {
-        $this->confirmDeleteId = $id;
-    }
-
-    public function cancelDelete(): void { $this->confirmDeleteId = null; }
-
-    public function delete(): void
-    {
-        if ($this->confirmDeleteId) {
-            Expense::findOrFail($this->confirmDeleteId)->delete();
-            $this->confirmDeleteId = null;
-            $this->dispatch('toast', message: 'تم حذف المصروف');
-        }
+        Expense::findOrFail($id)->delete();
+        $this->dispatch('toast', message: 'تم حذف المصروف');
     }
 
     public function render()

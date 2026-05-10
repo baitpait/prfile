@@ -1,4 +1,4 @@
-﻿<div>
+﻿<div x-data="{ deletingId: null }">
 
 <div class="flex items-center justify-between mb-6">
     <div>
@@ -49,7 +49,7 @@
                         <a href="{{ route('suppliers.edit', $s->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                         @endif
                         @if(auth()->user()->isManager())
-                        <button wire:click="confirmDelete({{ $s->id }})" class="btn btn-ghost py-1 px-2 text-xs text-red-500 hover:bg-red-50">حذف</button>
+                        <button type="button" @click="deletingId = {{ $s->id }}" class="btn btn-ghost py-1 px-2 text-xs text-red-500 hover:bg-red-50">حذف</button>
                         @endif
                     </div>
                 </td>
@@ -71,10 +71,9 @@
 
 
 {{-- تأكيد الحذف --}}
-@if($confirmDeleteId !== null)
-<div wire:key="delete-{{ $confirmDeleteId }}"
+<div x-show="deletingId !== null" x-cloak
      class="fixed inset-0 z-[60] flex items-center justify-center">
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" wire:click="cancelDelete"></div>
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" @click="deletingId = null"></div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 z-10 p-6">
         <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -82,12 +81,11 @@
         <h3 class="text-base font-bold text-center mb-1">حذف المورد</h3>
         <p class="text-sm text-gray-400 text-center mb-5">هل أنت متأكد؟ يمكن استعادة السجل لاحقاً.</p>
         <div class="flex gap-2">
-            <button wire:click="cancelDelete" class="btn btn-secondary flex-1">إلغاء</button>
-            <button wire:click="delete" class="btn btn-danger flex-1">حذف</button>
+            <button type="button" @click="deletingId = null" class="btn btn-secondary flex-1">إلغاء</button>
+            <button type="button" @click="$wire.delete(deletingId); deletingId = null" class="btn btn-danger flex-1">حذف</button>
         </div>
     </div>
 </div>
-@endif
 
 </div>
 

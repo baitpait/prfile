@@ -97,10 +97,13 @@
         </div>
         <h3 class="text-base font-bold text-center text-[#3D3D3D] mb-1">حذف العميل</h3>
         <p class="text-sm text-gray-400 text-center mb-5">هل أنت متأكد؟ يمكن استعادة السجل لاحقاً.</p>
-        <div class="flex gap-2">
-            <button type="button" @click="deletingId = null" class="btn btn-secondary flex-1">إلغاء</button>
-            <button type="button" @click="$wire.deleteRecord(deletingId); deletingId = null" class="btn btn-danger flex-1">حذف</button>
-        </div>
+        <form method="POST" :action="'{{ url('/clients') }}/' + deletingId">
+            @csrf @method('DELETE')
+            <div class="flex gap-2">
+                <button type="button" @click="deletingId = null" class="btn btn-secondary flex-1">إلغاء</button>
+                <button type="submit" class="btn btn-danger flex-1">حذف</button>
+            </div>
+        </form>
     </div>
 </div>
 

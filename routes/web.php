@@ -36,6 +36,11 @@ Route::middleware(['auth'])->group(function () {
         return view('expenses.edit', compact('expense'));
     })->name('expenses.edit');
     Route::get('/expenses/{expense}', fn (\App\Models\Expense $expense) => view('expenses.show', compact('expense')))->name('expenses.show');
+    Route::delete('/expenses/{expense}', function (\App\Models\Expense $expense) {
+        abort_unless(auth()->user()->isManager(), 403);
+        $expense->delete();
+        return redirect()->route('expenses.index')->with('toast', 'تم حذف المصروف');
+    })->name('expenses.destroy');
 
     Route::get('/income-entries', fn () => view('income-entries.index'))->name('income-entries.index');
     Route::get('/income-entries/create', function () {
@@ -47,6 +52,11 @@ Route::middleware(['auth'])->group(function () {
         return view('income-entries.edit', compact('incomeEntry'));
     })->name('income-entries.edit');
     Route::get('/income-entries/{incomeEntry}', fn (\App\Models\IncomeEntry $incomeEntry) => view('income-entries.show', compact('incomeEntry')))->name('income-entries.show');
+    Route::delete('/income-entries/{incomeEntry}', function (\App\Models\IncomeEntry $incomeEntry) {
+        abort_unless(auth()->user()->isManager(), 403);
+        $incomeEntry->delete();
+        return redirect()->route('income-entries.index')->with('toast', 'تم حذف الإيراد');
+    })->name('income-entries.destroy');
 
     Route::get('/payments', fn () => view('payments.index'))->name('payments.index');
     Route::get('/payments/create', function () {
@@ -58,6 +68,11 @@ Route::middleware(['auth'])->group(function () {
         return view('payments.edit', compact('payment'));
     })->name('payments.edit');
     Route::get('/payments/{payment}', fn (\App\Models\ClientPayment $payment) => view('payments.show', compact('payment')))->name('payments.show');
+    Route::delete('/payments/{payment}', function (\App\Models\ClientPayment $payment) {
+        abort_unless(auth()->user()->isManager(), 403);
+        $payment->delete();
+        return redirect()->route('payments.index')->with('toast', 'تم حذف الدفعة');
+    })->name('payments.destroy');
 
     Route::get('/clients/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
@@ -67,6 +82,11 @@ Route::middleware(['auth'])->group(function () {
         abort_unless(auth()->user()->isAccountant(), 403);
         return view('clients.edit', compact('client'));
     })->name('clients.edit');
+    Route::delete('/clients/{client}', function (\App\Models\Client $client) {
+        abort_unless(auth()->user()->isManager(), 403);
+        $client->delete();
+        return redirect()->route('clients.index')->with('toast', 'تم حذف العميل');
+    })->name('clients.destroy');
     Route::get('/clients/{client}', function (\App\Models\Client $client) {
         $client->load(['invoices' => fn($q) => $q->latest('document_date'), 'payments' => fn($q) => $q->latest('paid_at')]);
         return view('clients.show', compact('client'));
@@ -81,6 +101,11 @@ Route::middleware(['auth'])->group(function () {
         return view('suppliers.edit', compact('supplier'));
     })->name('suppliers.edit');
     Route::get('/suppliers/{supplier}', fn (\App\Models\Supplier $supplier) => view('suppliers.show', compact('supplier')))->name('suppliers.show');
+    Route::delete('/suppliers/{supplier}', function (\App\Models\Supplier $supplier) {
+        abort_unless(auth()->user()->isManager(), 403);
+        $supplier->delete();
+        return redirect()->route('suppliers.index')->with('toast', 'تم حذف المورد');
+    })->name('suppliers.destroy');
 
     Route::get('/users', function () {
         abort_unless(auth()->user()->isManager(), 403);

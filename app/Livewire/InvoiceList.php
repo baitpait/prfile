@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\InvoiceLine;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -26,12 +27,55 @@ class InvoiceList extends Component
     public string $document_date     = '';
     public string $due_date          = '';
     public string $currency_code     = 'ILS';
-    public string $total_amount      = '';
+    public string $total_amount      = '0';
     public string $discount_amount   = '0';
     public string $status            = 'draft';
     public string $notes             = '';
 
+    /** @var array<int, array{title:string, description:string, unit_price:string, quantity:string, line_total:string}> */
+    public array $lines = [];
+
     public function updatedSearch(): void { $this->resetPage(); }
+
+    /* ── عند تغيير سعر أو كمية أي بند ── */
+    public function updatedLines(mixed $value, string $key): void
+    {
+        $parts = explode('.', $key);
+        if (count($parts) === 2 && in_array($parts[1], ['unit_price', 'quantity'])) {
+            $i = (int) $parts[0];
+            $price = (float) ($this->lines[$i]['unit_price'] ?? 0);
+            $qty   = (int) ($this->lines[$i]['quantity']   ?? 1);
+            $this->lines[$i]['line_total'] = (string) round($price * $qty, 4);
+            $this->recalcTotal();
+        }
+    }
+
+    public function updatedDiscountAmount(): void { $this->recalcTotal(); }
+
+    private function recalcTotal(): void
+    {
+        $subtotal = collect($this->lines)->sum(fn($l) => (float)($l['line_total'] ?? 0));
+        $net = max(0, $subtotal - (float)($this->discount_amount ?? 0));
+        $this->total_amount = (string) round($net, 2);
+    }
+
+    public function addLine(): void
+    {
+        $this->lines[] = [
+            'title'       => '',
+            'description' => '',
+            'unit_price'  => '',
+            'quantity'    => '1',
+            'line_total'  => '0',
+        ];
+    }
+
+    public function removeLine(int $index): void
+    {
+        array_splice($this->lines, $index, 1);
+        $this->lines = array_values($this->lines);
+        $this->recalcTotal();
+    }
 
     public function openCreate(): void
     {
@@ -44,7 +88,7 @@ class InvoiceList extends Component
 
     public function openEdit(int $id): void
     {
-        $inv = Invoice::findOrFail($id);
+        $inv = Invoice::with('lines')->findOrFail($id);
         $this->editingId         = $id;
         $this->client_id         = (string) $inv->client_id;
         $this->legacy_invoice_no = $inv->legacy_invoice_no ?? '';
@@ -55,6 +99,13 @@ class InvoiceList extends Component
         $this->discount_amount   = (string) ($inv->discount_amount ?? 0);
         $this->status            = $inv->status          ?? 'draft';
         $this->notes             = $inv->notes           ?? '';
+        $this->lines             = $inv->lines->map(fn($l) => [
+            'title'       => $l->title       ?? '',
+            'description' => $l->description ?? '',
+            'unit_price'  => (string) $l->unit_price,
+            'quantity'    => (string) $l->quantity,
+            'line_total'  => (string) $l->line_total,
+        ])->toArray();
         $this->confirmDeleteId   = null;
         $this->viewingId         = null;
         $this->showModal         = true;
@@ -79,22 +130,40 @@ class InvoiceList extends Component
 
     public function save(): void
     {
-        $this->validate([
+        $rules = [
             'client_id'       => 'required|exists:clients,id',
             'document_date'   => 'required|date',
             'due_date'        => 'nullable|date|after_or_equal:document_date',
             'currency_code'   => 'required|string|size:3',
-            'total_amount'    => 'required|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
             'status'          => 'required|in:draft,issued,cancelled',
-        ], [], [
+            'lines'           => 'array',
+            'lines.*.title'   => 'required_with:lines|string|max:500',
+            'lines.*.quantity'  => 'required_with:lines|integer|min:0',
+            'lines.*.unit_price'=> 'required_with:lines|numeric|min:0',
+        ];
+
+        $this->validate($rules, [
+            'lines.*.title.required_with'    => 'اسم البند مطلوب',
+            'lines.*.quantity.required_with' => 'الكمية مطلوبة',
+            'lines.*.unit_price.required_with' => 'السعر مطلوب',
+        ], [
             'client_id'     => 'العميل',
             'document_date' => 'تاريخ الفاتورة',
             'due_date'      => 'تاريخ الاستحقاق',
             'currency_code' => 'العملة',
-            'total_amount'  => 'المبلغ الإجمالي',
             'status'        => 'الحالة',
         ]);
+
+        // حساب الإجمالي من البنود تلقائياً إذا وُجدت
+        if (!empty($this->lines)) {
+            $subtotal = collect($this->lines)->sum(fn($l) => (float)($l['line_total'] ?? 0));
+            $this->total_amount = (string) max(0, round($subtotal - (float)($this->discount_amount ?? 0), 2));
+        }
+
+        if (empty($this->total_amount) || (float)$this->total_amount < 0) {
+            $this->addError('total_amount', 'المبلغ الإجمالي مطلوب');
+            return;
+        }
 
         $data = [
             'client_id'           => $this->client_id,
@@ -110,9 +179,24 @@ class InvoiceList extends Component
         ];
 
         if ($this->editingId) {
-            Invoice::findOrFail($this->editingId)->update($data);
+            $invoice = Invoice::findOrFail($this->editingId);
+            $invoice->update($data);
         } else {
-            Invoice::create($data);
+            $invoice = Invoice::create($data);
+        }
+
+        // حفظ البنود
+        $invoice->lines()->delete();
+        foreach ($this->lines as $i => $line) {
+            if (trim($line['title'] ?? '') === '') continue;
+            $invoice->lines()->create([
+                'line_order'  => $i + 1,
+                'title'       => $line['title'],
+                'description' => $line['description'] ?: null,
+                'unit_price'  => (float)($line['unit_price'] ?? 0),
+                'quantity'    => (int)($line['quantity']   ?? 1),
+                'line_total'  => (float)($line['line_total'] ?? 0),
+            ]);
         }
 
         $this->showModal = false;
@@ -141,12 +225,13 @@ class InvoiceList extends Component
     private function resetForm(): void
     {
         $this->reset([
-            'client_id','legacy_invoice_no','document_date','due_date',
-            'total_amount','notes',
+            'client_id','legacy_invoice_no','document_date','due_date','notes',
         ]);
         $this->currency_code   = 'ILS';
         $this->status          = 'draft';
         $this->discount_amount = '0';
+        $this->total_amount    = '0';
+        $this->lines           = [];
         $this->resetValidation();
     }
 

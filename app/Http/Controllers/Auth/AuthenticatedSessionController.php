@@ -21,6 +21,13 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            if (!Auth::user()->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                return back()->withErrors([
+                    'email' => 'هذا الحساب معطّل. تواصل مع المدير.',
+                ]);
+            }
             $request->session()->regenerate();
             return redirect()->intended(route('dashboard'));
         }

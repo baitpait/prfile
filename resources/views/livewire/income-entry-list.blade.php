@@ -6,10 +6,10 @@
         <p class="text-sm text-gray-400 mt-0.5">{{ $rows->total() }} سجل</p>
     </div>
     @if(auth()->user()->isAccountant())
-    <button wire:click="openCreate" class="btn btn-primary">
+    <a href="{{ route('income-entries.create') }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         إضافة إيراد
-    </button>
+    </a>
     @endif
 </div>
 
@@ -34,9 +34,9 @@
                 </td>
                 <td>
                     <div class="flex items-center gap-1 justify-end">
-                        <button wire:click="openView({{ $entry->id }})" class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50">عرض</button>
+                        <a href="{{ route('income-entries.show', $entry->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
                         @if(auth()->user()->isAccountant())
-                        <button wire:click="openEdit({{ $entry->id }})" class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50">تعديل</button>
+                        <a href="{{ route('income-entries.edit', $entry->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                         @endif
                         @if(auth()->user()->isManager())
                         <button wire:click="confirmDelete({{ $entry->id }})" class="btn btn-ghost py-1 px-2 text-xs text-red-500 hover:bg-red-50">حذف</button>
@@ -57,108 +57,6 @@
 </div>
 @if($rows->hasPages())<div class="mt-5">{{ $rows->links() }}</div>@endif
 
-{{-- ══ نافذة العرض التفصيلي ══ --}}
-@if($viewingId !== null)
-<div wire:key="view-{{ $viewingId }}"
-     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" wire:click="closeView"></div>
-    <div class="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md mx-0 sm:mx-4 z-10 max-h-[90vh] overflow-y-auto">
-        @if($viewingRecord)
-        @php $entry = $viewingRecord; @endphp
-        <div class="p-6">
-            <div class="flex items-start justify-between mb-5">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>
-                    </div>
-                    <div>
-                        <h2 class="text-base font-bold text-[#3D3D3D]">{{ $entry->description }}</h2>
-                        <p class="text-lg font-bold text-green-600" dir="ltr">{{ number_format((float)$entry->amount,2) }} {{ $entry->currency_code }}</p>
-                    </div>
-                </div>
-                <button wire:click="closeView" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <dl class="divide-y divide-[#E2E4E9]">
-                <div class="flex justify-between py-3">
-                    <dt class="text-sm text-gray-500">التاريخ</dt>
-                    <dd class="text-sm font-medium text-[#3D3D3D]" dir="ltr">{{ $entry->income_date?->format('Y-m-d') ?? '—' }}</dd>
-                </div>
-                <div class="flex justify-between py-3">
-                    <dt class="text-sm text-gray-500">المبلغ</dt>
-                    <dd class="text-sm font-mono font-bold text-green-600" dir="ltr">{{ number_format((float)$entry->amount,2) }} {{ $entry->currency_code }}</dd>
-                </div>
-                @if($entry->notes)
-                <div class="py-3">
-                    <dt class="text-sm text-gray-500 mb-1">ملاحظات</dt>
-                    <dd class="text-sm text-[#3D3D3D] bg-amber-50 rounded-lg p-2">{{ $entry->notes }}</dd>
-                </div>
-                @endif
-            </dl>
-            <div class="flex justify-end gap-2 pt-4 border-t border-[#E2E4E9]">
-                <button wire:click="closeView" class="btn btn-secondary text-xs">إغلاق</button>
-                @if(auth()->user()->isAccountant())
-                <button wire:click="openEdit({{ $entry->id }})" class="btn btn-primary text-xs">تعديل</button>
-                @endif
-            </div>
-        </div>
-        @endif
-    </div>
-</div>
-@endif
-
-@if($showModal)
-<div wire:key="form-{{ $editingId ?? 'new' }}"
-     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" wire:click="closeModal"></div>
-    <div class="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md mx-0 sm:mx-4 z-10">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-lg font-bold text-[#3D3D3D]">{{ $editingId ? 'تعديل الإيراد' : 'إضافة إيراد جديد' }}</h2>
-                <button wire:click="closeModal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-            </div>
-            <div class="space-y-4">
-                <div class="form-group">
-                    <label class="label">الوصف <span class="text-red-400">*</span></label>
-                    <input wire:model="description" type="text" class="input">
-                    @error('description')<p class="field-error">{{ $message }}</p>@enderror
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="label">المبلغ <span class="text-red-400">*</span></label>
-                        <input wire:model="amount" type="number" step="0.01" min="0" dir="ltr" class="input">
-                        @error('amount')<p class="field-error">{{ $message }}</p>@enderror
-                    </div>
-                    <div class="form-group">
-                        <label class="label">العملة <span class="text-red-400">*</span></label>
-                        <select wire:model="currency_code" class="input select">
-                            <option value="ILS">ILS — شيكل</option>
-                            <option value="USD">USD — دولار</option>
-                            <option value="JOD">JOD — دينار</option>
-                            <option value="EUR">EUR — يورو</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="label">التاريخ <span class="text-red-400">*</span></label>
-                    <input wire:model="income_date" type="date" class="input">
-                    @error('income_date')<p class="field-error">{{ $message }}</p>@enderror
-                </div>
-                <div class="form-group"><label class="label">ملاحظات</label><textarea wire:model="notes" rows="2" class="input"></textarea></div>
-            </div>
-            <div class="flex justify-end gap-2 mt-2 pt-4 border-t border-[#E2E4E9]">
-                <button wire:click="closeModal" class="btn btn-secondary">إلغاء</button>
-                <button wire:click="save" wire:loading.attr="disabled" class="btn btn-primary">
-                    <svg wire:loading wire:target="save" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                    <span wire:loading.remove wire:target="save">حفظ</span>
-                    <span wire:loading wire:target="save">جاري الحفظ...</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 
 @if($confirmDeleteId !== null)
 <div wire:key="delete-{{ $confirmDeleteId }}"

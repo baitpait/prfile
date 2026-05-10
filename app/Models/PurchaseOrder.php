@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class PurchaseOrder extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'supplier_id', 'legacy_po_no',
+        'document_date', 'due_date',
+        'currency_code', 'discount_amount', 'total_amount',
+        'notes', 'status', 'recorded_by_user_id', 'source_row_json',
+    ];
+
+    protected $casts = [
+        'document_date' => 'date',
+        'due_date' => 'date',
+        'discount_amount' => 'decimal:4',
+        'total_amount' => 'decimal:4',
+        'source_row_json' => 'array',
+    ];
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function lines(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderLine::class)->orderBy('line_order');
+    }
+
+    public function recordedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recorded_by_user_id');
+    }
+}

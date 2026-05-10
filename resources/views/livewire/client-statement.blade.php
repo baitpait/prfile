@@ -31,7 +31,7 @@
                    class="border border-[#E0E0E0] rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#C9A227]">
         </div>
         @if($dateFrom || $dateTo)
-            <button wire:click="$set('dateFrom',''); $set('dateTo','')"
+            <button wire:click="resetDates"
                     class="text-sm text-[#DC2626] hover:underline">
                 مسح الفلتر
             </button>

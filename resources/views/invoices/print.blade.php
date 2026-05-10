@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>فاتورة {{ $invoice->legacy_invoice_no ?? '#'.$invoice->id }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+    direction: rtl;
+    background: #f5f5f5;
+    color: #222;
+    font-size: 13px;
+  }
+
+  .page {
+    background: #fff;
+    width: 794px;
+    min-height: 1123px;
+    margin: 20px auto;
+    padding: 40px 45px;
+    box-shadow: 0 2px 20px rgba(0,0,0,.12);
+    position: relative;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #C9A227;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand img { width: 64px; height: 64px; object-fit: contain; }
+  .brand-text { line-height: 1.4; }
+  .brand-name { font-size: 15px; font-weight: 700; color: #3D3D3D; }
+  .brand-sub  { font-size: 11px; color: #888; margin-top: 2px; }
+  .brand-wa   { font-size: 11px; color: #C9A227; margin-top: 2px; direction: ltr; }
+
+  .invoice-title {
+    font-size: 42px;
+    font-weight: 900;
+    color: #C9A227;
+    letter-spacing: -1px;
+    line-height: 1;
+    text-align: left;
+  }
+
+  /* ── Info row ── */
+  .info-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .info-box {
+    flex: 1;
+    border: 1px solid #E2E4E9;
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .info-box .lbl { font-size: 11px; color: #888; }
+  .info-box .val { font-size: 13px; font-weight: 700; color: #3D3D3D; direction: ltr; }
+
+  /* ── Client + Summary row ── */
+  .client-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .client-card {
+    flex: 1;
+    background: #FAFAFA;
+    border: 1px solid #E2E4E9;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .client-card .section-lbl { font-size: 11px; color: #C9A227; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .client-card .client-name { font-size: 16px; font-weight: 800; color: #3D3D3D; margin-bottom: 4px; }
+  .client-card .client-sub  { font-size: 12px; color: #666; line-height: 1.6; }
+
+  .summary-card {
+    width: 220px;
+    border: 2px solid #C9A227;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .summary-card .sum-header {
+    background: #C9A227;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 14px;
+    text-align: center;
+  }
+
+  .summary-card .sum-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid #F0EDE3;
+  }
+
+  .summary-card .sum-row:last-child { border-bottom: none; }
+  .summary-card .sum-lbl { font-size: 11px; color: #666; }
+  .summary-card .sum-val { font-size: 13px; font-weight: 700; direction: ltr; }
+  .summary-card .sum-val.credit { color: #16a34a; }
+  .summary-card .sum-val.debit  { color: #dc2626; }
+
+  /* ── Lines table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+  }
+
+  thead tr {
+    background: #3D3D3D;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 12px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  thead th:last-child { text-align: left; }
+
+  tbody tr:nth-child(even) { background: #FAFAFA; }
+  tbody tr:hover { background: #FFF9EC; }
+
+  tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #E2E4E9;
+    vertical-align: top;
+  }
+
+  tbody td.num { text-align: left; direction: ltr; font-weight: 600; }
+  tbody td.center { text-align: center; }
+
+  .line-title { font-weight: 600; color: #3D3D3D; margin-bottom: 2px; }
+  .line-desc  { font-size: 11px; color: #888; }
+
+  /* ── Totals ── */
+  .totals-section {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 24px;
+  }
+
+  .totals-table {
+    width: 280px;
+    margin-right: auto;
+  }
+
+  .totals-table td {
+    padding: 7px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid #F0F0F0;
+  }
+
+  .totals-table td:last-child { text-align: left; direction: ltr; font-weight: 600; }
+  .totals-table .grand td { font-weight: 800; font-size: 15px; color: #C9A227; border-top: 2px solid #C9A227; border-bottom: 2px solid #C9A227; }
+  .totals-table .paid-row td { color: #16a34a; }
+  .totals-table .balance-row td { color: #dc2626; font-weight: 800; }
+
+  /* ── Amount words ── */
+  .amount-words {
+    background: #FFFBF0;
+    border: 1px solid #F0E6B8;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7A6200;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid #E2E4E9;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  /* ── Print button (screen only) ── */
+  .print-btn {
+    position: fixed;
+    bottom: 32px;
+    left: 32px;
+    background: #C9A227;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(201,162,39,.4);
+    z-index: 100;
+  }
+
+  .print-btn:hover { background: #b08f20; }
+
+  /* ── Print media ── */
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; padding: 28px 32px; box-shadow: none; width: 100%; }
+    .print-btn { display: none; }
+    @page { margin: 0; size: A4; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  {{-- ── Header ── --}}
+  <div class="header">
+    <div class="brand">
+      <img src="{{ asset('branding/logo.png') }}" alt="Logo">
+      <div class="brand-text">
+        <div class="brand-name">Profile Media Prodution</div>
+        <div class="brand-sub">وكالة إعلام وإنتاج</div>
+        <div class="brand-wa" dir="ltr">WhatsApp: 0569224006</div>
+      </div>
+    </div>
+    <div class="invoice-title">فاتورة</div>
+  </div>
+
+  {{-- ── Info boxes ── --}}
+  <div class="info-row">
+    <div class="info-box">
+      <span class="lbl">رقم الفاتورة</span>
+      <span class="val">{{ $invoice->legacy_invoice_no ?? '#'.$invoice->id }}</span>
+    </div>
+    <div class="info-box">
+      <span class="lbl">تاريخ الفاتورة</span>
+      <span class="val">{{ $invoice->document_date?->format('Y-m-d') ?? '—' }}</span>
+    </div>
+    @if($invoice->due_date)
+    <div class="info-box">
+      <span class="lbl">تاريخ الاستحقاق</span>
+      <span class="val">{{ $invoice->due_date->format('Y-m-d') }}</span>
+    </div>
+    @endif
+  </div>
+
+  {{-- ── Client + Summary ── --}}
+  <div class="client-row">
+    <div class="client-card">
+      <div class="section-lbl">بيانات العميل</div>
+      <div class="client-name">{{ $client?->displayName() ?? '—' }}</div>
+      @if($client?->phone_primary)
+      <div class="client-sub">📞 {{ $client->phone_primary }}</div>
+      @endif
+      @if($client?->email)
+      <div class="client-sub" dir="ltr">{{ $client->email }}</div>
+      @endif
+      @if($client?->city)
+      <div class="client-sub">{{ $client->city }}{{ $client->country_code ? ' — '.$client->country_code : '' }}</div>
+      @endif
+    </div>
+
+    <div class="summary-card">
+      <div class="sum-header">ملخص الحساب</div>
+      <div class="sum-row">
+        <span class="sum-lbl">إجمالي الفاتورة</span>
+        <span class="sum-val">{{ number_format((float)$invoice->total_amount, 2) }} {{ $invoice->currency_code }}</span>
+      </div>
+      @if($invoice->discount_amount && $invoice->discount_amount > 0)
+      <div class="sum-row">
+        <span class="sum-lbl">الخصم</span>
+        <span class="sum-val debit">- {{ number_format((float)$invoice->discount_amount, 2) }}</span>
+      </div>
+      @endif
+      <div class="sum-row">
+        <span class="sum-lbl">المدفوع</span>
+        <span class="sum-val credit">{{ number_format((float)$totalPaid, 2) }}</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-lbl" style="font-weight:700;color:#3D3D3D">الرصيد المستحق</span>
+        <span class="sum-val {{ $balanceDue > 0 ? 'debit' : 'credit' }}">{{ number_format((float)$balanceDue, 2) }}</span>
+      </div>
+    </div>
+  </div>
+
+  {{-- ── Line items ── --}}
+  @if($invoice->lines->isNotEmpty())
+  <table>
+    <thead>
+      <tr>
+        <th style="width:36px">#</th>
+        <th>البند / الوصف</th>
+        <th style="width:100px">سعر الوحدة</th>
+        <th style="width:70px; text-align:center">الكمية</th>
+        <th style="width:110px">المجموع</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach($invoice->lines as $line)
+      <tr>
+        <td class="center" style="color:#aaa">{{ $loop->iteration }}</td>
+        <td>
+          <div class="line-title">{{ $line->title }}</div>
+          @if($line->description)<div class="line-desc">{{ $line->description }}</div>@endif
+        </td>
+        <td class="num">{{ number_format((float)$line->unit_price, 2) }}</td>
+        <td class="center">{{ rtrim(rtrim(number_format((float)$line->quantity, 2), '0'), '.') }}</td>
+        <td class="num">{{ number_format((float)$line->line_total, 2) }}</td>
+      </tr>
+      @endforeach
+    </tbody>
+  </table>
+  @endif
+
+  {{-- ── Totals ── --}}
+  <div class="totals-section">
+    <table class="totals-table">
+      @php
+        $subtotal = $invoice->lines->sum('line_total');
+        $discount = (float)($invoice->discount_amount ?? 0);
+        $net      = (float)$invoice->total_amount;
+      @endphp
+      @if($invoice->lines->isNotEmpty() && $subtotal != $net)
+      <tr>
+        <td>المجموع الفرعي</td>
+        <td>{{ number_format((float)$subtotal, 2) }} {{ $invoice->currency_code }}</td>
+      </tr>
+      @endif
+      @if($discount > 0)
+      <tr>
+        <td>الخصم</td>
+        <td style="color:#dc2626">- {{ number_format($discount, 2) }} {{ $invoice->currency_code }}</td>
+      </tr>
+      @endif
+      <tr class="grand">
+        <td>الإجمالي</td>
+        <td>{{ number_format($net, 2) }} {{ $invoice->currency_code }}</td>
+      </tr>
+      @if($totalPaid > 0)
+      <tr class="paid-row">
+        <td>مدفوع</td>
+        <td>- {{ number_format((float)$totalPaid, 2) }} {{ $invoice->currency_code }}</td>
+      </tr>
+      <tr class="balance-row">
+        <td>الرصيد المستحق</td>
+        <td>{{ number_format((float)$balanceDue, 2) }} {{ $invoice->currency_code }}</td>
+      </tr>
+      @endif
+    </table>
+  </div>
+
+  {{-- ── Amount in Arabic words ── --}}
+  <div class="amount-words">{{ $amountInWords }}</div>
+
+  @if($invoice->notes)
+  <div style="margin-bottom:20px; padding:12px 16px; background:#FAFAFA; border:1px solid #E2E4E9; border-radius:6px; font-size:12px; color:#555;">
+    <span style="font-weight:700; color:#C9A227;">ملاحظات: </span>{{ $invoice->notes }}
+  </div>
+  @endif
+
+  {{-- ── Footer ── --}}
+  <div class="footer">
+    <span>Profile Media Prodution — شكراً لثقتكم</span>
+    <span dir="ltr">{{ now()->format('Y-m-d') }}</span>
+  </div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 طباعة</button>
+
+<script>
+  window.addEventListener('load', function () {
+    // small delay so the logo can load before print
+    setTimeout(function () {
+      // only auto-print if ?auto=1 is in URL
+      if (new URLSearchParams(location.search).get('auto') === '1') {
+        window.print();
+      }
+    }, 400);
+  });
+</script>
+
+</body>
+</html>

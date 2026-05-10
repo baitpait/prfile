@@ -5,46 +5,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>تسجيل الدخول — بروفايل ميدا</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-[#F5F5F5] flex items-center justify-center font-sans" dir="rtl">
-    <div class="w-full max-w-sm bg-white border border-[#E0E0E0] rounded p-8 shadow-sm">
+<body class="min-h-screen font-sans" dir="rtl" style="background: #0f0f0f;">
 
+{{-- خلفية ديناميكية --}}
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    {{-- دائرة ذهبية ضبابية يمين أعلى --}}
+    <div style="position:absolute;top:-120px;right:-80px;width:500px;height:500px;
+                background:radial-gradient(circle, rgba(201,162,39,0.18) 0%, transparent 70%);
+                border-radius:50%;"></div>
+    {{-- دائرة أصغر يسار أسفل --}}
+    <div style="position:absolute;bottom:-100px;left:-60px;width:350px;height:350px;
+                background:radial-gradient(circle, rgba(201,162,39,0.1) 0%, transparent 70%);
+                border-radius:50%;"></div>
+    {{-- خطوط شبكة خفيفة --}}
+    <div style="position:absolute;inset:0;
+                background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),
+                                 linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);
+                background-size:48px 48px;"></div>
+</div>
+
+{{-- المحتوى المركزي --}}
+<div class="relative min-h-screen flex flex-col items-center justify-center px-4 py-12">
+
+    {{-- البطاقة --}}
+    <div style="width:100%;max-width:420px;">
+
+        {{-- رأس الصفحة --}}
         <div class="text-center mb-8">
-            <div class="text-2xl font-bold text-[#3D3D3D]">بروفايل ميدا</div>
-            <div class="text-sm text-[#C9A227] mt-1">إنتاج إعلامي وتقارير تشغيلية</div>
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <img src="{{ asset('branding/logo.png') }}" alt="بروفايل ميدا"
+                     class="h-14 w-auto drop-shadow-lg"
+                     onerror="this.style.display='none'">
+            </div>
+            <h1 class="text-2xl font-black text-white tracking-tight">بروفايل ميدا</h1>
+            <p class="text-sm mt-1" style="color:#C9A227;">Profile Media Production</p>
         </div>
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-4">
-            @csrf
+        {{-- البطاقة البيضاء --}}
+        <div style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:20px;
+                    backdrop-filter:blur(16px);
+                    padding:2rem;">
 
-            <div>
-                <label class="block text-sm font-medium text-[#3D3D3D] mb-1">البريد الإلكتروني</label>
-                <input type="email" name="email" value="{{ old('email') }}" required autofocus
-                       class="w-full border border-[#E0E0E0] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]
-                              @error('email') border-[#DC2626] @enderror">
-                @error('email')
-                    <p class="text-xs text-[#DC2626] mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+            <p class="text-center text-sm font-semibold mb-6" style="color:rgba(255,255,255,0.5);">
+                تسجيل الدخول إلى لوحة التحكم
+            </p>
 
-            <div>
-                <label class="block text-sm font-medium text-[#3D3D3D] mb-1">كلمة المرور</label>
-                <input type="password" name="password" required
-                       class="w-full border border-[#E0E0E0] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]">
-            </div>
+            <form method="POST" action="{{ route('login') }}" class="space-y-4">
+                @csrf
 
-            <div class="flex items-center gap-2">
-                <input type="checkbox" name="remember" id="remember" class="rounded">
-                <label for="remember" class="text-sm text-[#3D3D3D]">تذكّرني</label>
-            </div>
+                {{-- البريد --}}
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 tracking-wide"
+                           style="color:rgba(255,255,255,0.5);">البريد الإلكتروني</label>
+                    <input type="email" name="email" value="{{ old('email') }}"
+                           required autofocus autocomplete="email"
+                           placeholder="example@domain.com"
+                           dir="ltr"
+                           style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                                  border-radius:10px;padding:0.65rem 0.875rem;font-size:0.875rem;color:#fff;
+                                  outline:none;transition:border-color .2s,box-shadow .2s;
+                                  {{ $errors->has('email') ? 'border-color:#ef4444;' : '' }}"
+                           onfocus="this.style.borderColor='#C9A227';this.style.boxShadow='0 0 0 3px rgba(201,162,39,0.15)'"
+                           onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
+                    @error('email')
+                        <p class="text-xs mt-1.5" style="color:#f87171;">{{ $message }}</p>
+                    @enderror
+                </div>
 
-            <button type="submit"
-                    class="w-full bg-[#C9A227] text-white font-semibold py-2 rounded hover:opacity-90 transition">
-                دخول
-            </button>
-        </form>
+                {{-- كلمة المرور --}}
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 tracking-wide"
+                           style="color:rgba(255,255,255,0.5);">كلمة المرور</label>
+                    <input type="password" name="password"
+                           required autocomplete="current-password"
+                           placeholder="••••••••"
+                           dir="ltr"
+                           style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                                  border-radius:10px;padding:0.65rem 0.875rem;font-size:0.875rem;color:#fff;
+                                  outline:none;transition:border-color .2s,box-shadow .2s;"
+                           onfocus="this.style.borderColor='#C9A227';this.style.boxShadow='0 0 0 3px rgba(201,162,39,0.15)'"
+                           onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
+                    @error('password')
+                        <p class="text-xs mt-1.5" style="color:#f87171;">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- تذكّرني --}}
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" name="remember" id="remember"
+                           style="width:15px;height:15px;accent-color:#C9A227;cursor:pointer;">
+                    <label for="remember" class="text-sm cursor-pointer select-none"
+                           style="color:rgba(255,255,255,0.45);">تذكّرني</label>
+                </div>
+
+                {{-- زر الدخول --}}
+                <button type="submit"
+                        style="width:100%;background:linear-gradient(135deg,#C9A227,#e0b93a);
+                               color:#fff;font-weight:800;font-size:0.95rem;letter-spacing:0.02em;
+                               padding:0.75rem;border-radius:10px;border:none;cursor:pointer;
+                               box-shadow:0 4px 20px rgba(201,162,39,0.35);
+                               transition:opacity .2s,transform .1s;margin-top:0.5rem;"
+                        onmouseover="this.style.opacity='0.9'"
+                        onmouseout="this.style.opacity='1'"
+                        onmousedown="this.style.transform='scale(0.98)'"
+                        onmouseup="this.style.transform='scale(1)'">
+                    دخول
+                </button>
+            </form>
+        </div>
+
+        {{-- تذييل --}}
+        <p class="text-center text-xs mt-6" style="color:rgba(255,255,255,0.2);">
+            © {{ date('Y') }} Profile Media Production — جميع الحقوق محفوظة
+        </p>
+
     </div>
+</div>
+
 </body>
 </html>

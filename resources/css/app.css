@@ -7,13 +7,12 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'IBM Plex Sans Arabic', 'Tajawal', ui-sans-serif, system-ui, sans-serif;
-
+    --font-sans: 'Cairo', ui-sans-serif, system-ui, sans-serif;
     --color-brand-gold: #C9A227;
     --color-brand-grey: #3D3D3D;
     --color-surface: #FFFFFF;
-    --color-surface-muted: #F5F5F5;
-    --color-border: #E0E0E0;
+    --color-surface-muted: #F0F2F5;
+    --color-border: #E2E4E9;
     --color-danger: #DC2626;
     --color-success: #16A34A;
 }
@@ -24,8 +23,148 @@
         font-family: var(--font-sans);
         color: var(--color-brand-grey);
     }
-
     body {
-        background-color: var(--color-surface-muted);
+        background-color: #F0F2F5;
     }
+    [x-cloak] { display: none !important; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+    input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; }
+}
+
+@layer components {
+
+    /* ── مدخلات ── */
+    .input {
+        width: 100%;
+        border: 1px solid #E2E4E9;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        background: #fff;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        font-family: var(--font-sans);
+        color: var(--color-brand-grey);
+    }
+    .input:focus {
+        outline: none;
+        border-color: #C9A227;
+        box-shadow: 0 0 0 3px rgba(201,162,39,0.15);
+    }
+    .input::placeholder { color: #C0C4CC; }
+
+    select.input { cursor: pointer; }
+    textarea.input { resize: vertical; }
+
+    /* ── أزرار ── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.5rem 1.125rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+        cursor: pointer;
+        white-space: nowrap;
+        font-family: var(--font-sans);
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+        background: #C9A227;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(201,162,39,0.35);
+    }
+    .btn-primary:hover:not(:disabled) { background: #b8911f; }
+    .btn-primary:active:not(:disabled) { background: #a07d1a; }
+
+    .btn-secondary {
+        background: #fff;
+        color: #3D3D3D;
+        border: 1px solid #E2E4E9;
+    }
+    .btn-secondary:hover { background: #F5F5F5; }
+
+    .btn-danger {
+        background: #DC2626;
+        color: #fff;
+    }
+    .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+
+    .btn-ghost {
+        background: transparent;
+        color: #6B7280;
+    }
+    .btn-ghost:hover { background: #F3F4F6; color: #3D3D3D; }
+
+    /* ── كارد ── */
+    .card {
+        background: #fff;
+        border: 1px solid #E2E4E9;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    /* ── جداول ── */
+    .data-table { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
+    .data-table thead tr { background: #F7F8FA; }
+    .data-table th {
+        text-align: right;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #6B7280;
+        border-bottom: 1px solid #E2E4E9;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+    }
+    .data-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #F0F2F5;
+        vertical-align: middle;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr { transition: background 0.1s; }
+    .data-table tbody tr:hover td { background: #FAFBFC; }
+
+    /* ── شارات ── */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 99px;
+    }
+    .badge-green  { background: #DCFCE7; color: #15803D; }
+    .badge-yellow { background: #FEF9C3; color: #854D0E; }
+    .badge-red    { background: #FEE2E2; color: #B91C1C; }
+    .badge-gray   { background: #F3F4F6; color: #4B5563; }
+    .badge-blue   { background: #DBEAFE; color: #1D4ED8; }
+
+    /* ── label ── */
+    .label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6B7280;
+        margin-bottom: 0.375rem;
+    }
+
+    /* ── خطأ تحقق ── */
+    .field-error {
+        color: #DC2626;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    /* ── قسم تجميع الحقول ── */
+    .form-group { margin-bottom: 1rem; }
 }

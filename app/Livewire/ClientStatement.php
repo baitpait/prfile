@@ -46,6 +46,13 @@ class ClientStatement extends Component
         $this->loadStatement();
     }
 
+    public function resetDates(): void
+    {
+        $this->dateFrom = '';
+        $this->dateTo   = '';
+        $this->loadStatement();
+    }
+
     public function exportCsv(): StreamedResponse
     {
         $service = new ClientStatementService();

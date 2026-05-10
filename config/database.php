@@ -44,6 +44,14 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        'legacy' => [
+            'driver'   => 'sqlite',
+            'database' => env('DB_LEGACY', database_path('business_v1.sqlite')),
+            'prefix'   => '',
+            'foreign_key_constraints' => false,
+            'read_only' => true,
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),

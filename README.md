@@ -93,10 +93,10 @@ php artisan export:mysql-data
 يُنشئ ملفاً على سطح المكتب: **INSERT فقط** (بدون CREATE TABLE) — مناسب لقاعدة فيها الجداول بعد `migrate`.
 
 - مسار مخصص: `php artisan export:mysql-data --output=/path/to/file.sql`
-
-- مسار مخصص: `php artisan export:mysql-data --output=/path/to/file.sql`
-- **نسخة قديمة من `database.sqlite`** (نفس جداول Laravel قبل فقدانها):  
+- **نسخة قديمة من `database.sqlite`:**  
   `php artisan export:mysql-data --sqlite=/المسار/الكامل/database.sqlite --output=/path/to/import.sql`
+
+**النسخ الاحتياطي والاسترجاع:** `docs/DATABASE_BACKUP_AND_RESTORE_AR.md`
 
 ---
 

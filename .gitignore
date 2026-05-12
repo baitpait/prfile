@@ -2,6 +2,7 @@
 .DS_Store
 database/database.sqlite
 database/backups/*.sql
+database/backups/laravel_local_*.sqlite
 .env
 .env.backup
 .env.production

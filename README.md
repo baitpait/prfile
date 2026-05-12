@@ -52,6 +52,20 @@ php artisan serve
 
 ---
 
+## نشر الإنتاج — `profile.baitpait.com`
+
+إعداد موثَّق من لوحة الاستضافة (Enduser Panel)، المستخدم `baitpait`، الخادم `104.207.65.64`:
+
+| البند | المسار أو القيمة |
+|--------|------------------|
+| الدومين | `https://profile.baitpait.com` |
+| جذر الويب (Document root) | `/home/baitpait/public_html/profile/public` |
+| جذر Laravel (هنا `artisan` و`composer.json`) | `/home/baitpait/public_html/profile` |
+
+**مهم:** أوامر الشل (`php artisan`، `composer install`) تُنفَّذ من **الجذر الثاني** (أعلى من `public`)، وليس من داخل `public` فقط. إذا لم يوجد `artisan` تحت `profile` فالنسخة على الخادم ناقصة أو المشروع منشور تحت مجلد آخر — ابحث بـ `find /home/baitpait/public_html -name artisan`.
+
+---
+
 ## بيانات تجريبية جاهزة
 
 بعد `php artisan migrate` يمكنك إحدى الطريقتين:

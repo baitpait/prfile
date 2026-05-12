@@ -33,7 +33,7 @@
     </div>
     <table class="data-table">
         <thead><tr>
-            <th>الاسم</th><th>البريد</th><th>الهاتف</th><th>المدينة</th><th class="w-28"></th>
+            <th>الاسم</th><th>البريد</th><th>الهاتف</th><th>المدينة</th><th class="w-40"></th>
         </tr></thead>
         <tbody>
             @forelse($rows as $s)
@@ -44,6 +44,7 @@
                 <td class="text-gray-500">{{ $s->city ?? '—' }}</td>
                 <td>
                     <div class="flex items-center gap-1 justify-end">
+                        <a href="{{ route('suppliers.statement', $s->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-[#C9A227] hover:bg-amber-50" style="text-decoration:none;">كشف</a>
                         <a href="{{ route('suppliers.show', $s->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
                         @if(auth()->user()->isAccountant())
                         <a href="{{ route('suppliers.edit', $s->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
@@ -66,8 +67,9 @@
             @endforelse
         </tbody>
     </table>
+
+    <x-list-pagination :paginator="$rows" />
 </div>
-@if($rows->hasPages())<div class="mt-5">{{ $rows->links() }}</div>@endif
 
 
 {{-- تأكيد الحذف --}}

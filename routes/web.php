@@ -1,122 +1,225 @@
 <?php
 
+use App\Http\Controllers\ClientReceivablesAgingController;
 use App\Http\Controllers\ClientStatementController;
 use App\Http\Controllers\InvoicePrintController;
+use App\Http\Controllers\SupplierStatementController;
+use App\Models\Client;
+use App\Models\ClientPayment;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\LegacyCatalogProduct;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\Supplier;
+use App\Models\SupplierPayment;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+    Route::get('/financial-summary', fn () => view('financial-summary'))->name('financial-summary');
 
     Route::get('/clients', fn () => view('clients.index'))->name('clients.index');
     Route::get('/clients/{client}/statement', [ClientStatementController::class, 'show'])->name('clients.statement');
     Route::get('/clients/{client}/statement/pdf', [ClientStatementController::class, 'pdf'])->name('clients.statement.pdf');
 
+    Route::get('/products', fn () => view('products.index'))->name('products.index');
+    Route::get('/products/create', function () {
+        abort_unless(auth()->user()->can('create', Product::class), 403);
+
+        return view('products.create');
+    })->name('products.create');
+    Route::get('/products/{product}/edit', function (Product $product) {
+        abort_unless(auth()->user()->can('update', $product), 403);
+
+        return view('products.edit', compact('product'));
+    })->name('products.edit');
+    Route::delete('/products/{product}', function (Product $product) {
+        abort_unless(auth()->user()->can('delete', $product), 403);
+        $product->delete();
+
+        return redirect()->route('products.index')->with('toast', 'تم حذف المنتج');
+    })->name('products.destroy');
+
+    Route::get('/legacy-catalog/products', function () {
+        abort_unless(auth()->user()->can('viewAny', LegacyCatalogProduct::class), 403);
+
+        return view('legacy-catalog.products');
+    })->name('legacy-catalog-products.index');
+
     Route::get('/suppliers', fn () => view('suppliers.index'))->name('suppliers.index');
+
+    Route::get('/purchase-orders', fn () => view('purchase-orders.index'))->name('purchase-orders.index');
+    Route::get('/purchase-orders/create', function () {
+        abort_unless(auth()->user()->can('create', PurchaseOrder::class), 403);
+
+        return view('purchase-orders.create');
+    })->name('purchase-orders.create');
+    Route::get('/purchase-orders/{purchaseOrder}/edit', function (PurchaseOrder $purchaseOrder) {
+        abort_unless(auth()->user()->can('update', $purchaseOrder), 403);
+
+        return view('purchase-orders.edit', compact('purchaseOrder'));
+    })->name('purchase-orders.edit');
+    Route::get('/purchase-orders/{purchaseOrder}', function (PurchaseOrder $purchaseOrder) {
+        abort_unless(auth()->user()->can('view', $purchaseOrder), 403);
+        $purchaseOrder->load(['supplier', 'lines']);
+
+        return view('purchase-orders.show', compact('purchaseOrder'));
+    })->name('purchase-orders.show');
+
+    Route::get('/supplier-payments', fn () => view('supplier-payments.index'))->name('supplier-payments.index');
+    Route::get('/supplier-payments/create', function () {
+        abort_unless(auth()->user()->isAccountant(), 403);
+
+        return view('supplier-payments.create');
+    })->name('supplier-payments.create');
+    Route::get('/supplier-payments/{supplierPayment}/edit', function (SupplierPayment $supplierPayment) {
+        abort_unless(auth()->user()->isAccountant(), 403);
+
+        return view('supplier-payments.edit', compact('supplierPayment'));
+    })->name('supplier-payments.edit');
+    Route::get('/supplier-payments/{supplierPayment}', fn (SupplierPayment $supplierPayment) => view('supplier-payments.show', compact('supplierPayment')))->name('supplier-payments.show');
+    Route::delete('/supplier-payments/{supplierPayment}', function (SupplierPayment $supplierPayment) {
+        abort_unless(auth()->user()->isManager(), 403);
+        $supplierPayment->delete();
+
+        return redirect()->route('supplier-payments.index')->with('toast', 'تم حذف الدفعة');
+    })->name('supplier-payments.destroy');
 
     Route::get('/invoices', fn () => view('invoices.index'))->name('invoices.index');
     Route::get('/invoices/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('invoices.create');
     })->name('invoices.create');
-    Route::get('/invoices/{invoice}/edit', function (\App\Models\Invoice $invoice) {
+    Route::get('/invoices/{invoice}/edit', function (Invoice $invoice) {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('invoices.edit', compact('invoice'));
     })->name('invoices.edit');
     Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])->name('invoices.print');
 
     Route::get('/expenses', fn () => view('expenses.index'))->name('expenses.index');
+    Route::get('/reports/client-receivables-aging', ClientReceivablesAgingController::class)
+        ->name('reports.client-receivables-aging');
     Route::get('/expenses/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('expenses.create');
     })->name('expenses.create');
-    Route::get('/expenses/{expense}/edit', function (\App\Models\Expense $expense) {
+    Route::get('/expenses/{expense}/edit', function (Expense $expense) {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('expenses.edit', compact('expense'));
     })->name('expenses.edit');
-    Route::get('/expenses/{expense}', fn (\App\Models\Expense $expense) => view('expenses.show', compact('expense')))->name('expenses.show');
-    Route::delete('/expenses/{expense}', function (\App\Models\Expense $expense) {
+    Route::get('/expenses/{expense}', fn (Expense $expense) => view('expenses.show', compact('expense')))->name('expenses.show');
+    Route::delete('/expenses/{expense}', function (Expense $expense) {
         abort_unless(auth()->user()->isManager(), 403);
         $expense->delete();
+
         return redirect()->route('expenses.index')->with('toast', 'تم حذف المصروف');
     })->name('expenses.destroy');
 
-    Route::get('/income-entries', fn () => view('income-entries.index'))->name('income-entries.index');
-    Route::get('/income-entries/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
-        return view('income-entries.create');
-    })->name('income-entries.create');
-    Route::get('/income-entries/{incomeEntry}/edit', function (\App\Models\IncomeEntry $incomeEntry) {
-        abort_unless(auth()->user()->isAccountant(), 403);
-        return view('income-entries.edit', compact('incomeEntry'));
-    })->name('income-entries.edit');
-    Route::get('/income-entries/{incomeEntry}', fn (\App\Models\IncomeEntry $incomeEntry) => view('income-entries.show', compact('incomeEntry')))->name('income-entries.show');
-    Route::delete('/income-entries/{incomeEntry}', function (\App\Models\IncomeEntry $incomeEntry) {
-        abort_unless(auth()->user()->isManager(), 403);
-        $incomeEntry->delete();
-        return redirect()->route('income-entries.index')->with('toast', 'تم حذف الإيراد');
-    })->name('income-entries.destroy');
+    $incomeMergedRedirect = fn () => redirect()
+        ->route('payments.index')
+        ->with('toast', 'تُسجّل الإيرادات النقدية ضمن «دفعات العملاء» فقط.');
+
+    Route::get('/income-entries', $incomeMergedRedirect)->name('income-entries.index');
+    Route::get('/income-entries/create', $incomeMergedRedirect)->name('income-entries.create');
+    Route::get('/income-entries/{any}/edit', $incomeMergedRedirect)
+        ->where('any', '[0-9]+')
+        ->name('income-entries.edit');
+    Route::get('/income-entries/{any}', $incomeMergedRedirect)
+        ->where('any', '[0-9]+')
+        ->name('income-entries.show');
+    Route::delete('/income-entries/{any}', $incomeMergedRedirect)
+        ->where('any', '[0-9]+')
+        ->name('income-entries.destroy');
 
     Route::get('/payments', fn () => view('payments.index'))->name('payments.index');
     Route::get('/payments/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('payments.create');
     })->name('payments.create');
-    Route::get('/payments/{payment}/edit', function (\App\Models\ClientPayment $payment) {
+    Route::get('/payments/{payment}/edit', function (ClientPayment $payment) {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('payments.edit', compact('payment'));
     })->name('payments.edit');
-    Route::get('/payments/{payment}', fn (\App\Models\ClientPayment $payment) => view('payments.show', compact('payment')))->name('payments.show');
-    Route::delete('/payments/{payment}', function (\App\Models\ClientPayment $payment) {
+    Route::get('/payments/{payment}', fn (ClientPayment $payment) => view('payments.show', compact('payment')))->name('payments.show');
+    Route::delete('/payments/{payment}', function (ClientPayment $payment) {
         abort_unless(auth()->user()->isManager(), 403);
         $payment->delete();
+
         return redirect()->route('payments.index')->with('toast', 'تم حذف الدفعة');
     })->name('payments.destroy');
 
     Route::get('/clients/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('clients.create');
     })->name('clients.create');
-    Route::get('/clients/{client}/edit', function (\App\Models\Client $client) {
+    Route::get('/clients/{client}/edit', function (Client $client) {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('clients.edit', compact('client'));
     })->name('clients.edit');
-    Route::delete('/clients/{client}', function (\App\Models\Client $client) {
+    Route::delete('/clients/{client}', function (Client $client) {
         abort_unless(auth()->user()->isManager(), 403);
         $client->delete();
+
         return redirect()->route('clients.index')->with('toast', 'تم حذف العميل');
     })->name('clients.destroy');
-    Route::get('/clients/{client}', function (\App\Models\Client $client) {
-        $client->load(['invoices' => fn($q) => $q->latest('document_date'), 'payments' => fn($q) => $q->latest('paid_at')]);
+    Route::get('/clients/{client}', function (Client $client) {
+        $client->load(['invoices' => fn ($q) => $q->latest('document_date'), 'payments' => fn ($q) => $q->latest('paid_at')]);
+
         return view('clients.show', compact('client'));
     })->name('clients.show');
 
     Route::get('/suppliers/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('suppliers.create');
     })->name('suppliers.create');
-    Route::get('/suppliers/{supplier}/edit', function (\App\Models\Supplier $supplier) {
+    Route::get('/suppliers/{supplier}/statement', [SupplierStatementController::class, 'show'])->name('suppliers.statement');
+    Route::get('/suppliers/{supplier}/statement/pdf', [SupplierStatementController::class, 'pdf'])->name('suppliers.statement.pdf');
+    Route::get('/suppliers/{supplier}/edit', function (Supplier $supplier) {
         abort_unless(auth()->user()->isAccountant(), 403);
+
         return view('suppliers.edit', compact('supplier'));
     })->name('suppliers.edit');
-    Route::get('/suppliers/{supplier}', fn (\App\Models\Supplier $supplier) => view('suppliers.show', compact('supplier')))->name('suppliers.show');
-    Route::delete('/suppliers/{supplier}', function (\App\Models\Supplier $supplier) {
+    Route::get('/suppliers/{supplier}', function (Supplier $supplier) {
+        $supplier->load([
+            'purchaseOrders' => fn ($q) => $q->latest('document_date')->limit(15),
+            'payments' => fn ($q) => $q->latest('paid_at')->limit(15),
+        ]);
+
+        return view('suppliers.show', compact('supplier'));
+    })->name('suppliers.show');
+    Route::delete('/suppliers/{supplier}', function (Supplier $supplier) {
         abort_unless(auth()->user()->isManager(), 403);
         $supplier->delete();
+
         return redirect()->route('suppliers.index')->with('toast', 'تم حذف المورد');
     })->name('suppliers.destroy');
 
     Route::get('/users', function () {
         abort_unless(auth()->user()->isManager(), 403);
+
         return view('users.index');
     })->name('users.index');
     Route::get('/users/create', function () {
         abort_unless(auth()->user()->isManager(), 403);
+
         return view('users.create');
     })->name('users.create');
-    Route::get('/users/{user}/edit', function (\App\Models\User $user) {
+    Route::get('/users/{user}/edit', function (User $user) {
         abort_unless(auth()->user()->isManager(), 403);
+
         return view('users.edit', compact('user'));
     })->name('users.edit');
 });

@@ -45,12 +45,47 @@ return [
         ],
 
         'legacy' => [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => env('DB_LEGACY', database_path('business_v1.sqlite')),
-            'prefix'   => '',
+            'prefix' => '',
             'foreign_key_constraints' => false,
             'read_only' => true,
         ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | قاعدة ERP القديمة (Stocky / POS) — للقراءة فقط عند الترحيل
+        |--------------------------------------------------------------------------
+        | اضبط LEGACY_ERP_* في .env بعد استعادة النسخة الاحتياطية إلى MySQL/MariaDB.
+        | للاختبارات يمكن استخدام driver=sqlite ومسار ملف.
+        */
+        'legacy_erp' => env('LEGACY_ERP_DRIVER', 'mysql') === 'sqlite'
+            ? [
+                'driver' => 'sqlite',
+                'database' => env('LEGACY_ERP_DATABASE', database_path('legacy_erp.sqlite')),
+                'prefix' => '',
+                'foreign_key_constraints' => (bool) env('LEGACY_ERP_FOREIGN_KEYS', false),
+            ]
+            : [
+                'driver' => 'mysql',
+                'url' => env('LEGACY_ERP_URL'),
+                'host' => env('LEGACY_ERP_HOST', '127.0.0.1'),
+                'port' => env('LEGACY_ERP_PORT', '3306'),
+                'database' => env('LEGACY_ERP_DATABASE'),
+                'username' => env('LEGACY_ERP_USERNAME', 'root'),
+                'password' => env('LEGACY_ERP_PASSWORD', ''),
+                'unix_socket' => env('LEGACY_ERP_SOCKET', ''),
+                'charset' => env('LEGACY_ERP_CHARSET', 'utf8mb4'),
+                'collation' => env('LEGACY_ERP_COLLATION', 'utf8mb4_unicode_ci'),
+                'prefix' => '',
+                'prefix_indexes' => true,
+                'strict' => true,
+                'engine' => null,
+                'foreign_key_constraints' => (bool) env('LEGACY_ERP_FOREIGN_KEYS', false),
+                'options' => extension_loaded('pdo_mysql') ? array_filter([
+                    (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                ]) : [],
+            ],
 
         'mysql' => [
             'driver' => 'mysql',

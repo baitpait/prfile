@@ -52,6 +52,24 @@ php artisan serve
 
 ---
 
+## بيانات تجريبية جاهزة
+
+بعد `php artisan migrate` يمكنك إحدى الطريقتين:
+
+```bash
+# 1) مستخدم مدير من .env + بيانات تجريبية (محلي أو بيئة تجارب)
+SEED_DEV_ADMIN=true SEED_DEMO_DATA=true php artisan db:seed
+```
+
+```bash
+# 2) بيانات تجريبية فقط (ينشئ مستخدم demo@baitpait.local / كلمة المرور: password)
+php artisan db:seed --class=DemoDataSeeder
+```
+
+لا تشغّل البذور على إنتاج حقيقي دون قصد.
+
+---
+
 ## الاختبارات
 
 ```bash
@@ -88,6 +106,8 @@ docs/                       ← دستور المشروع والوثائق
 branding/                   ← الشعار والهوية البصرية
 ```
 
+**مرجع واجهات الفواتير (عملاء + مشتريات):** `docs/ar_invoices_and_purchase_orders_ui.md`
+
 ---
 
 ## الأدوار والصلاحيات
@@ -118,6 +138,8 @@ branding/                   ← الشعار والهوية البصرية
 ---
 
 ## Git Workflow
+
+المستودع على GitHub: [baitpait/prfile](https://github.com/baitpait/prfile)
 
 ```
 main          ← الفرع الرئيسي (محمي)

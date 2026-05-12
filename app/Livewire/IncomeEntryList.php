@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\IncomeEntry;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -10,11 +11,15 @@ use Livewire\WithPagination;
 class IncomeEntryList extends Component
 {
     use WithPagination;
+    use WithPerPagePagination;
 
     #[Url(as: 'q')]
     public string $search = '';
 
-    public function updatedSearch(): void { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public function deleteRecord(int $id): void
     {
@@ -24,15 +29,16 @@ class IncomeEntryList extends Component
 
     public function render()
     {
-        $rows = IncomeEntry::query()
-            ->when($this->search, function ($q) {
-                $s = "%{$this->search}%";
-                $q->where(fn($q) =>
-                    $q->where('description', 'like', $s)
-                      ->orWhere('notes',       'like', $s)
-                );
-            })
-            ->latest('income_date')->paginate(15);
+        $rows = $this->paginateWithPerPage(
+            IncomeEntry::query()
+                ->when($this->search, function ($q) {
+                    $s = "%{$this->search}%";
+                    $q->where(fn ($q) => $q->where('description', 'like', $s)
+                        ->orWhere('notes', 'like', $s)
+                    );
+                })
+                ->latest('income_date')
+        );
 
         return view('livewire.income-entry-list', ['rows' => $rows]);
     }

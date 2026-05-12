@@ -10,9 +10,9 @@ class InvoicePrintController extends Controller
     {
         $invoice->load(['lines', 'client.payments']);
 
-        $client     = $invoice->client;
-        $totalPaid  = $client ? $client->payments->sum('amount') : 0;
-        $netAmount  = (float) $invoice->total_amount - (float) ($invoice->discount_amount ?? 0);
+        $client = $invoice->client;
+        $totalPaid = $client ? $client->payments->sum('amount') : 0;
+        $netAmount = (float) $invoice->total_amount - (float) ($invoice->discount_amount ?? 0);
         $balanceDue = $netAmount - $totalPaid;
 
         $amountInWords = $this->toArabicWords($netAmount, $invoice->currency_code ?? 'ILS');
@@ -28,44 +28,52 @@ class InvoicePrintController extends Controller
         $words = $this->intWords($int);
 
         $currencyMain = match ($currency) {
-            'ILS'   => ['شيكل جديد', 'أغورة'],
-            'USD'   => ['دولار أمريكي', 'سنت'],
-            'JOD'   => ['دينار أردني', 'فلس'],
-            'EUR'   => ['يورو', 'سنت'],
+            'ILS' => ['شيكل جديد', 'أغورة'],
+            'USD' => ['دولار أمريكي', 'سنت'],
+            'JOD' => ['دينار أردني', 'فلس'],
+            'EUR' => ['يورو', 'سنت'],
             default => [$currency, ''],
         };
 
-        $result = 'فقط ' . $words . ' ' . $currencyMain[0];
+        $result = 'فقط '.$words.' '.$currencyMain[0];
         if ($dec > 0 && $currencyMain[1]) {
-            $result .= ' و' . $this->intWords($dec) . ' ' . $currencyMain[1];
+            $result .= ' و'.$this->intWords($dec).' '.$currencyMain[1];
         }
-        return $result . ' لا غير';
+
+        return $result.' لا غير';
     }
 
     private function intWords(int $n): string
     {
-        if ($n === 0) return 'صفر';
+        if ($n === 0) {
+            return 'صفر';
+        }
 
         $ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة',
-                 'عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر',
-                 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
-        $tens  = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+            'عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر',
+            'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+        $tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
         $hundreds = ['', 'مئة', 'مئتان', 'ثلاثمئة', 'أربعمئة', 'خمسمئة', 'ستمئة', 'سبعمئة', 'ثمانمئة', 'تسعمئة'];
 
         $parts = [];
 
         if ($n >= 1000000) {
             $m = (int) ($n / 1000000);
-            $parts[] = $this->intWords($m) . ' مليون';
+            $parts[] = $this->intWords($m).' مليون';
             $n %= 1000000;
         }
 
         if ($n >= 1000) {
             $t = (int) ($n / 1000);
-            if ($t === 1)      $parts[] = 'ألف';
-            elseif ($t === 2)  $parts[] = 'ألفان';
-            elseif ($t <= 10)  $parts[] = $ones[$t] . ' آلاف';
-            else               $parts[] = $this->intWords($t) . ' ألف';
+            if ($t === 1) {
+                $parts[] = 'ألف';
+            } elseif ($t === 2) {
+                $parts[] = 'ألفان';
+            } elseif ($t <= 10) {
+                $parts[] = $ones[$t].' آلاف';
+            } else {
+                $parts[] = $this->intWords($t).' ألف';
+            }
             $n %= 1000;
         }
 
@@ -80,7 +88,7 @@ class InvoicePrintController extends Controller
             } else {
                 $t = (int) ($n / 10);
                 $o = $n % 10;
-                $parts[] = $o > 0 ? $ones[$o] . ' و' . $tens[$t] : $tens[$t];
+                $parts[] = $o > 0 ? $ones[$o].' و'.$tens[$t] : $tens[$t];
             }
         }
 

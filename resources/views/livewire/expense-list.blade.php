@@ -54,8 +54,9 @@
             @endforelse
         </tbody>
     </table>
+
+    <x-list-pagination :paginator="$rows" />
 </div>
-@if($rows->hasPages())<div class="mt-5">{{ $rows->links() }}</div>@endif
 
 
 <div x-show="deletingId !== null" x-cloak

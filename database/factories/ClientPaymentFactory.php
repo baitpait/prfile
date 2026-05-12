@@ -13,11 +13,11 @@ class ClientPaymentFactory extends Factory
     public function definition(): array
     {
         return [
-            'client_id'     => Client::factory(),
-            'amount'        => fake()->randomFloat(2, 50, 5000),
+            'client_id' => Client::factory(),
+            'amount' => fake()->randomFloat(2, 50, 5000),
             'currency_code' => 'ILS',
-            'paid_at'       => fake()->dateTimeBetween('-1 year', 'now'),
-            'method'        => fake()->randomElement(['تحويل بنكي', 'شيك', 'نقداً']),
+            'paid_at' => fake()->dateTimeBetween('-1 year', 'now'),
+            'method' => fake()->randomElement(['تحويل بنكي', 'شيك', 'نقداً']),
         ];
     }
 }

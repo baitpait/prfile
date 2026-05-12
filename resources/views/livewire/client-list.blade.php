@@ -39,7 +39,7 @@
                 <th>البريد</th>
                 <th>الهاتف</th>
                 <th>المدينة</th>
-                <th class="w-36"></th>
+                <th class="w-44"></th>
             </tr>
         </thead>
         <tbody>
@@ -51,6 +51,7 @@
                 <td class="text-gray-500">{{ $client->city ?? '—' }}</td>
                 <td>
                     <div class="flex items-center gap-1 justify-end">
+                        <a href="{{ route('clients.statement', $client->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-[#C9A227] hover:bg-amber-50" style="text-decoration:none;">كشف</a>
                         <a href="{{ route('clients.show', $client->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
                         @if(auth()->user()->isAccountant())
                         <a href="{{ route('clients.edit', $client->id) }}" wire:navigate
@@ -78,11 +79,9 @@
             @endforelse
         </tbody>
     </table>
-</div>
 
-@if($rows->hasPages())
-<div class="mt-5">{{ $rows->links() }}</div>
-@endif
+    <x-list-pagination :paginator="$rows" />
+</div>
 
 
 {{-- نافذة تأكيد الحذف --}}

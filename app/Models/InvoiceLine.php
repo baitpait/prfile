@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InvoiceLine extends Model
 {
     protected $fillable = [
-        'invoice_id', 'line_order', 'title', 'description',
+        'invoice_id', 'product_id', 'line_order', 'title', 'description',
         'unit_price', 'quantity', 'line_total', 'source_row_json',
     ];
 
@@ -22,5 +22,10 @@ class InvoiceLine extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 }

@@ -6,24 +6,6 @@
     $invoiceTotal  = \App\Models\Invoice::count();
     $expenseCount  = \App\Models\Expense::count();
     $paymentCount  = \App\Models\ClientPayment::count();
-
-    $invoicedByC = \App\Models\Invoice::where('status','issued')
-        ->selectRaw('currency_code, sum(total_amount) as total')
-        ->groupBy('currency_code')->pluck('total','currency_code');
-
-    $paidByC = \App\Models\ClientPayment::selectRaw('currency_code, sum(amount) as total')
-        ->groupBy('currency_code')->pluck('total','currency_code');
-
-    $incomeByC = \App\Models\IncomeEntry::selectRaw('currency_code, sum(amount) as total')
-        ->groupBy('currency_code')->pluck('total','currency_code');
-
-    $expenseByC = \App\Models\Expense::selectRaw('currency_code, sum(amount) as total')
-        ->groupBy('currency_code')->pluck('total','currency_code');
-
-    $finCurrencies = collect(array_keys(array_merge(
-        $invoicedByC->toArray(), $paidByC->toArray(),
-        $incomeByC->toArray(),   $expenseByC->toArray()
-    )))->unique()->sort()->values();
 @endphp
 
 {{-- رأس الصفحة --}}
@@ -95,25 +77,28 @@
 
 </div>
 
-{{-- ═══ الملخص المالي (مخفي افتراضياً) ═══ --}}
+{{-- ═══ الملخص المالي (مخفي افتراضياً) — الصفحة الكاملة: «صناديق العملات» ═══ --}}
 <div x-data="{ open: false }" class="mb-8">
 
-    {{-- شريط الإظهار --}}
     <div class="flex items-center justify-between mb-3">
         <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest">الملخص المالي</h2>
-        <button @click="open = !open"
-                class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E2E4E9] bg-white text-gray-500 hover:border-[#C9A227] hover:text-[#C9A227] transition select-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      x-show="!open" d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      x-show="open"  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-            </svg>
-            <span x-text="open ? 'إخفاء الأرقام' : 'إظهار الأرقام'"></span>
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('financial-summary') }}"
+               class="text-xs font-semibold text-[#C9A227] hover:underline">صفحة صناديق العملات</a>
+            <button @click="open = !open"
+                    type="button"
+                    class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E2E4E9] bg-white text-gray-500 hover:border-[#C9A227] hover:text-[#C9A227] transition select-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          x-show="!open" d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          x-show="open"  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                </svg>
+                <span x-text="open ? 'إخفاء الأرقام' : 'إظهار الأرقام'"></span>
+            </button>
+        </div>
     </div>
 
-    {{-- المحتوى --}}
     <div x-show="open"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 -translate-y-2"
@@ -122,85 +107,7 @@
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-2"
          x-cloak>
-
-        @if($finCurrencies->isEmpty())
-        <div class="card p-6 text-center text-sm text-gray-300">لا توجد بيانات مالية مسجّلة بعد</div>
-        @else
-        <div class="grid grid-cols-1 lg:grid-cols-{{ min($finCurrencies->count(), 3) }} gap-4">
-            @foreach($finCurrencies as $cur)
-            @php
-                $invoiced = (float)($invoicedByC[$cur] ?? 0);
-                $paid     = (float)($paidByC[$cur]     ?? 0);
-                $income   = (float)($incomeByC[$cur]   ?? 0);
-                $expense  = (float)($expenseByC[$cur]  ?? 0);
-                $balance  = $invoiced - $paid;
-                $net      = $income - $expense;
-                $pct      = $invoiced > 0 ? min(100, round($paid / $invoiced * 100)) : 0;
-            @endphp
-            <div class="card p-5">
-
-                {{-- العنوان --}}
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest" dir="ltr">{{ $cur }}</span>
-                    <span class="badge {{ $balance <= 0 ? 'badge-green' : 'badge-yellow' }}">
-                        {{ $balance <= 0 ? 'محصّل بالكامل' : 'رصيد مستحق' }}
-                    </span>
-                </div>
-
-                {{-- الأرقام الأربعة --}}
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-blue-50 rounded-xl p-3">
-                        <p class="text-[10px] font-bold text-blue-400 mb-1">الفواتير الصادرة</p>
-                        <p class="text-lg font-bold text-blue-700 leading-none" dir="ltr">{{ number_format($invoiced, 2) }}</p>
-                    </div>
-                    <div class="bg-green-50 rounded-xl p-3">
-                        <p class="text-[10px] font-bold text-green-400 mb-1">الدفعات المستلمة</p>
-                        <p class="text-lg font-bold text-green-700 leading-none" dir="ltr">{{ number_format($paid, 2) }}</p>
-                    </div>
-                    <div class="bg-amber-50 rounded-xl p-3">
-                        <p class="text-[10px] font-bold text-amber-400 mb-1">الإيرادات المسجّلة</p>
-                        <p class="text-lg font-bold text-amber-700 leading-none" dir="ltr">{{ number_format($income, 2) }}</p>
-                    </div>
-                    <div class="bg-red-50 rounded-xl p-3">
-                        <p class="text-[10px] font-bold text-red-400 mb-1">المصروفات</p>
-                        <p class="text-lg font-bold text-red-700 leading-none" dir="ltr">{{ number_format($expense, 2) }}</p>
-                    </div>
-                </div>
-
-                {{-- شريط تحصيل الفواتير --}}
-                @if($invoiced > 0)
-                <div class="mb-3">
-                    <div class="flex justify-between text-[10px] text-gray-400 mb-1">
-                        <span>نسبة التحصيل</span>
-                        <span dir="ltr">{{ $pct }}%</span>
-                    </div>
-                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full rounded-full {{ $pct >= 100 ? 'bg-green-500' : ($pct >= 50 ? 'bg-[#C9A227]' : 'bg-red-400') }} transition-all"
-                             style="width: {{ $pct }}%"></div>
-                    </div>
-                </div>
-                @endif
-
-                {{-- الرصيد المستحق / صافي الإيرادات --}}
-                <div class="flex items-center justify-between pt-3 border-t border-[#E2E4E9]">
-                    <div>
-                        <p class="text-[10px] text-gray-400">رصيد مستحق من العملاء</p>
-                        <p class="text-base font-bold {{ $balance > 0 ? 'text-red-500' : 'text-green-600' }}" dir="ltr">
-                            {{ number_format(abs($balance), 2) }}
-                            @if($balance < 0)<span class="text-xs font-normal text-green-500"> زيادة</span>@endif
-                        </p>
-                    </div>
-                    <div class="text-left">
-                        <p class="text-[10px] text-gray-400">صافي الإيرادات</p>
-                        <p class="text-base font-bold {{ $net >= 0 ? 'text-[#C9A227]' : 'text-red-500' }}" dir="ltr">
-                            {{ $net >= 0 ? '+' : '-' }}{{ number_format(abs($net), 2) }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        </div>
-        @endif
+        @include('partials.currency-boxes-full')
     </div>
 </div>
 

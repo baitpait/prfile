@@ -90,7 +90,9 @@ php artisan db:seed --class=DemoDataSeeder
 php artisan export:mysql-data
 ```
 
-يُنشئ ملفاً على سطح المكتب (macOS): `profile_media_mysql_export_*.sql` وملف تعليمات بجانبه.
+يُنشئ ملفاً على سطح المكتب: **INSERT فقط** (بدون CREATE TABLE) — مناسب لقاعدة فيها الجداول بعد `migrate`.
+
+- مسار مخصص: `php artisan export:mysql-data --output=/path/to/file.sql`
 
 - مسار مخصص: `php artisan export:mysql-data --output=/path/to/file.sql`
 - **نسخة قديمة من `database.sqlite`** (نفس جداول Laravel قبل فقدانها):  

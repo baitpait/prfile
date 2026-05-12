@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * يصدّر بيانات التطبيق من اتصال Laravel الحالي (أو من ملف SQLite محدد) إلى ملف INSERT لـ MySQL
- * (للاستيراد اليدوي على السيرفر بعد تشغيل المايغريشن على قاعدة فارغة).
+ * (للاستيراد على MySQL بعد وجود الجداول من المايغريشن — الملف يحتوي INSERT فقط بدون سكيما).
  */
 class ExportLocalDataToMysqlFileCommand extends Command
 {
@@ -16,7 +16,7 @@ class ExportLocalDataToMysqlFileCommand extends Command
                             {--output= : مسار ملف .sql (افتراضي: سطح المكتب)}
                             {--sqlite= : مسار ملف database.sqlite قديم (نفس مخطط Laravel) للتصدير منه بدل القاعدة الحالية}';
 
-    protected $description = 'تصدير بيانات التطبيق إلى ملف SQL (MySQL) — يدعم نسخة SQLite قديمة عبر --sqlite';
+    protected $description = 'تصدير INSERT فقط (بدون سكيما) لـ MySQL — يدعم --sqlite لنسخة قديمة';
 
     private const EXPORT_SQLITE_CONNECTION = 'export_sqlite_source';
 
@@ -89,10 +89,11 @@ class ExportLocalDataToMysqlFileCommand extends Command
         $this->info('ملف الإخراج: '.$path);
 
         $lines = [];
-        $lines[] = '-- بروفايل ميدا — تصدير بيانات للاستيراد اليدوي على MySQL';
-        $lines[] = '-- أنشئ بعد: php artisan migrate --force على السيرفر (قاعدة فارغة من الجداول فقط)';
+        $lines[] = '-- بروفايل ميدا — بيانات فقط (INSERT) — بدون CREATE / DROP / ALTER';
+        $lines[] = '-- للاستيراد على MySQL/MariaDB بعد أن تكون الجداول موجودة (php artisan migrate --force)';
+        $lines[] = '-- افرغ الصفوف يدوياً أو بـ TRUNCATE إن أردت تجنب duplicate key قبل الاستيراد';
         if ($sqlitePath) {
-            $lines[] = '-- مصدر البيانات: نسخة SQLite خارجية (قديمة)';
+            $lines[] = '-- مصدر البيانات: ملف SQLite خارجي';
         }
         $lines[] = '';
         $lines[] = 'SET NAMES utf8mb4;';
@@ -151,27 +152,26 @@ class ExportLocalDataToMysqlFileCommand extends Command
     private function readmeArabic(): string
     {
         return <<<'TXT'
-بروفايل ميدا — استيراد يدوي على السيرفر (MySQL)
-============================================
+بروفايل ميدا — استيراد بيانات فقط (INSERT) على السيرفر
+====================================================
 
-1) على السيرفر بعد رفع الملف:
+الملف لا يحتوي على CREATE TABLE — الجداول يجب أن تكون موجودة مسبقاً (migrate).
+
+1) على السيرفر:
    cd /home/baitpait/public_html/profile
+   php artisan migrate --force
 
-2) تأكد أن المايغريشن نُفّذ وقاعدة البيانات تحتوي الجداول فقط (بدون بيانات)،
-   أو احذف بيانات الجداول يدوياً إن أردت استبدالها بالكامل.
+2) افرغ صفوف الجداول إن لزم (أو قاعدة جديدة) لتجنب duplicate entry.
 
-3) استيراد الملف (مثال — عدّل المستخدم واسم القاعدة):
-   mysql -u baitpait_profile -p baitpait_profile < profile_media_mysql_export_....sql
+3) استيراد الملف:
+   mysql -u baitpait_profile -p baitpait_profile < profile_media_DATA_ONLY_inserts.sql
 
-   أو من phpMyAdmin: استيراد → اختر ملف .sql
+   أو من phpMyAdmin: استيراد → اختر الملف.
 
-4) إن ظهر تعارض في المفاتيح (duplicate entry)، القاعدة ليست فارغة:
-   إما قاعدة جديدة، أو امسح بيانات الجداول بالترتيب المناسب ثم أعد الاستيراد.
+4) لتصدير من نسخة قديمة من database.sqlite:
+   php artisan export:mysql-data --sqlite=/المسار/database.sqlite --output=~/Desktop/اسم.sql
 
-5) لتصدير من نسخة قديمة من database.sqlite (قبل فقدانها):
-   php artisan export:mysql-data --sqlite=/المسار/الكامل/database.sqlite --output=~/Desktop/اسم.sql
-
-6) لا ترفع ملف .sql إلى Git إن احتوى بيانات حساسة.
+5) لا ترفع ملف .sql إلى Git إن احتوى بيانات حساسة.
 TXT;
     }
 

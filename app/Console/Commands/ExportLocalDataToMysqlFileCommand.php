@@ -7,15 +7,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * يصدّر بيانات التطبيق من اتصال Laravel الحالي إلى ملف INSERT لـ MySQL
+ * يصدّر بيانات التطبيق من اتصال Laravel الحالي (أو من ملف SQLite محدد) إلى ملف INSERT لـ MySQL
  * (للاستيراد اليدوي على السيرفر بعد تشغيل المايغريشن على قاعدة فارغة).
  */
 class ExportLocalDataToMysqlFileCommand extends Command
 {
     protected $signature = 'export:mysql-data
-                            {--output= : مسار ملف .sql (افتراضي: سطح المكتب)}';
+                            {--output= : مسار ملف .sql (افتراضي: سطح المكتب)}
+                            {--sqlite= : مسار ملف database.sqlite قديم (نفس مخطط Laravel) للتصدير منه بدل القاعدة الحالية}';
 
-    protected $description = 'تصدير بيانات قاعدة البيانات الحالية إلى ملف SQL (MySQL) على سطح المكتب';
+    protected $description = 'تصدير بيانات التطبيق إلى ملف SQL (MySQL) — يدعم نسخة SQLite قديمة عبر --sqlite';
+
+    private const EXPORT_SQLITE_CONNECTION = 'export_sqlite_source';
 
     /** @return list<string> */
     private function tablesInDependencyOrder(): array
@@ -46,7 +49,31 @@ class ExportLocalDataToMysqlFileCommand extends Command
 
     public function handle(): int
     {
-        $connection = DB::connection();
+        $sqlitePath = $this->option('sqlite');
+        if ($sqlitePath) {
+            $resolved = realpath($sqlitePath);
+            if ($resolved === false || ! is_file($resolved)) {
+                $this->error('ملف SQLite غير موجود: '.$sqlitePath);
+
+                return self::FAILURE;
+            }
+            config([
+                'database.connections.'.self::EXPORT_SQLITE_CONNECTION => [
+                    'driver' => 'sqlite',
+                    'database' => $resolved,
+                    'prefix' => '',
+                    'foreign_key_constraints' => false,
+                ],
+            ]);
+            DB::purge(self::EXPORT_SQLITE_CONNECTION);
+            $connectionName = self::EXPORT_SQLITE_CONNECTION;
+            $this->info('المصدر: ملف SQLite → '.$resolved);
+        } else {
+            $connectionName = (string) config('database.default');
+            $this->info('المصدر: اتصال Laravel الافتراضي → '.$connectionName);
+        }
+
+        $connection = DB::connection($connectionName);
         $pdo = $connection->getPdo();
         $driver = $connection->getDriverName();
 
@@ -58,19 +85,22 @@ class ExportLocalDataToMysqlFileCommand extends Command
             mkdir($dir, 0755, true);
         }
 
-        $this->info('الاتصال: '.$driver);
-        $this->info('الملف: '.$path);
+        $this->info('محرك القاعدة: '.$driver);
+        $this->info('ملف الإخراج: '.$path);
 
         $lines = [];
         $lines[] = '-- بروفايل ميدا — تصدير بيانات للاستيراد اليدوي على MySQL';
         $lines[] = '-- أنشئ بعد: php artisan migrate --force على السيرفر (قاعدة فارغة من الجداول فقط)';
+        if ($sqlitePath) {
+            $lines[] = '-- مصدر البيانات: نسخة SQLite خارجية (قديمة)';
+        }
         $lines[] = '';
         $lines[] = 'SET NAMES utf8mb4;';
         $lines[] = 'SET FOREIGN_KEY_CHECKS = 0;';
         $lines[] = '';
 
         foreach ($this->tablesInDependencyOrder() as $table) {
-            if (! Schema::hasTable($table)) {
+            if (! Schema::connection($connectionName)->hasTable($table)) {
                 $this->warn('تخطّي (غير موجود): '.$table);
 
                 continue;
@@ -138,7 +168,10 @@ class ExportLocalDataToMysqlFileCommand extends Command
 4) إن ظهر تعارض في المفاتيح (duplicate entry)، القاعدة ليست فارغة:
    إما قاعدة جديدة، أو امسح بيانات الجداول بالترتيب المناسب ثم أعد الاستيراد.
 
-5) لا ترفع ملف .sql إلى Git إن احتوى بيانات حساسة.
+5) لتصدير من نسخة قديمة من database.sqlite (قبل فقدانها):
+   php artisan export:mysql-data --sqlite=/المسار/الكامل/database.sqlite --output=~/Desktop/اسم.sql
+
+6) لا ترفع ملف .sql إلى Git إن احتوى بيانات حساسة.
 TXT;
     }
 

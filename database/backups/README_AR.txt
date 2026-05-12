@@ -1,17 +1,21 @@
 نسخة ERP القديمة (MariaDB / baitpait_profileMedia)
 ==============================================
 
-الملف: legacy_erp_baitpait_profileMedia_2026-05-12.sql
+الملف الأصلي: legacy_erp_baitpait_profileMedia_2026-05-12.sql
 هو dump كامل من النظام القديم (ليس مخطط Laravel).
 
-استيراد الملف إلى MySQL / MariaDB (على السيرفر أو محلياً)
---------------------------------------------------------
-السطران الأولان في الملف قد يفشلان الاستيراد (تحذير mysqldump + تعليق sandbox).
-استخدم أحد الخيارين:
+استيراد من phpMyAdmin (مهم)
+----------------------------
+السطران الأولان ليستا SQL (تحذير مسار mysqldump + تعليق sandbox) — phpMyAdmin يعطي خطأ 1064.
+استخدم الملف الجاهز **بدون هذين السطرين**:
 
+  legacy_erp_baitpait_profileMedia_2026-05-12_phpmyadmin_clean.sql
+
+(نسخة مطابقة للمحتوى بعد `sed '1,2d'` على الملف الأصلي.)
+
+استيراد من سطر الأوامر
+------------------------
   sed '1,2d' legacy_erp_baitpait_profileMedia_2026-05-12.sql | mysql -u USER -p baitpait_profileMedia
-
-أو احذف السطرين يدوياً في محرر نصوص ثم استورد من phpMyAdmin.
 
 بعدها اضبط في .env اتصال LEGACY_ERP_* نحو قاعدة baitpait_profileMedia وشغّل:
   php artisan legacy-erp:import

@@ -84,6 +84,16 @@ php artisan db:seed --class=DemoDataSeeder
 
 ---
 
+### تصدير بيانات محلية لاستيرادها يدوياً على MySQL (سطح المكتب)
+
+```bash
+php artisan export:mysql-data
+```
+
+يُنشئ ملفاً على سطح المكتب (macOS): `profile_media_mysql_export_*.sql` وملف تعليمات بجانبه. يمكن تحديد المسار: `php artisan export:mysql-data --output=/path/to/file.sql`
+
+---
+
 ## الاختبارات
 
 ```bash

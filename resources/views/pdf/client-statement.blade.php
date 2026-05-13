@@ -196,7 +196,7 @@ body {
 <body>
 
 @php
-    $logoDataFile = __DIR__ . '/logo-data.php';
+    $logoDataFile = resource_path('views/pdf/logo-data.php');
     $logoData = file_exists($logoDataFile)
         ? require $logoDataFile
         : (file_exists(public_path('branding/logo.png'))

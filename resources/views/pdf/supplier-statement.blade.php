@@ -102,7 +102,7 @@ tfoot td { background: #F5F5F5; font-weight: bold; }
 
 <div class="header">
     <div class="header-brand">
-        بروفايل ميدا
+        بروفايل ميديا
         <small>إنتاج إعلامي وتقارير تشغيلية</small>
     </div>
     <div class="header-meta">
@@ -218,7 +218,7 @@ tfoot td { background: #F5F5F5; font-weight: bold; }
 @endforeach
 
 <div class="footer">
-    <p>وثيقة داخلية — بروفايل ميدا للإنتاج الإعلامي &bull; صدر بتاريخ {{ now()->format('Y-m-d H:i') }} UTC</p>
+    <p>وثيقة داخلية — بروفايل ميديا للإنتاج الإعلامي &bull; صدر بتاريخ {{ now()->format('Y-m-d H:i') }} UTC</p>
 </div>
 
 </body>

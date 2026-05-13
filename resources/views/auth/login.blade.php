@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>تسجيل الدخول — بروفايل ميدا</title>
+    <title>تسجيل الدخول — بروفايل ميديا</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -37,11 +37,11 @@
         {{-- رأس الصفحة --}}
         <div class="text-center mb-8">
             <div class="flex items-center justify-center gap-3 mb-4">
-                <img src="{{ asset('branding/logo.png') }}" alt="بروفايل ميدا"
+                <img src="{{ asset('branding/logo.png') }}" alt="بروفايل ميديا"
                      class="h-14 w-auto drop-shadow-lg"
                      onerror="this.style.display='none'">
             </div>
-            <h1 class="text-2xl font-black text-white tracking-tight">بروفايل ميدا</h1>
+            <h1 class="text-2xl font-black text-white tracking-tight">بروفايل ميديا</h1>
             <p class="text-sm mt-1" style="color:#C9A227;">Profile Media Production</p>
         </div>
 

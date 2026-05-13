@@ -57,3 +57,26 @@
 - **تنبيه:** عند تغيير صلاحيات أو تجميعات مالية حدّث الملف `07` مع الكود في نفس طلب الدمج.
 
 ---
+
+## [2026-05-12] - ترحيل ERP القديم + نشر أول مرة على profile.baitpait.com
+- **الهدف:** نشر التطبيق على الإنتاج، استيراد بيانات ERP القديمة (`baitpait_profileMedia`) إلى مخطط Laravel، وتجهيز ملف SQL جاهز لاستيراد phpMyAdmin.
+- **التغييرات:**
+  - `app/Console/Commands/ExportLocalDataToMysqlFileCommand.php` (أمر `export:mysql-data` يدعم `--sqlite` و`--output`، يصدّر INSERT فقط بدون سكيما).
+  - `app/Services/LegacyErpImport/LegacyErpImportService.php` + `app/Console/Commands/ImportLegacyErpCommand.php` (ترحيل من ERP بـ idempotency عبر `legacy_match_key`, `legacy_invoice_no`, ...).
+  - `config/legacy_erp_import.php` و`config/database.php` (اتصال `legacy_erp`).
+  - `database/seeders/DemoDataSeeder.php` لبيانات تجريبية اختيارية (`SEED_DEMO_DATA=true`).
+  - `database/backups/` لنسخ SQL و SQLite (مستثناة من Git).
+  - `docs/DATABASE_BACKUP_AND_RESTORE_AR.md` و`docs/08_DEPLOYMENT_AND_OPERATIONS_AR.md`.
+  - إعادة تسمية هجرة `purchase_orders` إلى `094927` لتفادي خطأ FK في MySQL.
+- **الأدوات:** Laravel artisan، MySQL/MariaDB، phpMyAdmin، Git/GitHub (`baitpait/prfile`).
+- **تنبيه:** عند `migrate:fresh` على بيئة فيها بيانات، خذ نسخة احتياطية أولاً. ملف ERP الخام لا يُستورد داخل قاعدة Laravel — يبقى في قاعدة منفصلة ويُرحَّل عبر `legacy-erp:import`.
+
+---
+
+## [2026-05-13] - ربط APP_NAME بالقوالب
+- **الهدف:** جعل اسم التطبيق في الشريط العلوي + عنوان النافذة + صفحة الدخول قابلاً للتغيير من `.env` بدل النص الثابت.
+- **التغييرات:** `resources/views/components/layouts/app.blade.php` و`resources/views/auth/login.blade.php` يقرآن `config('app.name', 'بروفايل ميديا')`.
+- **الأدوات:** Blade.
+- **تنبيه:** أي قالب جديد يجب أن يستخدم `config('app.name')` لا نصاً ثابتاً. بعد تغيير `APP_NAME` في الإنتاج: `php artisan config:clear && config:cache && view:clear && view:cache`.
+
+---

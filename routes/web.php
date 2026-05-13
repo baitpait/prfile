@@ -100,6 +100,10 @@ Route::middleware(['auth'])->group(function () {
 
         return view('invoices.edit', compact('invoice'));
     })->name('invoices.edit');
+    Route::get('/invoices/{invoice}', function (Invoice $invoice) {
+        $invoice->load(['client', 'lines', 'recordedBy']);
+        return view('invoices.show', compact('invoice'));
+    })->name('invoices.show');
     Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])->name('invoices.print');
 
     Route::get('/expenses', fn () => view('expenses.index'))->name('expenses.index');

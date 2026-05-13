@@ -102,7 +102,7 @@
                 </td>
                 <td>
                     <div class="flex items-center gap-1 justify-end">
-                        <button wire:click="openView({{ $inv->id }})" class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50">عرض</button>
+                        <a href="{{ route('invoices.show', $inv->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
                         <a href="{{ route('invoices.print', $inv->id) }}" target="_blank" class="btn btn-ghost py-1 px-2 text-xs text-[#C9A227] hover:bg-amber-50">طباعة</a>
                         @if(auth()->user()->isAccountant())
                         <a href="{{ route('invoices.edit', $inv->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>

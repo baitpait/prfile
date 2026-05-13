@@ -2,7 +2,7 @@
 
 <div class="flex items-center justify-between mb-6">
     <div>
-        <h1 class="text-xl font-bold text-[#3D3D3D]">كتالوج المنتجات</h1>
+        <h1 class="text-xl font-bold text-[#3D3D3D]">كتالوج الخدمات</h1>
         <p class="text-sm text-gray-400 mt-0.5">{{ $rows->total() }} عنصر في الأرشيف</p>
     </div>
 </div>
@@ -45,7 +45,7 @@
             @empty
             <tr><td colspan="6">
                 <div class="text-center py-16 text-gray-300">
-                    <p class="text-sm">{{ $search ? 'لا توجد نتائج' : 'لا توجد منتجات في الأرشيف — استورد Products.xml أو رحّل قاعدة legacy' }}</p>
+                    <p class="text-sm">{{ $search ? 'لا توجد نتائج' : 'لا توجد خدمات في الأرشيف' }}</p>
                 </div>
             </td></tr>
             @endforelse

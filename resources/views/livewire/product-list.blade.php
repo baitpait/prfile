@@ -2,15 +2,15 @@
 
 <div class="flex items-center justify-between mb-6">
     <div>
-        <h1 class="text-xl font-bold text-[#3D3D3D]">المنتجات</h1>
-        <p class="text-sm text-gray-400 mt-0.5">{{ $rows->total() }} منتجًا</p>
+        <h1 class="text-xl font-bold text-[#3D3D3D]">الخدمات</h1>
+        <p class="text-sm text-gray-400 mt-0.5">{{ $rows->total() }} خدمة</p>
     </div>
     @can('create', \App\Models\Product::class)
     <a href="{{ route('products.create') }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        إضافة منتج
+        إضافة خدمة
     </a>
     @endcan
 </div>
@@ -80,7 +80,7 @@
             @empty
             <tr><td colspan="{{ auth()->user()->isAccountant() || auth()->user()->isManager() ? 4 : 3 }}">
                 <div class="text-center py-16 text-gray-300">
-                    <p class="text-sm">{{ $search ? 'لا توجد نتائج' : 'لا يوجد منتجات بعد' }}</p>
+                    <p class="text-sm">{{ $search ? 'لا توجد نتائج' : 'لا توجد خدمات بعد' }}</p>
                 </div>
             </td></tr>
             @endforelse
@@ -99,8 +99,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
         </div>
-        <h3 class="text-center font-bold text-[#3D3D3D] mb-2">حذف المنتج؟</h3>
-        <p class="text-center text-sm text-gray-500 mb-6">سيتم إخفاء المنتج من القوائم. البنود المرتبطة سابقًا تبقى كما هي على الفواتير.</p>
+        <h3 class="text-center font-bold text-[#3D3D3D] mb-2">حذف الخدمة؟</h3>
+        <p class="text-center text-sm text-gray-500 mb-6">سيتم إخفاء الخدمة من القوائم. البنود المرتبطة سابقًا تبقى كما هي على الفواتير.</p>
         <div class="flex gap-2">
             <button type="button" @click="deletingId = null" class="btn btn-secondary flex-1">إلغاء</button>
             <button type="button" class="btn btn-primary flex-1 bg-red-600 hover:bg-red-700 border-red-600"

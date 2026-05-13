@@ -96,7 +96,7 @@
                 </x-slot>
             </x-nav-link>
 
-            <x-nav-link :route="route('products.index')" label="المنتجات" :active="request()->routeIs('products.*')">
+            <x-nav-link :route="route('products.index')" label="الخدمات" :active="request()->routeIs('products.*')">
                 <x-slot name="icon">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

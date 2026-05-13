@@ -1,3 +1,3 @@
-<x-layouts.app title="منتج جديد">
+<x-layouts.app title="خدمة جديدة">
     <livewire:product-form />
 </x-layouts.app>

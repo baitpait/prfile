@@ -134,7 +134,7 @@
                             @can('create', \App\Models\Product::class)
                             <button type="button" wire:click="openQuickAddForLine({{ $i }})"
                                     class="w-full text-right px-3 py-2 text-[#C9A227] font-semibold hover:bg-amber-50 border-t border-[#E2E4E9]">
-                                + إضافة «{{ \Illuminate\Support\Str::limit(trim($line['product_search']), 40) }}» كمنتج جديد…
+                                + إضافة «{{ \Illuminate\Support\Str::limit(trim($line['product_search']), 40) }}» كخدمة جديدة…
                             </button>
                             @endcan
                             @endif
@@ -268,17 +268,17 @@
 @if($showQuickAddProductModal)
 <div class="fixed inset-0 z-[70] flex items-center justify-center p-4" style="background:rgba(0,0,0,.45);" wire:click.self="closeQuickAddProductModal">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto" wire:click.stop role="dialog" aria-modal="true" aria-labelledby="quick-add-title">
-        <h3 id="quick-add-title" class="text-lg font-bold text-[#3D3D3D] mb-1">إضافة منتج سريع</h3>
-        <p class="text-xs text-gray-500 mb-4">يُحفظ في كتالوج المنتجات. التسعير لعملة الفاتورة الحالية: <span class="font-mono" dir="ltr">{{ $currency_code }}</span></p>
+        <h3 id="quick-add-title" class="text-lg font-bold text-[#3D3D3D] mb-1">إضافة خدمة سريعة</h3>
+        <p class="text-xs text-gray-500 mb-4">يُحفظ في كتالوج الخدمات. التسعير لعملة الفاتورة الحالية: <span class="font-mono" dir="ltr">{{ $currency_code }}</span></p>
 
         <div class="space-y-3">
             <div>
-                <label class="label">اسم المنتج <span class="text-red-400">*</span></label>
+                <label class="label">اسم الخدمة <span class="text-red-400">*</span></label>
                 <input wire:model="quickAddName" type="text" class="input" maxlength="255">
                 @error('quickAddName')<p class="field-error">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="label">رمز المنتج</label>
+                <label class="label">رمز الخدمة</label>
                 <input wire:model="quickAddProductCode" type="text" class="input font-mono" dir="ltr" maxlength="64" placeholder="اختياري">
                 @error('quickAddProductCode')<p class="field-error">{{ $message }}</p>@enderror
             </div>

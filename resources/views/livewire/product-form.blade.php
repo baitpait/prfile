@@ -9,7 +9,7 @@
             </svg>
         </a>
         <div>
-            <h1 class="text-xl font-bold text-[#3D3D3D]">{{ $productId ? 'تعديل المنتج' : 'منتج جديد' }}</h1>
+            <h1 class="text-xl font-bold text-[#3D3D3D]">{{ $productId ? 'تعديل الخدمة' : 'خدمة جديدة' }}</h1>
             @if($productId)
             <p class="text-xs text-gray-400 mt-0.5">رقم #{{ $productId }}</p>
             @endif
@@ -23,12 +23,12 @@
 
 <div class="card p-5 space-y-4 mb-6">
     <div>
-        <label class="label">اسم المنتج <span class="text-red-400">*</span></label>
+        <label class="label">اسم الخدمة <span class="text-red-400">*</span></label>
         <input wire:model="name" type="text" class="input" maxlength="255">
         @error('name')<p class="field-error">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="label">رمز المنتج</label>
+        <label class="label">رمز الخدمة</label>
         <input wire:model="product_code" type="text" class="input font-mono" dir="ltr" maxlength="64" placeholder="اختياري — فريد إن وُجد">
         @error('product_code')<p class="field-error">{{ $message }}</p>@enderror
     </div>
@@ -81,7 +81,7 @@
 </div>
 
 <div class="flex justify-end">
-    <button type="button" wire:click="save" wire:loading.attr="disabled" class="btn btn-primary w-full sm:w-auto">حفظ المنتج</button>
+    <button type="button" wire:click="save" wire:loading.attr="disabled" class="btn btn-primary w-full sm:w-auto">حفظ الخدمة</button>
 </div>
 
 </div>

@@ -53,6 +53,11 @@ class ClientStatementController extends Controller
             ],
         ]);
 
+        $mpdfTempDir = storage_path('app/mpdf');
+        if (! is_dir($mpdfTempDir)) {
+            mkdir($mpdfTempDir, 0775, true);
+        }
+
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -67,6 +72,7 @@ class ClientStatementController extends Controller
             'autoScriptToLang' => true,
             'autoLangToFont' => true,
             'useSubstitutions' => true,
+            'tempDir' => $mpdfTempDir,
         ]);
 
         $mpdf->SetDirectionality('rtl');

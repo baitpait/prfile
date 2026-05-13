@@ -196,12 +196,8 @@ body {
 <body>
 
 @php
-    $logoDataFile = resource_path('views/pdf/logo-data.php');
-    $logoData = file_exists($logoDataFile)
-        ? require $logoDataFile
-        : (file_exists(public_path('branding/logo.png'))
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('branding/logo.png')))
-            : null);
+    $logoPath = public_path('branding/logo.png');
+    $logoExists = file_exists($logoPath);
 
     $printDate = $dateTo
         ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y')
@@ -218,8 +214,8 @@ body {
         </div>
     </div>
     <div class="header-left">
-        @if($logoData)
-            <img src="{{ $logoData }}" class="header-logo" alt="Logo">
+        @if($logoExists)
+            <img src="{{ $logoPath }}" class="header-logo" alt="Logo">
         @endif
         <div class="header-company">Profile Media Production</div>
         <div class="header-date">Date: {{ $printDate }}</div>
@@ -349,8 +345,8 @@ body {
 
 {{-- ===== FOOTER ===== --}}
 <div class="footer">
-    @if($logoData)
-        <img src="{{ $logoData }}" alt="Profile Media Production">
+    @if($logoExists)
+        <img src="{{ $logoPath }}" alt="Profile Media Production">
     @endif
 </div>
 

@@ -4,8 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Client;
 use App\Services\ClientStatementService;
-use Livewire\Component;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Url;
+use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClientStatement extends Component
@@ -28,11 +29,11 @@ class ClientStatement extends Component
 
     public function loadStatement(): void
     {
-        $service = new ClientStatementService();
+        $service = new ClientStatementService;
         $this->statement = $service->forClient(
             $this->client,
             $this->dateFrom ?: null,
-            $this->dateTo   ?: null
+            $this->dateTo ?: null
         );
     }
 
@@ -49,21 +50,23 @@ class ClientStatement extends Component
     public function resetDates(): void
     {
         $this->dateFrom = '';
-        $this->dateTo   = '';
+        $this->dateTo = '';
         $this->loadStatement();
     }
 
     public function exportCsv(): StreamedResponse
     {
-        $service = new ClientStatementService();
+        Gate::authorize('exportStatement', $this->client);
+
+        $service = new ClientStatementService;
         $rows = $service->toCsvRows($this->statement);
 
         $clientName = $this->client->displayName();
-        $filename = "كشف-حساب-{$clientName}-" . now()->format('Y-m-d') . '.csv';
+        $filename = "كشف-حساب-{$clientName}-".now()->format('Y-m-d').'.csv';
 
         return response()->streamDownload(function () use ($rows) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
             foreach ($rows as $row) {
                 fputcsv($handle, $row);
             }

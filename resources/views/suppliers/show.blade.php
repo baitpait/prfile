@@ -61,7 +61,58 @@
             </div>
             @endif
 
-            <div class="flex justify-end gap-2 pt-4 border-t border-[#E2E4E9]">
+            @if($supplier->purchaseOrders->isNotEmpty() || $supplier->payments->isNotEmpty())
+            <div class="space-y-6 mb-6">
+                @if($supplier->purchaseOrders->isNotEmpty())
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">فواتير المشتريات (أحدث {{ $supplier->purchaseOrders->count() }})</p>
+                        <a href="{{ route('purchase-orders.index', ['po_supplier' => $supplier->id]) }}" wire:navigate class="text-xs text-[#C9A227] font-semibold hover:underline">عرض الكل</a>
+                    </div>
+                    <div class="border border-[#E2E4E9] rounded-xl overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-[#F9F9FB] text-gray-500 text-xs"><tr><th class="text-right px-3 py-2">التاريخ</th><th class="text-right px-3 py-2">رقم المستند</th><th class="text-left px-3 py-2" dir="ltr">المبلغ</th><th class="w-16"></th></tr></thead>
+                            <tbody>
+                                @foreach($supplier->purchaseOrders as $po)
+                                <tr class="border-t border-[#E2E4E9]">
+                                    <td class="px-3 py-2 font-mono text-xs text-gray-500" dir="ltr">{{ $po->document_date?->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2 font-mono text-xs">{{ $po->legacy_po_no ?? '#'.$po->id }}</td>
+                                    <td class="px-3 py-2 font-mono text-xs font-semibold text-left" dir="ltr">{{ number_format((float) $po->total_amount, 2) }} {{ $po->currency_code }}</td>
+                                    <td class="px-2 py-2"><a href="{{ route('purchase-orders.show', $po) }}" wire:navigate class="text-[#C9A227] text-xs font-medium hover:underline">عرض</a></td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+                @if($supplier->payments->isNotEmpty())
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">دفعات المورد (أحدث {{ $supplier->payments->count() }})</p>
+                        <a href="{{ route('supplier-payments.index', ['sp_supplier' => $supplier->id]) }}" wire:navigate class="text-xs text-[#C9A227] font-semibold hover:underline">عرض الكل</a>
+                    </div>
+                    <div class="border border-[#E2E4E9] rounded-xl overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-[#F9F9FB] text-gray-500 text-xs"><tr><th class="text-right px-3 py-2">التاريخ</th><th class="text-left px-3 py-2" dir="ltr">المبلغ</th><th class="w-16"></th></tr></thead>
+                            <tbody>
+                                @foreach($supplier->payments as $pay)
+                                <tr class="border-t border-[#E2E4E9]">
+                                    <td class="px-3 py-2 font-mono text-xs text-gray-500" dir="ltr">{{ $pay->paid_at?->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2 font-mono text-xs font-semibold text-left text-purple-700" dir="ltr">{{ number_format((float) $pay->amount, 2) }} {{ $pay->currency_code }}</td>
+                                    <td class="px-2 py-2"><a href="{{ route('supplier-payments.show', $pay) }}" wire:navigate class="text-[#C9A227] text-xs font-medium hover:underline">عرض</a></td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+            </div>
+            @endif
+
+            <div class="flex flex-wrap justify-end gap-2 pt-4 border-t border-[#E2E4E9]">
+                <a href="{{ route('suppliers.statement', $supplier) }}" wire:navigate class="btn btn-secondary" style="text-decoration:none;">كشف حساب</a>
                 <a href="{{ route('suppliers.index') }}" wire:navigate class="btn btn-secondary" style="text-decoration:none;">رجوع</a>
                 @if(auth()->user()->isAccountant())
                 <a href="{{ route('suppliers.edit', $supplier->id) }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">تعديل</a>

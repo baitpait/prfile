@@ -21,6 +21,61 @@
     @if($search)<button wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none">&times;</button>@endif
 </div>
 
+<div class="card p-4 mb-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+        <div class="flex min-w-0 flex-1 flex-col gap-3">
+            {{-- صف 1: الحالة، العميل، العملة (من sm يظهر عمودان، من lg ثلاثة عند وجود عملات) --}}
+            <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 {{ count($invoiceCurrencies) > 0 ? 'md:grid-cols-3' : '' }}">
+                <div class="min-w-0">
+                    <label class="label">الحالة</label>
+                    <select wire:model.live="filterStatus" class="input w-full">
+                        <option value="">الكل</option>
+                        <option value="draft">مسودة</option>
+                        <option value="issued">صادرة</option>
+                        <option value="void">ملغاة</option>
+                    </select>
+                </div>
+                <div class="min-w-0">
+                    <label class="label">العميل</label>
+                    <select wire:model.live="filterClientId" class="input w-full">
+                        <option value="">كل العملاء</option>
+                        @foreach($clients as $c)
+                            <option value="{{ $c->id }}">{{ $c->displayName() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @if(count($invoiceCurrencies) > 0)
+                <div class="min-w-0 sm:col-span-2 md:col-span-1">
+                    <label class="label">العملة</label>
+                    <select wire:model.live="filterCurrency" class="input w-full">
+                        <option value="">كل العملات</option>
+                        @foreach($invoiceCurrencies as $code)
+                            <option value="{{ $code }}">{{ $code }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+            </div>
+            {{-- صف 2: التاريخان في نفس الصف من sm فما فوق --}}
+            <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="min-w-0">
+                    <label class="label">من تاريخ الفاتورة</label>
+                    <input wire:model.live="filterDateFrom" type="date" class="input w-full" dir="ltr">
+                </div>
+                <div class="min-w-0">
+                    <label class="label">إلى تاريخ الفاتورة</label>
+                    <input wire:model.live="filterDateTo" type="date" class="input w-full" dir="ltr">
+                </div>
+            </div>
+        </div>
+        @if($this->hasActiveInvoiceFilters())
+        <button type="button" wire:click="clearInvoiceFilters" class="btn btn-secondary shrink-0 self-start whitespace-nowrap lg:self-end">
+            مسح الفلاتر
+        </button>
+        @endif
+    </div>
+</div>
+
 <div class="card overflow-hidden">
     <div wire:loading.delay class="h-0.5 bg-[#C9A227]/20 relative overflow-hidden">
         <div class="absolute inset-y-0 right-0 w-1/3 bg-[#C9A227] animate-pulse"></div>
@@ -68,8 +123,9 @@
             @endforelse
         </tbody>
     </table>
+
+    <x-list-pagination :paginator="$rows" />
 </div>
-@if($rows->hasPages())<div class="mt-5">{{ $rows->links() }}</div>@endif
 
 {{-- ══ نافذة العرض التفصيلي ══ --}}
 @if($viewingId !== null)

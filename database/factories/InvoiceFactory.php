@@ -13,11 +13,11 @@ class InvoiceFactory extends Factory
     public function definition(): array
     {
         return [
-            'client_id'     => Client::factory(),
+            'client_id' => Client::factory(),
             'currency_code' => 'ILS',
-            'total_amount'  => fake()->randomFloat(2, 100, 10000),
+            'total_amount' => fake()->randomFloat(2, 100, 10000),
             'discount_amount' => 0,
-            'status'        => 'issued',
+            'status' => 'issued',
             'document_date' => fake()->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
         ];
     }

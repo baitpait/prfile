@@ -58,15 +58,15 @@ class ClientStatementService
             $currPayments = $payments->where('currency_code', $currency);
 
             $totalInvoiced = $currInvoices->sum(fn ($inv) => (float) $inv->total_amount);
-            $totalPaid     = $currPayments->sum(fn ($pay) => (float) $pay->amount);
+            $totalPaid = $currPayments->sum(fn ($pay) => (float) $pay->amount);
 
             $result[$currency] = [
-                'currency'       => $currency,
-                'invoices'       => $currInvoices->values(),
-                'payments'       => $currPayments->values(),
+                'currency' => $currency,
+                'invoices' => $currInvoices->values(),
+                'payments' => $currPayments->values(),
                 'total_invoiced' => $totalInvoiced,
-                'total_paid'     => $totalPaid,
-                'balance'        => $totalInvoiced - $totalPaid,
+                'total_paid' => $totalPaid,
+                'balance' => $totalInvoiced - $totalPaid,
             ];
         }
 

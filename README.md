@@ -52,6 +52,54 @@ php artisan serve
 
 ---
 
+## نشر الإنتاج — `profile.baitpait.com`
+
+إعداد موثَّق من لوحة الاستضافة (Enduser Panel)، المستخدم `baitpait`، الخادم `104.207.65.64`:
+
+| البند | المسار أو القيمة |
+|--------|------------------|
+| الدومين | `https://profile.baitpait.com` |
+| جذر الويب (Document root) | `/home/baitpait/public_html/profile/public` |
+| جذر Laravel (هنا `artisan` و`composer.json`) | `/home/baitpait/public_html/profile` |
+
+**مهم:** أوامر الشل (`php artisan`، `composer install`) تُنفَّذ من **الجذر الثاني** (أعلى من `public`)، وليس من داخل `public` فقط. إذا لم يوجد `artisan` تحت `profile` فالنسخة على الخادم ناقصة أو المشروع منشور تحت مجلد آخر — ابحث بـ `find /home/baitpait/public_html -name artisan`.
+
+---
+
+## بيانات تجريبية جاهزة
+
+بعد `php artisan migrate` يمكنك إحدى الطريقتين:
+
+```bash
+# 1) مستخدم مدير من .env + بيانات تجريبية (محلي أو بيئة تجارب)
+SEED_DEV_ADMIN=true SEED_DEMO_DATA=true php artisan db:seed
+```
+
+```bash
+# 2) بيانات تجريبية فقط (ينشئ مستخدم demo@baitpait.local / كلمة المرور: password)
+php artisan db:seed --class=DemoDataSeeder
+```
+
+لا تشغّل البذور على إنتاج حقيقي دون قصد.
+
+---
+
+### تصدير بيانات محلية لاستيرادها يدوياً على MySQL (سطح المكتب)
+
+```bash
+php artisan export:mysql-data
+```
+
+يُنشئ ملفاً على سطح المكتب: **INSERT فقط** (بدون CREATE TABLE) — مناسب لقاعدة فيها الجداول بعد `migrate`.
+
+- مسار مخصص: `php artisan export:mysql-data --output=/path/to/file.sql`
+- **نسخة قديمة من `database.sqlite`:**  
+  `php artisan export:mysql-data --sqlite=/المسار/الكامل/database.sqlite --output=/path/to/import.sql`
+
+**النسخ الاحتياطي والاسترجاع:** `docs/DATABASE_BACKUP_AND_RESTORE_AR.md`
+
+---
+
 ## الاختبارات
 
 ```bash
@@ -88,6 +136,8 @@ docs/                       ← دستور المشروع والوثائق
 branding/                   ← الشعار والهوية البصرية
 ```
 
+**مرجع واجهات الفواتير (عملاء + مشتريات):** `docs/ar_invoices_and_purchase_orders_ui.md`
+
 ---
 
 ## الأدوار والصلاحيات
@@ -118,6 +168,8 @@ branding/                   ← الشعار والهوية البصرية
 ---
 
 ## Git Workflow
+
+المستودع على GitHub: [baitpait/prfile](https://github.com/baitpait/prfile)
 
 ```
 main          ← الفرع الرئيسي (محمي)

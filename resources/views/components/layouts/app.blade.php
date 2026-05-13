@@ -96,7 +96,16 @@
                 </x-slot>
             </x-nav-link>
 
-            <x-nav-link :route="route('payments.index')" label="الدفعات" :active="request()->routeIs('payments.*')">
+            <x-nav-link :route="route('products.index')" label="المنتجات" :active="request()->routeIs('products.*')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('payments.index')" label="دفعات العملاء" :active="request()->routeIs('payments.*')">
                 <x-slot name="icon">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -116,13 +125,32 @@
                 </x-slot>
             </x-nav-link>
 
-            <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">المالية</div>
-
-            <x-nav-link :route="route('income-entries.index')" label="الإيرادات" :active="request()->routeIs('income-entries.*')">
+            <x-nav-link :route="route('purchase-orders.index')" label="فواتير المشتريات" :active="request()->routeIs('purchase-orders.*')">
                 <x-slot name="icon">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('supplier-payments.index')" label="دفعات الموردين" :active="request()->routeIs('supplier-payments.*')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">المالية</div>
+
+            <x-nav-link :route="route('financial-summary')" label="صناديق العملات"
+                        :active="request()->routeIs('financial-summary')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </x-slot>
             </x-nav-link>
@@ -135,6 +163,20 @@
                     </svg>
                 </x-slot>
             </x-nav-link>
+
+            @can('view-client-receivables-aging')
+            <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">التقارير</div>
+
+            <x-nav-link :route="route('reports.client-receivables-aging')" label="أعمار ذمم العملاء"
+                        :active="request()->routeIs('reports.client-receivables-aging')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+            @endcan
 
             @if(auth()->user()->isManager())
             <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">الإدارة</div>

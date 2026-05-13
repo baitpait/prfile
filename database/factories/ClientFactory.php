@@ -13,7 +13,7 @@ class ClientFactory extends Factory
     {
         return [
             'business_name' => fake()->company(),
-            'email'         => fake()->unique()->safeEmail(),
+            'email' => fake()->unique()->safeEmail(),
             'phone_primary' => fake()->phoneNumber(),
         ];
     }

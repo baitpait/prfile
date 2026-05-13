@@ -6,6 +6,7 @@
             <p class="text-[#C9A227] font-semibold mt-1">{{ $client->displayName() }}</p>
         </div>
         <div class="flex gap-2">
+            @can('exportStatement', $client)
             <button wire:click="exportCsv"
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium">
                 تصدير CSV
@@ -15,6 +16,7 @@
                class="px-4 py-2 text-sm bg-[#C9A227] text-white rounded hover:opacity-90 font-medium">
                 طباعة PDF
             </a>
+            @endcan
         </div>
     </div>
 

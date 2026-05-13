@@ -1,6 +1,8 @@
 *.log
 .DS_Store
 database/database.sqlite
+database/backups/*.sql
+database/backups/laravel_*
 .env
 .env.backup
 .env.production

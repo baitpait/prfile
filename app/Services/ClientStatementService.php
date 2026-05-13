@@ -26,6 +26,7 @@ class ClientStatementService
     public function forClient(Client $client, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $invoicesQuery = $client->invoices()
+            ->with('lines')
             ->whereIn('status', ['issued'])
             ->whereNull('deleted_at');
 
@@ -42,8 +43,8 @@ class ClientStatementService
             $paymentsQuery->where('paid_at', '<=', $dateTo);
         }
 
-        $invoices = $invoicesQuery->orderBy('document_date')->get();
-        $payments = $paymentsQuery->orderBy('paid_at')->get();
+        $invoices = $invoicesQuery->orderBy('document_date')->orderBy('id')->get();
+        $payments = $paymentsQuery->orderBy('paid_at')->orderBy('id')->get();
 
         $currencies = $invoices->pluck('currency_code')
             ->merge($payments->pluck('currency_code'))
@@ -54,19 +55,57 @@ class ClientStatementService
         $result = [];
 
         foreach ($currencies as $currency) {
-            $currInvoices = $invoices->where('currency_code', $currency);
-            $currPayments = $payments->where('currency_code', $currency);
+            $currInvoices = $invoices->where('currency_code', $currency)->values();
+            $currPayments = $payments->where('currency_code', $currency)->values();
 
             $totalInvoiced = $currInvoices->sum(fn ($inv) => (float) $inv->total_amount);
-            $totalPaid = $currPayments->sum(fn ($pay) => (float) $pay->amount);
+            $totalPaid     = $currPayments->sum(fn ($pay) => (float) $pay->amount);
+
+            // بناء جدول زمني مرتب بالتاريخ
+            $events = collect();
+
+            foreach ($currInvoices as $inv) {
+                $events->push([
+                    'type'   => 'invoice',
+                    'date'   => $inv->document_date,
+                    'sort'   => $inv->document_date->format('Y-m-d') . '_0_' . $inv->id,
+                    'model'  => $inv,
+                    'amount' => (float) $inv->total_amount,
+                ]);
+            }
+
+            foreach ($currPayments as $pay) {
+                $events->push([
+                    'type'   => 'payment',
+                    'date'   => $pay->paid_at,
+                    'sort'   => $pay->paid_at->format('Y-m-d') . '_1_' . $pay->id,
+                    'model'  => $pay,
+                    'amount' => (float) $pay->amount,
+                ]);
+            }
+
+            $events = $events->sortBy('sort')->values();
+
+            // احتساب الرصيد المتراكم
+            $running = 0.0;
+            $timeline = [];
+            foreach ($events as $event) {
+                if ($event['type'] === 'invoice') {
+                    $running += $event['amount'];
+                } else {
+                    $running -= $event['amount'];
+                }
+                $timeline[] = array_merge($event, ['running_balance' => $running]);
+            }
 
             $result[$currency] = [
-                'currency' => $currency,
-                'invoices' => $currInvoices->values(),
-                'payments' => $currPayments->values(),
+                'currency'       => $currency,
+                'invoices'       => $currInvoices,
+                'payments'       => $currPayments,
                 'total_invoiced' => $totalInvoiced,
-                'total_paid' => $totalPaid,
-                'balance' => $totalInvoiced - $totalPaid,
+                'total_paid'     => $totalPaid,
+                'balance'        => $totalInvoiced - $totalPaid,
+                'timeline'       => $timeline,
             ];
         }
 

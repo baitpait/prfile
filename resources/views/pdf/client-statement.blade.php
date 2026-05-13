@@ -4,228 +4,352 @@
 <meta charset="utf-8">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
     font-family: xbriyaz, sans-serif;
     color: #3D3D3D;
-    font-size: 11pt;
+    font-size: 10pt;
     direction: rtl;
-    unicode-bidi: bidi-override;
 }
 
+/* ===== HEADER ===== */
 .header {
     width: 100%;
-    border-bottom: 2px solid #C9A227;
-    padding-bottom: 10pt;
-    margin-bottom: 16pt;
+    margin-bottom: 14pt;
     overflow: hidden;
 }
-.header-brand {
-    font-size: 18pt;
-    font-weight: bold;
-    color: #3D3D3D;
+.header-right {
     float: right;
 }
-.header-brand small {
-    font-size: 9pt;
-    color: #C9A227;
-    display: block;
-    margin-top: 2pt;
+.header-title {
+    font-size: 22pt;
+    font-weight: bold;
+    color: #1a1a1a;
 }
-.header-meta {
+.header-title span {
+    font-size: 14pt;
+    font-weight: normal;
+    color: #3D3D3D;
+}
+.header-left {
     float: left;
     text-align: left;
-    font-size: 9pt;
-    color: #666;
     direction: ltr;
 }
+.header-logo {
+    width: 90pt;
+    display: block;
+    margin-bottom: 4pt;
+}
+.header-company {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #3D3D3D;
+    direction: ltr;
+    text-align: center;
+}
+.header-date {
+    font-size: 9pt;
+    color: #555;
+    direction: ltr;
+    text-align: center;
+    margin-top: 3pt;
+}
 
-.statement-title { font-size: 16pt; font-weight: bold; margin-bottom: 4pt; }
-.client-name     { font-size: 13pt; color: #C9A227; margin-bottom: 14pt; }
-.date-range      { font-size: 9pt; color: #666; margin-bottom: 14pt; }
-
-.currency-section  { margin-bottom: 18pt; }
-.currency-header   {
-    background: #F5F5F5;
-    border: 1px solid #E0E0E0;
-    padding: 6pt 10pt;
+/* ===== SECTION TITLE ===== */
+.section-title {
     font-size: 12pt;
     font-weight: bold;
-}
-.currency-code { color: #C9A227; direction: ltr; }
-
-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 6pt; }
-th {
-    background: #F5F5F5;
     text-align: right;
-    padding: 5pt 8pt;
-    border: 1px solid #E0E0E0;
-    font-weight: bold;
-}
-td { padding: 5pt 8pt; border: 1px solid #E0E0E0; }
-.ltr { direction: ltr; text-align: left; }
-tfoot td { background: #F5F5F5; font-weight: bold; }
-
-.balance-box {
-    margin-top: 8pt;
-    border: 1px solid #E0E0E0;
-    padding: 8pt 12pt;
-    width: 260pt;
-    float: left;
-}
-.balance-row {
-    overflow: hidden;
-    font-size: 9.5pt;
-    margin-bottom: 3pt;
-}
-.balance-label  { float: right; }
-.balance-amount { float: left; direction: ltr; }
-.balance-total  {
-    border-top: 1px solid #E0E0E0;
-    padding-top: 5pt;
+    margin-bottom: 6pt;
     margin-top: 4pt;
+}
+
+/* ===== MAIN TABLE ===== */
+.main-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+}
+.main-table th {
+    background: #E8E8E8;
+    border: 1pt solid #CCCCCC;
+    padding: 5pt 7pt;
     font-weight: bold;
+    text-align: right;
+}
+.main-table th.ltr { direction: ltr; text-align: left; }
+
+/* صف الفاتورة - رأس */
+.row-invoice-header td {
+    border: 1pt solid #CCCCCC;
+    padding: 5pt 7pt;
+    font-weight: bold;
+    background: #FAFAFA;
+}
+.row-invoice-header .inv-number {
+    font-weight: bold;
+    font-size: 10pt;
+}
+
+/* صف تفاصيل الفاتورة (جدول داخلي) */
+.row-invoice-lines td {
+    border-right: 1pt solid #CCCCCC;
+    border-left: 1pt solid #CCCCCC;
+    padding: 0;
+}
+.lines-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+}
+.lines-table th {
+    background: #C9A227;
+    color: #fff;
+    padding: 4pt 6pt;
+    text-align: right;
+    font-weight: bold;
+    border-right: 1pt solid #b8911e;
+}
+.lines-table th:first-child { border-right: none; }
+.lines-table td {
+    padding: 4pt 6pt;
+    border-top: 1pt solid #E8E8E8;
+    border-right: 1pt solid #E8E8E8;
+    text-align: right;
+    background: #fff;
+}
+.lines-table td.ltr { direction: ltr; text-align: left; }
+
+/* صف إجمالي الفاتورة */
+.row-invoice-total td {
+    border: 1pt solid #CCCCCC;
+    padding: 4pt 7pt;
+    background: #F5F5F5;
+    font-weight: bold;
+    direction: ltr;
+    text-align: left;
+}
+.row-invoice-total .label-cell {
+    direction: rtl;
+    text-align: right;
+    font-size: 8.5pt;
+    color: #555;
+}
+
+/* صف الدفعة */
+.row-payment td {
+    border: 1pt solid #CCCCCC;
+    padding: 5pt 7pt;
+    background: #FFFDF5;
+}
+.row-payment .pay-desc {
+    font-weight: bold;
+    color: #1a1a1a;
+}
+.row-payment .amount-col {
+    direction: ltr;
+    text-align: left;
+    color: #DC2626;
+    font-weight: bold;
+}
+.row-payment .balance-col {
+    direction: ltr;
+    text-align: left;
+    font-weight: bold;
+}
+
+/* صف رصيد نهاية المدة */
+.row-final td {
+    border: 1pt solid #CCCCCC;
+    padding: 6pt 7pt;
+    background: #3D3D3D;
+    color: #fff;
+    font-weight: bold;
+    font-size: 10pt;
+}
+.row-final .balance-col {
+    direction: ltr;
+    text-align: left;
     font-size: 11pt;
 }
-.balance-owed  { color: #DC2626; }
-.balance-clear { color: #16A34A; }
 
+.ltr  { direction: ltr; text-align: left; }
+.rtl  { direction: rtl; text-align: right; }
+.amt  { direction: ltr; text-align: left; font-weight: bold; }
+.amt-negative { color: #DC2626; }
+.amt-positive { color: #1a1a1a; }
+
+/* ===== FOOTER ===== */
 .footer {
-    border-top: 1px solid #E0E0E0;
-    padding-top: 8pt;
-    margin-top: 20pt;
-    font-size: 8pt;
-    color: #999;
+    margin-top: 18pt;
+    text-align: center;
 }
+.footer img {
+    width: 70pt;
+}
+
+/* currency section spacing */
+.currency-block { margin-bottom: 24pt; }
 </style>
 </head>
 <body>
 
-{{-- ترويسة --}}
+@php
+    $logoPath = public_path('branding/logo.png');
+    $logoData = file_exists($logoPath)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
+
+    $printDate = $dateTo
+        ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y')
+        : now()->format('d/m/Y');
+
+    $methods = ['cash' => 'Cash', 'bank' => 'Bank', 'check' => 'Check', 'transfer' => 'Transfer'];
+@endphp
+
+{{-- ===== HEADER ===== --}}
 <div class="header">
-    <div class="header-brand">
-        بروفايل ميدا
-        <small>إنتاج إعلامي وتقارير تشغيلية</small>
+    <div class="header-right">
+        <div class="header-title">
+            كشف حساب&nbsp; <span>{{ $client->displayName() }}</span>
+        </div>
     </div>
-    <div class="header-meta">
-        تاريخ الإصدار: {{ now()->format('Y-m-d') }}<br>
-        الوقت (UTC): {{ now()->utc()->format('H:i') }}
+    <div class="header-left">
+        @if($logoData)
+            <img src="{{ $logoData }}" class="header-logo" alt="Logo">
+        @endif
+        <div class="header-company">Profile Media Production</div>
+        <div class="header-date">Date: {{ $printDate }}</div>
     </div>
     <div style="clear:both;"></div>
 </div>
-
-{{-- عنوان الكشف --}}
-<div class="statement-title">كشف حساب</div>
-<div class="client-name">{{ $client->displayName() }}</div>
-
-@if($dateFrom || $dateTo)
-<div class="date-range">
-    الفترة:
-    @if($dateFrom) من {{ $dateFrom }} @endif
-    @if($dateTo) إلى {{ $dateTo }} @endif
-</div>
-@endif
 
 @if(empty($statement))
     <p style="color:#999; text-align:center; margin-top:40pt;">لا توجد حركات مالية في هذه الفترة.</p>
 @endif
 
-{{-- قسم لكل عملة --}}
+{{-- ===== قسم لكل عملة ===== --}}
 @foreach($statement as $currency => $section)
-<div class="currency-section">
-    <div class="currency-header">
-        عملة: <span class="currency-code">{{ $currency }}</span>
-    </div>
+<div class="currency-block">
 
-    {{-- فواتير --}}
-    @if($section['invoices']->count() > 0)
-    <table>
+    <div class="section-title">حركة الحساب حتى {{ $printDate }}</div>
+
+    <table class="main-table">
         <thead>
             <tr>
-                <th>التاريخ</th>
-                <th>رقم الفاتورة</th>
-                <th>الحالة</th>
-                <th class="ltr">المبلغ ({{ $currency }})</th>
+                <th style="width:70pt;">التاريخ</th>
+                <th>العملية</th>
+                <th style="width:80pt;" class="ltr">المبلغ {{ $currency }}</th>
+                <th style="width:80pt;" class="ltr">المبلغ المستحق</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($section['invoices'] as $inv)
-            <tr>
-                <td class="ltr">{{ $inv->document_date->format('Y-m-d') }}</td>
-                <td>{{ $inv->legacy_invoice_no ?? '#'.$inv->id }}</td>
-                <td>
-                    @if($inv->status === 'issued') صادرة
-                    @elseif($inv->status === 'draft') مسودة
-                    @else ملغاة
-                    @endif
+
+        @foreach($section['timeline'] as $event)
+
+            @if($event['type'] === 'invoice')
+            @php $inv = $event['model']; $invNo = $inv->legacy_invoice_no ?? ('#' . $inv->id); @endphp
+
+            {{-- رأس الفاتورة --}}
+            <tr class="row-invoice-header">
+                <td class="ltr" style="font-size:8.5pt;">{{ $event['date']->format('d/m/Y') }}</td>
+                <td colspan="2">
+                    <span class="inv-number">فاتورة {{ $invNo }}#</span>
                 </td>
-                <td class="ltr">{{ number_format((float)$inv->total_amount, 2) }}</td>
+                <td class="ltr" style="font-weight:bold;">
+                    {{ number_format($event['running_balance'], 2) }} ش.ج
+                </td>
             </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3">مجموع الفواتير</td>
-                <td class="ltr">{{ number_format($section['total_invoiced'], 2) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-    @endif
 
-    {{-- دفعات --}}
-    @if($section['payments']->count() > 0)
-    <table style="margin-top:6pt;">
-        <thead>
-            <tr>
-                <th>التاريخ</th>
-                <th>طريقة الدفع</th>
-                <th>المرجع</th>
-                <th class="ltr">المبلغ ({{ $currency }})</th>
+            {{-- بنود الفاتورة --}}
+            @if($inv->lines->count() > 0)
+            <tr class="row-invoice-lines">
+                <td colspan="4">
+                    <table class="lines-table">
+                        <thead>
+                            <tr>
+                                <th style="width:80pt;">السعر X الكمية</th>
+                                <th>البند</th>
+                                <th style="width:70pt;">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($inv->lines as $line)
+                            <tr>
+                                <td class="ltr" style="white-space:nowrap;">
+                                    {{ number_format((float)$line->unit_price, 2) }}
+                                    x {{ number_format((float)$line->quantity, 0) }}
+                                </td>
+                                <td>{{ $line->title }}{{ $line->description ? ' - ' . $line->description : '' }}</td>
+                                <td class="ltr">{{ number_format((float)$line->line_total, 2) }} ش.ج</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach($section['payments'] as $pay)
-            <tr>
-                <td class="ltr">{{ $pay->paid_at->format('Y-m-d') }}</td>
-                <td>{{ $pay->method ?? '—' }}</td>
-                <td>{{ $pay->bank_reference ?? '—' }}</td>
-                <td class="ltr">{{ number_format((float)$pay->amount, 2) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3">مجموع الدفعات</td>
-                <td class="ltr">{{ number_format($section['total_paid'], 2) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-    @endif
+            @endif
 
-    {{-- ملخص الرصيد --}}
-    <div class="balance-box">
-        <div class="balance-row">
-            <span class="balance-label">إجمالي الفواتير</span>
-            <span class="balance-amount">{{ number_format($section['total_invoiced'], 2) }} {{ $currency }}</span>
-        </div>
-        <div class="balance-row">
-            <span class="balance-label">إجمالي الدفعات</span>
-            <span class="balance-amount" style="color:#16A34A;">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
-        </div>
-        <div class="balance-row balance-total">
-            <span class="balance-label">الرصيد المستحق</span>
-            <span class="balance-amount {{ $section['balance'] > 0 ? 'balance-owed' : 'balance-clear' }}">
-                {{ number_format($section['balance'], 2) }} {{ $currency }}
-            </span>
-        </div>
-    </div>
-    <div style="clear:both;"></div>
+            {{-- إجمالي الفاتورة --}}
+            <tr class="row-invoice-total">
+                <td colspan="2" class="label-cell">
+                    {{ number_format($event['amount'], 2) }} ش.ج
+                </td>
+                <td class="ltr">
+                    <strong>{{ $currency }}</strong>
+                    {{ number_format($event['amount'], 2) }} ش.ج
+                </td>
+                <td class="ltr"></td>
+            </tr>
+
+            @else
+            {{-- ===== صف الدفعة ===== --}}
+            @php
+                $pay = $event['model'];
+                $payNo = $pay->bank_reference ?? ('#' . str_pad($pay->id, 6, '0', STR_PAD_LEFT));
+                $methodLabel = $methods[$pay->method] ?? $pay->method ?? '';
+            @endphp
+            <tr class="row-payment">
+                <td class="ltr" style="font-size:8.5pt;">{{ $event['date']->format('d/m/Y') }}</td>
+                <td>
+                    <span class="pay-desc">
+                        عملية الدفع {{ $payNo }}#
+                        @if($methodLabel) ({{ $methodLabel }})@endif
+                    </span>
+                </td>
+                <td class="ltr amt-negative">
+                    ({{ number_format($event['amount'], 2) }} ش.ج)
+                    <span style="font-size:8pt;font-weight:normal;color:#888;"> {{ $currency }}</span>
+                </td>
+                <td class="ltr" style="font-weight:bold;
+                    {{ $event['running_balance'] > 0 ? 'color:#DC2626;' : ($event['running_balance'] < 0 ? 'color:#16A34A;' : '') }}">
+                    {{ number_format($event['running_balance'], 2) }} ش.ج
+                </td>
+            </tr>
+            @endif
+
+        @endforeach
+
+        {{-- ===== رصيد نهاية المدة ===== --}}
+        <tr class="row-final">
+            <td colspan="3" class="rtl">رصيد نهاية المدة</td>
+            <td class="balance-col ltr">
+                {{ number_format($section['balance'], 2) }} ش.ج
+            </td>
+        </tr>
+
+        </tbody>
+    </table>
 
 </div>
 @endforeach
 
-{{-- تذييل --}}
+{{-- ===== FOOTER ===== --}}
 <div class="footer">
-    <p>وثيقة داخلية — بروفايل ميدا للإنتاج الإعلامي &bull; صدر بتاريخ {{ now()->format('Y-m-d H:i') }} UTC</p>
+    @if($logoData)
+        <img src="{{ $logoData }}" alt="Profile Media Production">
+    @endif
 </div>
 
 </body>

@@ -196,10 +196,12 @@ body {
 <body>
 
 @php
-    $logoPath = public_path('branding/logo.png');
-    $logoData = file_exists($logoPath)
-        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
-        : null;
+    $logoDataFile = __DIR__ . '/logo-data.php';
+    $logoData = file_exists($logoDataFile)
+        ? require $logoDataFile
+        : (file_exists(public_path('branding/logo.png'))
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('branding/logo.png')))
+            : null);
 
     $printDate = $dateTo
         ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y')

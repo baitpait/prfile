@@ -198,8 +198,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('suppliers.edit');
     Route::get('/suppliers/{supplier}', function (Supplier $supplier) {
         $supplier->load([
-            'purchaseOrders' => fn ($q) => $q->latest('document_date')->limit(15),
-            'payments' => fn ($q) => $q->latest('paid_at')->limit(15),
+            'purchaseOrders' => fn ($q) => $q->latest('document_date'),
+            'payments' => fn ($q) => $q->latest('paid_at'),
         ]);
 
         return view('suppliers.show', compact('supplier'));

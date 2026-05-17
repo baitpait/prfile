@@ -150,11 +150,16 @@
             <div class="card overflow-hidden">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-[#E2E4E9]">
                     <p class="text-sm font-bold text-[#3D3D3D]">آخر الفواتير</p>
-                    <span class="text-xs text-gray-400">{{ $allInvoices->count() }} فاتورة</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">{{ $allInvoices->count() }} فاتورة</span>
+                        @if(auth()->user()->isAccountant())
+                        <a href="{{ route('invoices.create', ['client' => $client->id]) }}" wire:navigate class="btn btn-primary text-xs py-1 px-2" style="text-decoration:none;">فاتورة جديدة</a>
+                        @endif
+                    </div>
                 </div>
                 @if($allInvoices->isNotEmpty())
                 <table class="data-table">
-                    <thead><tr><th>رقم / تاريخ</th><th>الحالة</th><th>المبلغ</th></tr></thead>
+                    <thead><tr><th>رقم / تاريخ</th><th>الحالة</th><th>المبلغ</th><th class="w-40"></th></tr></thead>
                     <tbody>
                         @foreach($allInvoices->take(10) as $inv)
                         @php $s = $inv->status; @endphp
@@ -172,6 +177,15 @@
                                 {{ number_format((float)$inv->total_amount, 2) }}
                                 <span class="text-xs text-gray-400 font-normal">{{ $inv->currency_code }}</span>
                             </td>
+                            <td>
+                                <div class="flex items-center gap-1 justify-end flex-wrap">
+                                    <a href="{{ route('invoices.show', $inv) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
+                                    <a href="{{ route('invoices.print', $inv) }}" target="_blank" class="btn btn-ghost py-1 px-2 text-xs text-[#C9A227] hover:bg-amber-50" style="text-decoration:none;">طباعة</a>
+                                    @if(auth()->user()->isAccountant())
+                                    <a href="{{ route('invoices.edit', $inv) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -184,14 +198,19 @@
             </div>
 
             {{-- آخر الدفعات --}}
-            @if($allPayments->isNotEmpty())
             <div class="card overflow-hidden">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-[#E2E4E9]">
                     <p class="text-sm font-bold text-[#3D3D3D]">آخر الدفعات</p>
-                    <span class="text-xs text-gray-400">{{ $allPayments->count() }} دفعة</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">{{ $allPayments->count() }} دفعة</span>
+                        @if(auth()->user()->isAccountant())
+                        <a href="{{ route('payments.create', ['client' => $client->id]) }}" wire:navigate class="btn btn-primary text-xs py-1 px-2" style="text-decoration:none;">دفعة جديدة</a>
+                        @endif
+                    </div>
                 </div>
+                @if($allPayments->isNotEmpty())
                 <table class="data-table">
-                    <thead><tr><th>التاريخ</th><th>الطريقة</th><th>المبلغ</th></tr></thead>
+                    <thead><tr><th>التاريخ</th><th>الطريقة</th><th>المبلغ</th><th class="w-32"></th></tr></thead>
                     <tbody>
                         @foreach($allPayments->take(10) as $pay)
                         @php $m = $pay->method ?? ''; @endphp
@@ -202,12 +221,24 @@
                                 {{ number_format((float)$pay->amount, 2) }}
                                 <span class="text-xs text-gray-400 font-normal">{{ $pay->currency_code }}</span>
                             </td>
+                            <td>
+                                <div class="flex items-center gap-1 justify-end flex-wrap">
+                                    <a href="{{ route('payments.show', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
+                                    @if(auth()->user()->isAccountant())
+                                    <a href="{{ route('payments.edit', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+                @else
+                <div class="text-center py-10 text-gray-300">
+                    <p class="text-sm">لا توجد دفعات لهذا العميل</p>
+                </div>
+                @endif
             </div>
-            @endif
 
         </div>
     </div>

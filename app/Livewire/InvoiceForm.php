@@ -84,6 +84,10 @@ class InvoiceForm extends Component
         } else {
             Gate::authorize('create', Invoice::class);
             $this->document_date = now()->format('Y-m-d');
+            $prefillClientId = request()->integer('client');
+            if ($prefillClientId > 0 && Client::query()->whereKey($prefillClientId)->exists()) {
+                $this->client_id = (string) $prefillClientId;
+            }
         }
 
         if (count($this->lines) === 0) {

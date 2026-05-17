@@ -39,6 +39,10 @@ class PaymentForm extends Component
             $this->notes = $payment->notes ?? '';
         } else {
             $this->paid_at = now()->format('Y-m-d');
+            $prefillClientId = request()->integer('client');
+            if ($prefillClientId > 0 && Client::query()->whereKey($prefillClientId)->exists()) {
+                $this->client_id = (string) $prefillClientId;
+            }
         }
     }
 

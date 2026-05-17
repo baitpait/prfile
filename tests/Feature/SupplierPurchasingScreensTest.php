@@ -11,6 +11,35 @@ beforeEach(function () {
     $this->viewer = User::factory()->create(['role' => 'viewer', 'is_active' => true]);
 });
 
+test('supplier show page displays summary cards and action links', function () {
+    $supplier = Supplier::create([
+        'legacy_number' => 'sup-show-'.uniqid(),
+        'business_name' => 'مورد واجهة العرض',
+    ]);
+
+    PurchaseOrder::create([
+        'supplier_id' => $supplier->id,
+        'legacy_po_no' => 'PO-SHOW-1',
+        'document_date' => '2025-06-01',
+        'due_date' => null,
+        'currency_code' => 'ILS',
+        'discount_amount' => 0,
+        'total_amount' => 500,
+        'notes' => null,
+        'status' => 'issued',
+        'recorded_by_user_id' => null,
+    ]);
+
+    $this->actingAs($this->viewer);
+    $this->get(route('suppliers.show', $supplier))
+        ->assertOk()
+        ->assertSee('مورد واجهة العرض')
+        ->assertSee('الملخص المالي')
+        ->assertSee('آخر أوامر الشراء')
+        ->assertSee('PO-SHOW-1')
+        ->assertSee('عرض');
+});
+
 test('purchase orders index loads for authenticated user', function () {
     $this->actingAs($this->viewer);
     $this->get(route('purchase-orders.index'))->assertOk();

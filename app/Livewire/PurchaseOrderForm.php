@@ -60,6 +60,10 @@ class PurchaseOrderForm extends Component
         } else {
             Gate::authorize('create', PurchaseOrder::class);
             $this->document_date = now()->format('Y-m-d');
+            $prefillSupplierId = request()->integer('supplier');
+            if ($prefillSupplierId > 0 && Supplier::query()->whereKey($prefillSupplierId)->exists()) {
+                $this->supplier_id = (string) $prefillSupplierId;
+            }
         }
 
         if (count($this->lines) === 0) {

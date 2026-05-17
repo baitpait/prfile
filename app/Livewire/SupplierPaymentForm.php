@@ -39,6 +39,10 @@ class SupplierPaymentForm extends Component
             $this->notes = $supplierPayment->notes ?? '';
         } else {
             $this->paid_at = now()->format('Y-m-d');
+            $prefillSupplierId = request()->integer('supplier');
+            if ($prefillSupplierId > 0 && Supplier::query()->whereKey($prefillSupplierId)->exists()) {
+                $this->supplier_id = (string) $prefillSupplierId;
+            }
         }
     }
 

@@ -23,6 +23,7 @@ class SupplierStatementService
     public function forSupplier(Supplier $supplier, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $ordersQuery = $supplier->purchaseOrders()
+            ->with('lines')
             ->whereIn('status', ['issued'])
             ->whereNull('deleted_at');
 
@@ -39,8 +40,8 @@ class SupplierStatementService
             $paymentsQuery->where('paid_at', '<=', $dateTo);
         }
 
-        $orders = $ordersQuery->orderBy('document_date')->get();
-        $payments = $paymentsQuery->orderBy('paid_at')->get();
+        $orders = $ordersQuery->orderBy('document_date')->orderBy('id')->get();
+        $payments = $paymentsQuery->orderBy('paid_at')->orderBy('id')->get();
 
         $currencies = $orders->pluck('currency_code')
             ->merge($payments->pluck('currency_code'))
@@ -57,6 +58,41 @@ class SupplierStatementService
             $totalOrdered = $currOrders->sum(fn ($po) => (float) $po->total_amount);
             $totalPaid = $currPayments->sum(fn ($pay) => (float) $pay->amount);
 
+            $events = collect();
+
+            foreach ($currOrders as $po) {
+                $events->push([
+                    'type' => 'purchase_order',
+                    'date' => $po->document_date,
+                    'sort' => $po->document_date->format('Y-m-d').'_0_'.$po->id,
+                    'model' => $po,
+                    'amount' => (float) $po->total_amount,
+                ]);
+            }
+
+            foreach ($currPayments as $pay) {
+                $events->push([
+                    'type' => 'payment',
+                    'date' => $pay->paid_at,
+                    'sort' => $pay->paid_at->format('Y-m-d').'_1_'.$pay->id,
+                    'model' => $pay,
+                    'amount' => (float) $pay->amount,
+                ]);
+            }
+
+            $events = $events->sortBy('sort')->values();
+
+            $running = 0.0;
+            $timeline = [];
+            foreach ($events as $event) {
+                if ($event['type'] === 'purchase_order') {
+                    $running += $event['amount'];
+                } else {
+                    $running -= $event['amount'];
+                }
+                $timeline[] = array_merge($event, ['running_balance' => $running]);
+            }
+
             $result[$currency] = [
                 'currency' => $currency,
                 'purchase_orders' => $currOrders->values(),
@@ -64,6 +100,7 @@ class SupplierStatementService
                 'total_ordered' => $totalOrdered,
                 'total_paid' => $totalPaid,
                 'balance' => $totalOrdered - $totalPaid,
+                'timeline' => $timeline,
             ];
         }
 

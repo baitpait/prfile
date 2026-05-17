@@ -3,6 +3,7 @@
 use App\Models\Client;
 use App\Models\ClientPayment;
 use App\Models\Invoice;
+use App\Models\InvoiceLine;
 use App\Models\User;
 use App\Services\ClientStatementService;
 
@@ -150,6 +151,38 @@ test('client statement page loads for viewer', function () {
 
     $this->actingAs($this->viewer);
     $this->get(route('clients.statement', $client))->assertOk();
+});
+
+test('client statement page shows invoice line details and actions', function () {
+    $client = Client::factory()->create();
+
+    $invoice = Invoice::factory()->create([
+        'client_id' => $client->id,
+        'currency_code' => 'ILS',
+        'total_amount' => 1600,
+        'status' => 'issued',
+        'document_date' => '2021-11-27',
+        'legacy_invoice_no' => 'ERP-SALE-3',
+    ]);
+
+    InvoiceLine::query()->create([
+        'invoice_id' => $invoice->id,
+        'line_order' => 1,
+        'title' => 'حملة انتخابية',
+        'unit_price' => 1600,
+        'quantity' => 1,
+        'line_total' => 1600,
+    ]);
+
+    $this->actingAs($this->accountant);
+    $this->get(route('clients.statement', $client))
+        ->assertOk()
+        ->assertSee('حركة الحساب')
+        ->assertSee('ERP-SALE-3')
+        ->assertSee('حملة انتخابية')
+        ->assertSee('عرض')
+        ->assertSee('طباعة')
+        ->assertSee('تعديل');
 });
 
 test('viewer cannot download client statement pdf', function () {

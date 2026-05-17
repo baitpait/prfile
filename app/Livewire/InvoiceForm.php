@@ -370,7 +370,7 @@ class InvoiceForm extends Component
             'currency_code' => ['required', 'string', 'size:3', Rule::in(Product::billingCurrencies())],
             'status' => 'required|in:draft,issued,cancelled',
             'lines' => 'array',
-            'lines.*.product_id' => ['nullable', 'integer', Rule::exists(Product::class)],
+            'lines.*.product_id' => ['nullable', 'integer', Rule::exists(Product::class, 'id')],
             'lines.*.title' => 'required_with:lines|string|max:500',
             'lines.*.quantity' => 'required_with:lines|numeric|min:0',
             'lines.*.unit_price' => 'required_with:lines|numeric|min:0',

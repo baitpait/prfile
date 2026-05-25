@@ -3,82 +3,125 @@
 namespace App\Services;
 
 use App\Models\Client;
+use App\Models\Invoice;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class ClientReceivablesAgingService
 {
     /**
-     * فواتير صادرة للعملاء الذين لديهم رصيد مستحق (إجمالي فواتير − دفعات) في نفس العملة.
+     * صف واحد لكل عميل/عملة: الرصيد المستحق، أيام من أقدم فاتورة غير مسدّدة (FIFO)، والهاتف.
      *
      * @return Collection<int, array{
      *   client_id: int,
      *   client_name: string,
+     *   phone: string|null,
      *   currency_code: string,
-     *   invoice_id: int,
-     *   legacy_invoice_no: string|null,
-     *   document_date: string,
-     *   due_date: string|null,
-     *   total_amount: float,
-     *   days_since_document: int,
-     *   days_overdue: int|null
+     *   balance: float,
+     *   days_from_first_unpaid: int,
+     *   first_unpaid_document_date: string|null
      * }>
      */
-    public function rows(?string $currencyFilter = null): Collection
+    public function rows(?ClientReceivablesAgingFilters $filters = null): Collection
     {
+        $filters ??= new ClientReceivablesAgingFilters;
         $statementService = new ClientStatementService;
         $today = Carbon::now()->startOfDay();
         $out = collect();
 
-        Client::query()->whereNull('deleted_at')->orderBy('id')->each(function (Client $client) use ($statementService, $currencyFilter, $today, &$out): void {
+        Client::query()->whereNull('deleted_at')->orderBy('id')->each(function (Client $client) use ($statementService, $filters, $today, &$out): void {
             $statement = $statementService->forClient($client);
 
             foreach ($statement as $currency => $section) {
-                if ($currencyFilter !== null && $currencyFilter !== '' && $currency !== $currencyFilter) {
-                    continue;
-                }
-                if ((float) $section['balance'] <= 0.00001) {
+                if ($filters->currency !== null && $filters->currency !== '' && $currency !== $filters->currency) {
                     continue;
                 }
 
-                foreach ($section['invoices'] as $inv) {
-                    $daysOverdue = null;
-                    if ($inv->due_date) {
-                        $due = $inv->due_date->copy()->startOfDay();
-                        if ($today->gt($due)) {
-                            $daysOverdue = (int) $due->diffInDays($today);
-                        } else {
-                            $daysOverdue = 0;
-                        }
-                    }
-
-                    $out->push([
-                        'client_id' => $client->id,
-                        'client_name' => $client->displayName(),
-                        'currency_code' => $currency,
-                        'invoice_id' => $inv->id,
-                        'legacy_invoice_no' => $inv->legacy_invoice_no,
-                        'document_date' => $inv->document_date->toDateString(),
-                        'due_date' => $inv->due_date?->toDateString(),
-                        'total_amount' => (float) $inv->total_amount,
-                        'days_since_document' => (int) $inv->document_date->copy()->startOfDay()->diffInDays($today),
-                        'days_overdue' => $daysOverdue,
-                    ]);
+                $balance = (float) $section['balance'];
+                if ($balance <= 0.00001) {
+                    continue;
                 }
+
+                $fifo = $this->firstUnpaidInvoiceAfterFifo(
+                    $section['invoices'],
+                    $section['payments'],
+                    $today
+                );
+
+                $out->push([
+                    'client_id' => $client->id,
+                    'client_name' => $client->displayName(),
+                    'phone' => $this->displayPhone($client),
+                    'currency_code' => $currency,
+                    'balance' => round($balance, 2),
+                    'days_from_first_unpaid' => $fifo['days_from_first_unpaid'],
+                    'first_unpaid_document_date' => $fifo['first_unpaid_document_date'],
+                ]);
             }
         });
 
-        return $out->sort(function (array $a, array $b): int {
-            $av = $a['days_overdue'];
-            $bv = $b['days_overdue'];
-            $as = $av === null ? -1 : (int) $av;
-            $bs = $bv === null ? -1 : (int) $bv;
-            if ($as !== $bs) {
-                return $bs <=> $as;
-            }
+        return $this->applyFilters($out, $filters)
+            ->sortByDesc('balance')
+            ->sortByDesc('days_from_first_unpaid')
+            ->values();
+    }
 
-            return $b['days_since_document'] <=> $a['days_since_document'];
-        })->values();
+    /**
+     * مجاميع تراكمية: إجمالي الذمم + تصنيف عمرية مع تراكم الدُفعات (بعد تطبيق الفلاتر).
+     *
+     * @return array{
+     *   total_balance: float,
+     *   client_count: int,
+     *   buckets: array{0_30: float, 31_60: float, 61_90: float, 91_plus: float},
+     *   cumulative: array{through_30: float, through_60: float, through_90: float, all: float}
+     * }
+     */
+    public function summary(?ClientReceivablesAgingFilters $filters = null): array
+    {
+        $rows = $this->rows($filters);
+
+        $buckets = [
+            '0_30' => 0.0,
+            '31_60' => 0.0,
+            '61_90' => 0.0,
+            '91_plus' => 0.0,
+        ];
+
+        foreach ($rows as $row) {
+            $days = (int) $row['days_from_first_unpaid'];
+            $amount = (float) $row['balance'];
+
+            if ($days <= 30) {
+                $buckets['0_30'] += $amount;
+            } elseif ($days <= 60) {
+                $buckets['31_60'] += $amount;
+            } elseif ($days <= 90) {
+                $buckets['61_90'] += $amount;
+            } else {
+                $buckets['91_plus'] += $amount;
+            }
+        }
+
+        foreach ($buckets as $key => $value) {
+            $buckets[$key] = round($value, 2);
+        }
+
+        $through30 = $buckets['0_30'];
+        $through60 = $through30 + $buckets['31_60'];
+        $through90 = $through60 + $buckets['61_90'];
+        $all = $through90 + $buckets['91_plus'];
+
+        return [
+            'total_balance' => round($rows->sum(fn (array $r): float => (float) $r['balance']), 2),
+            'client_count' => $rows->count(),
+            'buckets' => $buckets,
+            'cumulative' => [
+                'through_30' => round($through30, 2),
+                'through_60' => round($through60, 2),
+                'through_90' => round($through90, 2),
+                'all' => round($all, 2),
+            ],
+        ];
     }
 
     /**
@@ -98,5 +141,132 @@ class ClientReceivablesAgingService
         });
 
         return collect(array_keys($set))->sort()->values()->all();
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function applyFilters(Collection $rows, ClientReceivablesAgingFilters $filters): Collection
+    {
+        if (! $filters->hasAny()) {
+            return $rows;
+        }
+
+        [$daysMin, $daysMax] = $this->resolveDayBounds($filters);
+        $search = $filters->search !== null && $filters->search !== ''
+            ? mb_strtolower(trim($filters->search))
+            : null;
+
+        return $rows->filter(function (array $row) use ($filters, $daysMin, $daysMax, $search): bool {
+            $days = (int) $row['days_from_first_unpaid'];
+
+            if ($daysMin !== null && $days < $daysMin) {
+                return false;
+            }
+
+            if ($daysMax !== null && $days > $daysMax) {
+                return false;
+            }
+
+            if ($filters->minBalance !== null && (float) $row['balance'] < $filters->minBalance) {
+                return false;
+            }
+
+            if ($search !== null) {
+                $name = mb_strtolower((string) $row['client_name']);
+                $phone = mb_strtolower((string) ($row['phone'] ?? ''));
+
+                if (! str_contains($name, $search) && ! str_contains($phone, $search)) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
+    }
+
+    /**
+     * @return array{0: int|null, 1: int|null}
+     */
+    private function resolveDayBounds(ClientReceivablesAgingFilters $filters): array
+    {
+        if ($filters->agingBucket !== null && $filters->agingBucket !== '') {
+            return match ($filters->agingBucket) {
+                '0_30' => [0, 30],
+                '31_60' => [31, 60],
+                '61_90' => [61, 90],
+                '91_plus' => [91, null],
+                default => [$filters->daysMin, $filters->daysMax],
+            };
+        }
+
+        return [$filters->daysMin, $filters->daysMax];
+    }
+
+    /**
+     * تخصيص الدفعات على الفواتير الأقدم أولاً (FIFO) لتحديد أقدم فاتورة فيها متبقٍ.
+     *
+     * @param  \Illuminate\Support\Collection<int, Invoice>  $invoices
+     * @param  \Illuminate\Support\Collection<int, \App\Models\ClientPayment>  $payments
+     * @return array{
+     *   days_from_first_unpaid: int,
+     *   first_unpaid_document_date: string|null
+     * }
+     */
+    private function firstUnpaidInvoiceAfterFifo(Collection $invoices, Collection $payments, Carbon $today): array
+    {
+        $paymentPool = (float) $payments->sum(fn ($pay) => (float) $pay->amount);
+
+        $sorted = $invoices
+            ->sortBy(fn (Invoice $inv) => $inv->document_date->format('Y-m-d').'_'.$inv->id)
+            ->values();
+
+        $firstUnpaid = null;
+
+        foreach ($sorted as $invoice) {
+            $invoiceTotal = (float) $invoice->total_amount;
+            $allocated = min($invoiceTotal, max(0.0, $paymentPool));
+            $remaining = $invoiceTotal - $allocated;
+            $paymentPool -= $allocated;
+
+            if ($remaining > 0.00001 && $firstUnpaid === null) {
+                $firstUnpaid = $invoice;
+            }
+        }
+
+        if ($firstUnpaid === null) {
+            $fallback = $sorted->first();
+
+            if ($fallback !== null) {
+                $firstUnpaid = $fallback;
+            }
+        }
+
+        if ($firstUnpaid === null) {
+            return [
+                'days_from_first_unpaid' => 0,
+                'first_unpaid_document_date' => null,
+            ];
+        }
+
+        $start = $firstUnpaid->document_date->copy()->startOfDay();
+
+        return [
+            'days_from_first_unpaid' => (int) $start->diffInDays($today),
+            'first_unpaid_document_date' => $firstUnpaid->document_date->toDateString(),
+        ];
+    }
+
+    private function displayPhone(Client $client): ?string
+    {
+        $primary = trim((string) ($client->phone_primary ?? ''));
+        if ($primary !== '') {
+            return $primary;
+        }
+
+        $secondary = trim((string) ($client->phone_secondary ?? ''));
+
+        return $secondary !== '' ? $secondary : null;
     }
 }

@@ -2,21 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
+use App\Models\ClientPayment;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-class InvoicePrintController extends Controller
+class ClientPaymentPrintController extends Controller
 {
-    public function show(Invoice $invoice)
-    {
-        $invoice->load(['lines', 'client']);
+    use AuthorizesRequests;
 
-        $client = $invoice->client;
+    /**
+     * Business Purpose: Printable receipt voucher (سند قبض) for a client payment with company letterhead.
+     */
+    public function show(ClientPayment $payment)
+    {
+        $this->authorize('view', $payment);
+
+        $payment->load(['client', 'recordedBy']);
+
         $amountInWords = $this->toArabicWords(
-            (float) $invoice->total_amount,
-            $invoice->currency_code ?? 'ILS'
+            (float) $payment->amount,
+            $payment->currency_code ?? 'ILS'
         );
 
-        return view('invoices.print', compact('invoice', 'client', 'amountInWords'));
+        $methods = [
+            'cash' => 'نقدي',
+            'bank' => 'بنكي',
+            'check' => 'شيك',
+            'transfer' => 'تحويل',
+        ];
+
+        return view('payments.print', compact('payment', 'amountInWords', 'methods'));
     }
 
     private function toArabicWords(float $amount, string $currency): string

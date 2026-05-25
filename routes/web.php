@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClientReceivablesAgingController;
 use App\Http\Controllers\ClientStatementController;
+use App\Http\Controllers\ClientPaymentPrintController;
 use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\SupplierStatementController;
 use App\Models\Client;
@@ -107,8 +108,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])->name('invoices.print');
 
     Route::get('/expenses', fn () => view('expenses.index'))->name('expenses.index');
-    Route::get('/reports/client-receivables-aging', ClientReceivablesAgingController::class)
+    Route::get('/reports/client-receivables-aging', [ClientReceivablesAgingController::class, '__invoke'])
         ->name('reports.client-receivables-aging');
+    Route::get('/reports/client-receivables-aging/pdf', [ClientReceivablesAgingController::class, 'pdf'])
+        ->name('reports.client-receivables-aging.pdf');
     Route::get('/expenses/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
 
@@ -154,6 +157,7 @@ Route::middleware(['auth'])->group(function () {
 
         return view('payments.edit', compact('payment'));
     })->name('payments.edit');
+    Route::get('/payments/{payment}/print', [ClientPaymentPrintController::class, 'show'])->name('payments.print');
     Route::get('/payments/{payment}', fn (ClientPayment $payment) => view('payments.show', compact('payment')))->name('payments.show');
     Route::delete('/payments/{payment}', function (ClientPayment $payment) {
         abort_unless(auth()->user()->isManager(), 403);

@@ -287,24 +287,10 @@
     </div>
 
     <div class="summary-card">
-      <div class="sum-header">ملخص الحساب</div>
+      <div class="sum-header">مجموع الفاتورة</div>
       <div class="sum-row">
-        <span class="sum-lbl">إجمالي الفاتورة</span>
+        <span class="sum-lbl" style="font-weight:700;color:#3D3D3D">الإجمالي</span>
         <span class="sum-val">{{ number_format((float)$invoice->total_amount, 2) }} {{ $invoice->currency_code }}</span>
-      </div>
-      @if($invoice->discount_amount && $invoice->discount_amount > 0)
-      <div class="sum-row">
-        <span class="sum-lbl">الخصم</span>
-        <span class="sum-val debit">- {{ number_format((float)$invoice->discount_amount, 2) }}</span>
-      </div>
-      @endif
-      <div class="sum-row">
-        <span class="sum-lbl">المدفوع</span>
-        <span class="sum-val credit">{{ number_format((float)$totalPaid, 2) }}</span>
-      </div>
-      <div class="sum-row">
-        <span class="sum-lbl" style="font-weight:700;color:#3D3D3D">الرصيد المستحق</span>
-        <span class="sum-val {{ $balanceDue > 0 ? 'debit' : 'credit' }}">{{ number_format((float)$balanceDue, 2) }}</span>
       </div>
     </div>
   </div>
@@ -341,37 +327,10 @@
   {{-- ── Totals ── --}}
   <div class="totals-section">
     <table class="totals-table">
-      @php
-        $subtotal = $invoice->lines->sum('line_total');
-        $discount = (float)($invoice->discount_amount ?? 0);
-        $net      = (float)$invoice->total_amount;
-      @endphp
-      @if($invoice->lines->isNotEmpty() && $subtotal != $net)
-      <tr>
-        <td>المجموع الفرعي</td>
-        <td>{{ number_format((float)$subtotal, 2) }} {{ $invoice->currency_code }}</td>
-      </tr>
-      @endif
-      @if($discount > 0)
-      <tr>
-        <td>الخصم</td>
-        <td style="color:#dc2626">- {{ number_format($discount, 2) }} {{ $invoice->currency_code }}</td>
-      </tr>
-      @endif
       <tr class="grand">
-        <td>الإجمالي</td>
-        <td>{{ number_format($net, 2) }} {{ $invoice->currency_code }}</td>
+        <td>مجموع الفاتورة</td>
+        <td>{{ number_format((float) $invoice->total_amount, 2) }} {{ $invoice->currency_code }}</td>
       </tr>
-      @if($totalPaid > 0)
-      <tr class="paid-row">
-        <td>مدفوع</td>
-        <td>- {{ number_format((float)$totalPaid, 2) }} {{ $invoice->currency_code }}</td>
-      </tr>
-      <tr class="balance-row">
-        <td>الرصيد المستحق</td>
-        <td>{{ number_format((float)$balanceDue, 2) }} {{ $invoice->currency_code }}</td>
-      </tr>
-      @endif
     </table>
   </div>
 

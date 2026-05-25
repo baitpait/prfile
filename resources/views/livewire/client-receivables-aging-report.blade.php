@@ -2,20 +2,17 @@
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-[#3D3D3D]">أعمار ذمم العملاء</h1>
-            <p class="text-sm text-gray-500 mt-1">فواتير صادرة لعملاء لديهم رصيد مستحق، مع مدة المستند والتأخير عن الاستحقاق.</p>
+            <p class="text-sm text-gray-500 mt-1">
+                رصيد مستحق لكل عميل وعملة، مع أيام التأخير من تاريخ أقدم فاتورة غير مسدّدة (تخصيص FIFO).
+            </p>
         </div>
         <div class="flex flex-wrap items-end gap-3">
-            <div>
-                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">تصفية بالعملة</label>
-                <select wire:model.live="currency"
-                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm min-w-[10rem] focus:outline-none focus:border-[#C9A227]">
-                    <option value="">كل العملات</option>
-                    @foreach($currencyOptions as $c)
-                        <option value="{{ $c }}" dir="ltr">{{ $c }}</option>
-                    @endforeach
-                </select>
-            </div>
             @can('export-client-receivables-aging-csv')
+            <a href="{{ $pdfExportUrl }}" target="_blank" rel="noopener"
+               class="px-4 py-2 text-sm bg-[#3D3D3D] text-white rounded hover:bg-[#2a2a2a] font-medium self-end"
+               style="text-decoration:none;">
+                تصدير PDF
+            </a>
             <button type="button" wire:click="exportCsv"
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium self-end">
                 تصدير CSV
@@ -24,23 +21,88 @@
         </div>
     </div>
 
+    <div class="bg-white border border-[#E0E0E0] rounded p-4 mb-6">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
+            <h2 class="text-sm font-bold text-[#3D3D3D]">تصفية النتائج</h2>
+            @if($currency !== '' || $agingBucket !== '' || $daysMin !== '' || $daysMax !== '' || $minBalance !== '' || $search !== '')
+            <button type="button" wire:click="clearFilters"
+                    class="text-xs text-gray-500 hover:text-[#3D3D3D] underline">
+                مسح الفلاتر
+            </button>
+            @endif
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div>
+                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">العملة</label>
+                <select wire:model.live="currency"
+                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-[#C9A227]">
+                    <option value="">كل العملات</option>
+                    @foreach($currencyOptions as $c)
+                        <option value="{{ $c }}" dir="ltr">{{ $c }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">فئة التأخير</label>
+                <select wire:model.live="agingBucket"
+                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-[#C9A227]"
+                        @disabled($daysMin !== '' || $daysMax !== '')>
+                    <option value="">الكل</option>
+                    <option value="0_30">0–30 يوم</option>
+                    <option value="31_60">31–60 يوم</option>
+                    <option value="61_90">61–90 يوم</option>
+                    <option value="91_plus">91+ يوم</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">أيام من (حد أدنى)</label>
+                <input type="number" min="0" step="1" wire:model.live="daysMin" dir="ltr"
+                       placeholder="—"
+                       @disabled($agingBucket !== '')
+                       class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full font-mono focus:outline-none focus:border-[#C9A227] disabled:bg-[#F5F5F5]">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">أيام إلى (حد أقصى)</label>
+                <input type="number" min="0" step="1" wire:model.live="daysMax" dir="ltr"
+                       placeholder="—"
+                       @disabled($agingBucket !== '')
+                       class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full font-mono focus:outline-none focus:border-[#C9A227] disabled:bg-[#F5F5F5]">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">حد أدنى للمبلغ</label>
+                <input type="number" min="0" step="0.01" wire:model.live="minBalance" dir="ltr"
+                       placeholder="0"
+                       class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full font-mono focus:outline-none focus:border-[#C9A227]">
+            </div>
+            <div class="sm:col-span-2 lg:col-span-1 xl:col-span-2">
+                <label class="block text-xs font-medium text-[#3D3D3D] mb-1">بحث (اسم أو هاتف)</label>
+                <input type="search" wire:model.live.debounce.300ms="search"
+                       placeholder="ابحث..."
+                       class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-[#C9A227]">
+            </div>
+        </div>
+        @if($agingBucket !== '')
+        <p class="text-xs text-gray-500 mt-2">فئة التأخير نشطة — حقلا «أيام من/إلى» معطّلان.</p>
+        @elseif($daysMin !== '' || $daysMax !== '')
+        <p class="text-xs text-gray-500 mt-2">نطاق الأيام مخصّص — اختر «الكل» في فئة التأخير لاستخدامه.</p>
+        @endif
+    </div>
+
     @if(count($rows) === 0)
         <div class="text-center py-16 text-gray-400 bg-white border border-[#E0E0E0] rounded">
             لا توجد ذمم مستحقة مطابقة للفلتر الحالي.
         </div>
     @else
-        <div class="overflow-x-auto bg-white border border-[#E0E0E0] rounded">
+        <div class="overflow-x-auto bg-white border border-[#E0E0E0] rounded mb-6">
             <table class="w-full text-sm">
                 <thead class="bg-[#F5F5F5] text-[#3D3D3D]">
                     <tr>
                         <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]">العميل</th>
+                        <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">الهاتف</th>
                         <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">العملة</th>
-                        <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]">الفاتورة</th>
-                        <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">تاريخ المستند</th>
-                        <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">الاستحقاق</th>
-                        <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">المبلغ</th>
-                        <th class="text-center px-3 py-2 font-semibold border-b border-[#E0E0E0]">أيام منذ المستند</th>
-                        <th class="text-center px-3 py-2 font-semibold border-b border-[#E0E0E0]">أيام التأخير</th>
+                        <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">المبلغ المستحق</th>
+                        <th class="text-center px-3 py-2 font-semibold border-b border-[#E0E0E0]">أيام من أول ذمة</th>
+                        <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]" dir="ltr">تاريخ أول ذمة</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,23 +113,66 @@
                                 {{ $r['client_name'] }}
                             </a>
                         </td>
+                        <td class="px-3 py-2 font-mono text-gray-700" dir="ltr">{{ $r['phone'] ?? '—' }}</td>
                         <td class="px-3 py-2 font-mono" dir="ltr">{{ $r['currency_code'] }}</td>
-                        <td class="px-3 py-2">{{ $r['legacy_invoice_no'] ?? '#'.$r['invoice_id'] }}</td>
-                        <td class="px-3 py-2 font-mono" dir="ltr">{{ $r['document_date'] }}</td>
-                        <td class="px-3 py-2 font-mono text-gray-600" dir="ltr">{{ $r['due_date'] ?? '—' }}</td>
-                        <td class="px-3 py-2 font-mono text-right" dir="ltr">{{ number_format((float) $r['total_amount'], 2) }}</td>
-                        <td class="px-3 py-2 text-center font-mono">{{ $r['days_since_document'] }}</td>
-                        <td class="px-3 py-2 text-center font-mono">
-                            @if($r['days_overdue'] === null)
-                                <span class="text-gray-400">—</span>
-                            @else
-                                {{ $r['days_overdue'] }}
-                            @endif
-                        </td>
+                        <td class="px-3 py-2 font-mono text-right font-semibold" dir="ltr">{{ number_format((float) $r['balance'], 2) }}</td>
+                        <td class="px-3 py-2 text-center font-mono">{{ $r['days_from_first_unpaid'] }}</td>
+                        <td class="px-3 py-2 font-mono text-gray-600" dir="ltr">{{ $r['first_unpaid_document_date'] ?? '—' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="bg-white border border-[#E0E0E0] rounded p-4">
+                <h2 class="text-sm font-bold text-[#3D3D3D] mb-3">إجمالي الذمم</h2>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between gap-4">
+                        <dt class="text-gray-500">عدد العملاء</dt>
+                        <dd class="font-mono font-semibold">{{ $summary['client_count'] }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <dt class="text-gray-500">المبلغ المستحق</dt>
+                        <dd class="font-mono font-semibold text-[#3D3D3D]" dir="ltr">{{ number_format((float) $summary['total_balance'], 2) }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="bg-white border border-[#E0E0E0] rounded p-4">
+                <h2 class="text-sm font-bold text-[#3D3D3D] mb-3">تصنيف عمرية (حسب أول ذمة)</h2>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-gray-500 border-b border-[#E0E0E0]">
+                            <th class="text-right py-1 font-medium">الدُفعة</th>
+                            <th class="text-left py-1 font-medium" dir="ltr">المبلغ</th>
+                            <th class="text-left py-1 font-medium" dir="ltr">تراكمي</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-mono">
+                        <tr class="border-b border-[#F0F0F0]">
+                            <td class="py-2 text-right">0–30 يوم</td>
+                            <td class="py-2 text-left" dir="ltr">{{ number_format((float) $summary['buckets']['0_30'], 2) }}</td>
+                            <td class="py-2 text-left font-semibold" dir="ltr">{{ number_format((float) $summary['cumulative']['through_30'], 2) }}</td>
+                        </tr>
+                        <tr class="border-b border-[#F0F0F0]">
+                            <td class="py-2 text-right">31–60 يوم</td>
+                            <td class="py-2 text-left" dir="ltr">{{ number_format((float) $summary['buckets']['31_60'], 2) }}</td>
+                            <td class="py-2 text-left font-semibold" dir="ltr">{{ number_format((float) $summary['cumulative']['through_60'], 2) }}</td>
+                        </tr>
+                        <tr class="border-b border-[#F0F0F0]">
+                            <td class="py-2 text-right">61–90 يوم</td>
+                            <td class="py-2 text-left" dir="ltr">{{ number_format((float) $summary['buckets']['61_90'], 2) }}</td>
+                            <td class="py-2 text-left font-semibold" dir="ltr">{{ number_format((float) $summary['cumulative']['through_90'], 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 text-right">91+ يوم</td>
+                            <td class="py-2 text-left" dir="ltr">{{ number_format((float) $summary['buckets']['91_plus'], 2) }}</td>
+                            <td class="py-2 text-left font-semibold" dir="ltr">{{ number_format((float) $summary['cumulative']['all'], 2) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     @endif
 </div>

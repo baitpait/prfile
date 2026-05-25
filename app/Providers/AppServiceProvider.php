@@ -3,20 +3,24 @@
 namespace App\Providers;
 
 use App\Models\Client;
+use App\Models\ClientBalanceAdjustment;
 use App\Models\ClientPayment;
 use App\Models\Invoice;
 use App\Models\LegacyCatalogProduct;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\SupplierBalanceAdjustment;
 use App\Models\SupplierPayment;
 use App\Models\User;
+use App\Policies\ClientBalanceAdjustmentPolicy;
 use App\Policies\ClientPaymentPolicy;
 use App\Policies\ClientPolicy;
 use App\Policies\InvoicePolicy;
 use App\Policies\LegacyCatalogProductPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PurchaseOrderPolicy;
+use App\Policies\SupplierBalanceAdjustmentPolicy;
 use App\Policies\SupplierPaymentPolicy;
 use App\Policies\SupplierPolicy;
 use Illuminate\Pagination\Paginator;
@@ -32,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('vendor.pagination.tailwind');
 
         Gate::policy(ClientPayment::class, ClientPaymentPolicy::class);
+        Gate::policy(ClientBalanceAdjustment::class, ClientBalanceAdjustmentPolicy::class);
         Gate::policy(Invoice::class, InvoicePolicy::class);
         Gate::policy(LegacyCatalogProduct::class, LegacyCatalogProductPolicy::class);
         Gate::policy(Product::class, ProductPolicy::class);
@@ -39,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Client::class, ClientPolicy::class);
         Gate::policy(Supplier::class, SupplierPolicy::class);
         Gate::policy(SupplierPayment::class, SupplierPaymentPolicy::class);
+        Gate::policy(SupplierBalanceAdjustment::class, SupplierBalanceAdjustmentPolicy::class);
 
         Gate::define('view-client-receivables-aging', fn (User $user): bool => (bool) $user->is_active);
         Gate::define('export-client-receivables-aging-csv', fn (User $user): bool => $user->isAccountant());

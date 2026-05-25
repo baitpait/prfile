@@ -49,4 +49,9 @@ class Supplier extends Model
     {
         return $this->hasMany(SupplierPayment::class);
     }
+
+    public function balanceAdjustments(): HasMany
+    {
+        return $this->hasMany(SupplierBalanceAdjustment::class);
+    }
 }

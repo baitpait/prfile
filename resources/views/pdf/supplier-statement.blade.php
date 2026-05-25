@@ -205,6 +205,10 @@ tfoot td { background: #F5F5F5; font-weight: bold; }
             <span class="balance-label">إجمالي الدفعات</span>
             <span class="balance-amount" style="color:#16A34A;">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
         </div>
+        <div class="balance-row">
+            <span class="balance-label">إجمالي التسويات</span>
+            <span class="balance-amount" style="color:#7C3AED;">{{ number_format($section['total_adjusted'], 2) }} {{ $currency }}</span>
+        </div>
         <div class="balance-row balance-total">
             <span class="balance-label">المتبقي للمورد</span>
             <span class="balance-amount {{ $section['balance'] > 0 ? 'balance-owed' : 'balance-clear' }}">

@@ -115,6 +115,18 @@
                 </x-slot>
             </x-nav-link>
 
+            @if(auth()->user()->isAccountant())
+            <x-nav-link :route="route('client-adjustments.index')" label="تسويات العملاء"
+                        :active="request()->routeIs(['client-adjustments.*', 'clients.adjustments.*'])">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 14l6-6m-5.5.5h.01m4.99 4.99h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+            @endif
+
             <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">المشتريات</div>
 
             <x-nav-link :route="route('suppliers.index')" label="الموردون" :active="request()->routeIs('suppliers.*')">
@@ -143,6 +155,18 @@
                     </svg>
                 </x-slot>
             </x-nav-link>
+
+            @if(auth()->user()->isAccountant())
+            <x-nav-link :route="route('supplier-adjustments.index')" label="تسويات الموردين"
+                        :active="request()->routeIs(['supplier-adjustments.*', 'suppliers.adjustments.*'])">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 14l6-6m-5.5.5h.01m4.99 4.99h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+            @endif
 
             <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">المالية</div>
 

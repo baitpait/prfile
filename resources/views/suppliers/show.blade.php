@@ -23,6 +23,9 @@
             @if($supplier->city)<p class="text-sm text-gray-400 mt-0.5">{{ $supplier->city }}</p>@endif
         </div>
         <div class="mr-auto flex items-center gap-2">
+            @if(auth()->user()->isAccountant())
+            <a href="{{ route('suppliers.adjustments.create', $supplier) }}" wire:navigate class="btn btn-secondary text-xs" style="text-decoration:none;">تسوية</a>
+            @endif
             <a href="{{ route('suppliers.statement', $supplier) }}" wire:navigate class="btn btn-secondary text-xs" style="text-decoration:none;display:flex;align-items:center;gap:6px;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 كشف حساب

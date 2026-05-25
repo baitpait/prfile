@@ -137,8 +137,9 @@ test('csv export rows match statement totals', function () {
     expect($rows[1][3])->toBe('+2500.00');
     expect($rows[2][3])->toBe('-1000.00');
     expect($rows[4][3])->toBe('1000.00');
-    expect($rows[5][2])->toContain('الرصيد المستحق');
-    expect($rows[5][3])->toBe('1500.00');
+    expect($rows[5][3])->toBe('0.00');
+    expect($rows[6][2])->toContain('الرصيد المستحق');
+    expect($rows[6][3])->toBe('1500.00');
 });
 
 test('client statement page loads for viewer', function () {

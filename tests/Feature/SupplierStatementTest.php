@@ -168,5 +168,6 @@ test('supplier statement csv rows use purchase order type label', function () {
     $statement = $service->forSupplier($supplier);
     $rows = $service->toCsvRows($statement);
 
-    expect($rows[1][1])->toBe('أمر شراء');
+    expect($rows[1][2])->toContain('أمر شراء');
+    expect($rows[1][3])->toBe('+300.00');
 });

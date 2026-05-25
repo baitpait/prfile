@@ -3,22 +3,12 @@
 namespace App\Services;
 
 use App\Models\Supplier;
-use Illuminate\Support\Collection;
 
 class SupplierStatementService
 {
     /**
      * كشف التزامات تجاه المورد حسب العملة.
-     * الرصيد الموجب = المتبقي المستحق للمورد (أوامر شراء − دفعات).
-     *
-     * @return array<string, array{
-     *   currency: string,
-     *   purchase_orders: Collection,
-     *   payments: Collection,
-     *   total_ordered: float,
-     *   total_paid: float,
-     *   balance: float
-     * }>
+     * الرصيد = أوامر شراء − دفعات − تسويات.
      */
     public function forSupplier(Supplier $supplier, ?string $dateFrom = null, ?string $dateTo = null): array
     {
@@ -30,21 +20,28 @@ class SupplierStatementService
         $paymentsQuery = $supplier->payments()
             ->whereNull('deleted_at');
 
+        $adjustmentsQuery = $supplier->balanceAdjustments()
+            ->whereNull('deleted_at');
+
         if ($dateFrom) {
             $ordersQuery->where('document_date', '>=', $dateFrom);
             $paymentsQuery->where('paid_at', '>=', $dateFrom);
+            $adjustmentsQuery->where('adjustment_date', '>=', $dateFrom);
         }
 
         if ($dateTo) {
             $ordersQuery->where('document_date', '<=', $dateTo);
             $paymentsQuery->where('paid_at', '<=', $dateTo);
+            $adjustmentsQuery->where('adjustment_date', '<=', $dateTo);
         }
 
         $orders = $ordersQuery->orderBy('document_date')->orderBy('id')->get();
         $payments = $paymentsQuery->orderBy('paid_at')->orderBy('id')->get();
+        $adjustments = $adjustmentsQuery->orderBy('adjustment_date')->orderBy('id')->get();
 
         $currencies = $orders->pluck('currency_code')
             ->merge($payments->pluck('currency_code'))
+            ->merge($adjustments->pluck('currency_code'))
             ->unique()
             ->sort()
             ->values();
@@ -52,11 +49,13 @@ class SupplierStatementService
         $result = [];
 
         foreach ($currencies as $currency) {
-            $currOrders = $orders->where('currency_code', $currency);
-            $currPayments = $payments->where('currency_code', $currency);
+            $currOrders = $orders->where('currency_code', $currency)->values();
+            $currPayments = $payments->where('currency_code', $currency)->values();
+            $currAdjustments = $adjustments->where('currency_code', $currency)->values();
 
             $totalOrdered = $currOrders->sum(fn ($po) => (float) $po->total_amount);
             $totalPaid = $currPayments->sum(fn ($pay) => (float) $pay->amount);
+            $totalAdjusted = $currAdjustments->sum(fn ($adj) => (float) $adj->amount);
 
             $events = collect();
 
@@ -80,6 +79,16 @@ class SupplierStatementService
                 ]);
             }
 
+            foreach ($currAdjustments as $adj) {
+                $events->push([
+                    'type' => 'adjustment',
+                    'date' => $adj->adjustment_date,
+                    'sort' => $adj->adjustment_date->format('Y-m-d').'_2_'.$adj->id,
+                    'model' => $adj,
+                    'amount' => (float) $adj->amount,
+                ]);
+            }
+
             $events = $events->sortBy('sort')->values();
 
             $running = 0.0;
@@ -95,11 +104,13 @@ class SupplierStatementService
 
             $result[$currency] = [
                 'currency' => $currency,
-                'purchase_orders' => $currOrders->values(),
-                'payments' => $currPayments->values(),
+                'purchase_orders' => $currOrders,
+                'payments' => $currPayments,
+                'adjustments' => $currAdjustments,
                 'total_ordered' => $totalOrdered,
                 'total_paid' => $totalPaid,
-                'balance' => $totalOrdered - $totalPaid,
+                'total_adjusted' => $totalAdjusted,
+                'balance' => $totalOrdered - $totalPaid - $totalAdjusted,
                 'timeline' => $timeline,
             ];
         }
@@ -108,38 +119,48 @@ class SupplierStatementService
     }
 
     /**
-     * @return list<list<string|float>>
+     * @return list<list<string>>
      */
     public function toCsvRows(array $statement): array
     {
-        $rows = [['العملة', 'النوع', 'التاريخ', 'المرجع', 'المبلغ', 'الرصيد التراكمي']];
+        $rows = [['العملة', 'التاريخ', 'البيان', 'المبلغ']];
 
         foreach ($statement as $currency => $section) {
-            $running = 0.0;
-
-            foreach ($section['purchase_orders'] as $po) {
-                $running += (float) $po->total_amount;
-                $rows[] = [
-                    $currency,
-                    'أمر شراء',
-                    $po->document_date->format('Y-m-d'),
-                    $po->legacy_po_no ?? "#{$po->id}",
-                    number_format((float) $po->total_amount, 2),
-                    number_format($running, 2),
-                ];
+            foreach ($section['timeline'] ?? [] as $event) {
+                if ($event['type'] === 'purchase_order') {
+                    $po = $event['model'];
+                    $ref = $po->legacy_po_no ?? "#{$po->id}";
+                    $rows[] = [
+                        $currency,
+                        $event['date']->format('Y-m-d'),
+                        "أمر شراء {$ref}",
+                        '+'.number_format((float) $event['amount'], 2, '.', ''),
+                    ];
+                } elseif ($event['type'] === 'payment') {
+                    $pay = $event['model'];
+                    $ref = $pay->bank_reference ?? "#{$pay->id}";
+                    $rows[] = [
+                        $currency,
+                        $event['date']->format('Y-m-d'),
+                        "دفعة {$ref}",
+                        '-'.number_format((float) $event['amount'], 2, '.', ''),
+                    ];
+                } else {
+                    $adj = $event['model'];
+                    $rows[] = [
+                        $currency,
+                        $event['date']->format('Y-m-d'),
+                        'تسوية #'.$adj->id.' ('.$adj->typeLabel().')',
+                        '-'.number_format((float) $event['amount'], 2, '.', ''),
+                    ];
+                }
             }
 
-            foreach ($section['payments'] as $pay) {
-                $running -= (float) $pay->amount;
-                $rows[] = [
-                    $currency,
-                    'دفعة',
-                    $pay->paid_at->format('Y-m-d'),
-                    $pay->bank_reference ?? "#{$pay->id}",
-                    number_format((float) $pay->amount, 2),
-                    number_format($running, 2),
-                ];
-            }
+            $rows[] = [$currency, '', 'إجمالي أوامر الشراء', number_format((float) $section['total_ordered'], 2, '.', '')];
+            $rows[] = [$currency, '', 'إجمالي الدفعات', number_format((float) $section['total_paid'], 2, '.', '')];
+            $rows[] = [$currency, '', 'إجمالي التسويات', number_format((float) $section['total_adjusted'], 2, '.', '')];
+            $rows[] = [$currency, '', 'المتبقي للمورد', number_format((float) $section['balance'], 2, '.', '')];
+            $rows[] = ['', '', '', ''];
         }
 
         return $rows;

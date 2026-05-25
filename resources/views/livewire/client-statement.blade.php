@@ -5,7 +5,13 @@
             <h1 class="text-2xl font-bold text-[#3D3D3D]">كشف حساب</h1>
             <p class="text-[#C9A227] font-semibold mt-1">{{ $client->displayName() }}</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+            @if(auth()->user()->isAccountant())
+            <a href="{{ route('clients.adjustments.create', $client) }}" wire:navigate
+               class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium text-[#7C3AED]">
+                + تسوية على الذمة
+            </a>
+            @endif
             @can('exportStatement', $client)
             <button wire:click="exportCsv"
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium">
@@ -62,9 +68,13 @@
                 <span class="text-gray-600">إجمالي الفواتير</span>
                 <span class="font-mono font-semibold" dir="ltr">{{ number_format($section['total_invoiced'], 2) }} {{ $currency }}</span>
             </div>
-            <div class="flex justify-between text-sm mb-3">
+            <div class="flex justify-between text-sm mb-2">
                 <span class="text-gray-600">إجمالي الدفعات</span>
                 <span class="font-mono font-semibold text-[#16A34A]" dir="ltr">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
+            </div>
+            <div class="flex justify-between text-sm mb-3">
+                <span class="text-gray-600">إجمالي التسويات</span>
+                <span class="font-mono font-semibold text-[#7C3AED]" dir="ltr">{{ number_format($section['total_adjusted'], 2) }} {{ $currency }}</span>
             </div>
             <div class="border-t border-[#E0E0E0] pt-3 flex justify-between font-bold">
                 <span>الرصيد المستحق</span>
@@ -72,7 +82,7 @@
                     {{ number_format($section['balance'], 2) }} {{ $currency }}
                 </span>
             </div>
-            <p class="text-xs text-gray-400 mt-2">الرصيد = إجمالي الفواتير − إجمالي الدفعات</p>
+            <p class="text-xs text-gray-400 mt-2">الرصيد = الفواتير − الدفعات − التسويات</p>
         </div>
 
         {{-- حركة الحساب: فواتير (مع البنود) + دفعات --}}
@@ -159,7 +169,7 @@
                                     </td>
                                 </tr>
                                 @endif
-                            @else
+                            @elseif($event['type'] === 'payment')
                                 @php
                                     $pay = $event['model'];
                                     $payRef = $pay->bank_reference ?? ('#'.$pay->id);
@@ -182,6 +192,24 @@
                                             <a href="{{ route('payments.edit', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                                             @endif
                                         </div>
+                                    </td>
+                                </tr>
+                            @else
+                                @php $adj = $event['model']; @endphp
+                                <tr class="bg-[#F5F3FF] border-b border-[#E0E0E0]">
+                                    <td class="px-3 py-2 text-gray-600" dir="ltr">{{ $event['date']->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2">
+                                        <span class="font-semibold text-[#7C3AED]">تسوية #{{ $adj->id }}</span>
+                                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded mr-2">{{ $adj->typeLabel() }}</span>
+                                        @if($adj->reason)
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ $adj->reason }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2 font-mono font-semibold text-[#7C3AED]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>
+                                    <td class="px-3 py-2">
+                                        @if(auth()->user()->isAccountant())
+                                        <a href="{{ route('clients.adjustments.edit', [$client, $adj]) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endif

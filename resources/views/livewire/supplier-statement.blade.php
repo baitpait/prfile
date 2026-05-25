@@ -4,7 +4,13 @@
             <h1 class="text-2xl font-bold text-[#3D3D3D]">كشف حساب مورد</h1>
             <p class="text-[#C9A227] font-semibold mt-1">{{ $supplier->displayName() }}</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+            @if(auth()->user()->isAccountant())
+            <a href="{{ route('suppliers.adjustments.create', $supplier) }}" wire:navigate
+               class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium text-[#7C3AED]">
+                + تسوية على الذمة
+            </a>
+            @endif
             @can('exportStatement', $supplier)
             <button wire:click="exportCsv"
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium">
@@ -48,18 +54,30 @@
     @php $payMethods = ['cash' => 'نقداً', 'bank' => 'بنك', 'check' => 'شيك', 'transfer' => 'تحويل']; @endphp
     <div class="mb-8" id="currency-{{ $currency }}">
 
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-bold text-[#3D3D3D]">
-                عملة:
-                <span dir="ltr" class="text-[#C9A227] font-mono">{{ $currency }}</span>
-            </h2>
-            <span class="text-sm font-medium {{ $section['balance'] > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]' }}">
-                المتبقي للمورد:
-                <span dir="ltr" class="font-mono font-bold">
-                    {{ number_format($section['balance'], 2) }}
-                    {{ $currency }}
+        <h2 class="text-lg font-bold text-[#3D3D3D] mb-3">
+            عملة: <span dir="ltr" class="text-[#C9A227] font-mono">{{ $currency }}</span>
+        </h2>
+
+        <div class="bg-[#FAFAFA] border border-[#E0E0E0] rounded-lg p-4 mb-4 max-w-md">
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">إجمالي أوامر الشراء</span>
+                <span class="font-mono font-semibold" dir="ltr">{{ number_format($section['total_ordered'], 2) }} {{ $currency }}</span>
+            </div>
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">إجمالي الدفعات</span>
+                <span class="font-mono font-semibold text-[#16A34A]" dir="ltr">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
+            </div>
+            <div class="flex justify-between text-sm mb-3">
+                <span class="text-gray-600">إجمالي التسويات</span>
+                <span class="font-mono font-semibold text-[#7C3AED]" dir="ltr">{{ number_format($section['total_adjusted'], 2) }} {{ $currency }}</span>
+            </div>
+            <div class="border-t border-[#E0E0E0] pt-3 flex justify-between font-bold">
+                <span>المتبقي للمورد</span>
+                <span class="font-mono {{ $section['balance'] > 0 ? 'text-[#DC2626]' : ($section['balance'] < 0 ? 'text-[#16A34A]' : 'text-[#3D3D3D]') }}" dir="ltr">
+                    {{ number_format($section['balance'], 2) }} {{ $currency }}
                 </span>
-            </span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">المتبقي = أوامر الشراء − الدفعات − التسويات</p>
         </div>
 
         @if(!empty($section['timeline']))
@@ -146,7 +164,7 @@
                                     </td>
                                 </tr>
                                 @endif
-                            @else
+                            @elseif($event['type'] === 'payment')
                                 @php
                                     $pay = $event['model'];
                                     $payRef = $pay->bank_reference ?? ('#'.$pay->id);
@@ -157,21 +175,28 @@
                                     <td class="px-3 py-2">
                                         <span class="font-semibold text-[#3D3D3D]">دفعة {{ $payRef }}</span>
                                         <span class="text-xs text-gray-500 mr-2">({{ $methodLabel }})</span>
-                                        @if($pay->notes)
-                                        <p class="text-xs text-gray-400 mt-0.5">{{ $pay->notes }}</p>
-                                        @endif
                                     </td>
-                                    <td class="px-3 py-2 font-mono font-semibold text-[#DC2626]" dir="ltr">({{ number_format($event['amount'], 2) }})</td>
-                                    <td class="px-3 py-2 font-mono font-bold {{ $event['running_balance'] > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]' }}" dir="ltr">
-                                        {{ number_format($event['running_balance'], 2) }}
-                                    </td>
+                                    <td class="px-3 py-2 font-mono font-semibold text-[#16A34A]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>
+                                    <td class="px-3 py-2 font-mono font-bold" dir="ltr">{{ number_format($event['running_balance'], 2) }}</td>
                                     <td class="px-3 py-2">
-                                        <div class="flex items-center gap-1 justify-end flex-wrap">
-                                            <a href="{{ route('supplier-payments.show', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
-                                            @if(auth()->user()->isAccountant())
-                                            <a href="{{ route('supplier-payments.edit', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
-                                            @endif
-                                        </div>
+                                        <a href="{{ route('supplier-payments.show', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500" style="text-decoration:none;">عرض</a>
+                                    </td>
+                                </tr>
+                            @else
+                                @php $adj = $event['model']; @endphp
+                                <tr class="bg-[#F5F3FF] border-b border-[#E0E0E0]">
+                                    <td class="px-3 py-2 text-gray-600" dir="ltr">{{ $event['date']->format('Y-m-d') }}</td>
+                                    <td class="px-3 py-2">
+                                        <span class="font-semibold text-[#7C3AED]">تسوية #{{ $adj->id }}</span>
+                                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded mr-2">{{ $adj->typeLabel() }}</span>
+                                        @if($adj->reason)<p class="text-xs text-gray-500 mt-0.5">{{ $adj->reason }}</p>@endif
+                                    </td>
+                                    <td class="px-3 py-2 font-mono font-semibold text-[#7C3AED]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>
+                                    <td class="px-3 py-2 font-mono font-bold" dir="ltr">{{ number_format($event['running_balance'], 2) }}</td>
+                                    <td class="px-3 py-2">
+                                        @if(auth()->user()->isAccountant())
+                                        <a href="{{ route('suppliers.adjustments.edit', [$supplier, $adj]) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600" style="text-decoration:none;">تعديل</a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endif
@@ -188,25 +213,6 @@
             </div>
         </div>
         @endif
-
-        <div class="flex justify-end">
-            <div class="bg-white border border-[#E0E0E0] rounded p-4 min-w-64">
-                <div class="flex justify-between text-sm mb-1">
-                    <span>إجمالي أوامر الشراء</span>
-                    <span class="font-mono" dir="ltr">{{ number_format($section['total_ordered'], 2) }} {{ $currency }}</span>
-                </div>
-                <div class="flex justify-between text-sm mb-2">
-                    <span>إجمالي الدفعات</span>
-                    <span class="font-mono text-[#16A34A]" dir="ltr">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
-                </div>
-                <div class="border-t border-[#E0E0E0] pt-2 flex justify-between font-bold">
-                    <span>المتبقي للمورد</span>
-                    <span class="font-mono {{ $section['balance'] > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]' }}" dir="ltr">
-                        {{ number_format($section['balance'], 2) }} {{ $currency }}
-                    </span>
-                </div>
-            </div>
-        </div>
     </div>
     @endforeach
 

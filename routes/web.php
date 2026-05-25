@@ -6,6 +6,7 @@ use App\Http\Controllers\ClientPaymentPrintController;
 use App\Http\Controllers\InvoicePrintController;
 use App\Http\Controllers\SupplierStatementController;
 use App\Models\Client;
+use App\Models\ClientBalanceAdjustment;
 use App\Models\ClientPayment;
 use App\Models\Expense;
 use App\Models\Invoice;
@@ -13,6 +14,7 @@ use App\Models\LegacyCatalogProduct;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\SupplierBalanceAdjustment;
 use App\Models\SupplierPayment;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/clients', fn () => view('clients.index'))->name('clients.index');
     Route::get('/clients/{client}/statement', [ClientStatementController::class, 'show'])->name('clients.statement');
     Route::get('/clients/{client}/statement/pdf', [ClientStatementController::class, 'pdf'])->name('clients.statement.pdf');
+    Route::get('/clients/{client}/adjustments/create', function (Client $client) {
+        abort_unless(auth()->user()->can('create', ClientBalanceAdjustment::class), 403);
+
+        return view('clients.adjustments.create', compact('client'));
+    })->name('clients.adjustments.create');
+    Route::get('/clients/{client}/adjustments/{adjustment}/edit', function (Client $client, ClientBalanceAdjustment $adjustment) {
+        abort_unless($adjustment->client_id === $client->id, 404);
+        abort_unless(auth()->user()->can('update', $adjustment), 403);
+
+        return view('clients.adjustments.edit', compact('client', 'adjustment'));
+    })->name('clients.adjustments.edit');
+    Route::delete('/clients/{client}/adjustments/{adjustment}', function (Client $client, ClientBalanceAdjustment $adjustment) {
+        abort_unless($adjustment->client_id === $client->id, 404);
+        abort_unless(auth()->user()->can('delete', $adjustment), 403);
+        $adjustment->delete();
+
+        return redirect()->route('clients.statement', $client)->with('toast', 'تم حذف التسوية');
+    })->name('clients.adjustments.destroy');
 
     Route::get('/products', fn () => view('products.index'))->name('products.index');
     Route::get('/products/create', function () {
@@ -146,6 +166,17 @@ Route::middleware(['auth'])->group(function () {
         ->where('any', '[0-9]+')
         ->name('income-entries.destroy');
 
+    Route::get('/client-adjustments', function () {
+        abort_unless(auth()->user()->isAccountant(), 403);
+
+        return view('client-adjustments.index');
+    })->name('client-adjustments.index');
+    Route::get('/supplier-adjustments', function () {
+        abort_unless(auth()->user()->isAccountant(), 403);
+
+        return view('supplier-adjustments.index');
+    })->name('supplier-adjustments.index');
+
     Route::get('/payments', fn () => view('payments.index'))->name('payments.index');
     Route::get('/payments/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
@@ -195,6 +226,24 @@ Route::middleware(['auth'])->group(function () {
     })->name('suppliers.create');
     Route::get('/suppliers/{supplier}/statement', [SupplierStatementController::class, 'show'])->name('suppliers.statement');
     Route::get('/suppliers/{supplier}/statement/pdf', [SupplierStatementController::class, 'pdf'])->name('suppliers.statement.pdf');
+    Route::get('/suppliers/{supplier}/adjustments/create', function (Supplier $supplier) {
+        abort_unless(auth()->user()->can('create', SupplierBalanceAdjustment::class), 403);
+
+        return view('suppliers.adjustments.create', compact('supplier'));
+    })->name('suppliers.adjustments.create');
+    Route::get('/suppliers/{supplier}/adjustments/{adjustment}/edit', function (Supplier $supplier, SupplierBalanceAdjustment $adjustment) {
+        abort_unless($adjustment->supplier_id === $supplier->id, 404);
+        abort_unless(auth()->user()->can('update', $adjustment), 403);
+
+        return view('suppliers.adjustments.edit', compact('supplier', 'adjustment'));
+    })->name('suppliers.adjustments.edit');
+    Route::delete('/suppliers/{supplier}/adjustments/{adjustment}', function (Supplier $supplier, SupplierBalanceAdjustment $adjustment) {
+        abort_unless($adjustment->supplier_id === $supplier->id, 404);
+        abort_unless(auth()->user()->can('delete', $adjustment), 403);
+        $adjustment->delete();
+
+        return redirect()->route('suppliers.statement', $supplier)->with('toast', 'تم حذف التسوية');
+    })->name('suppliers.adjustments.destroy');
     Route::get('/suppliers/{supplier}/edit', function (Supplier $supplier) {
         abort_unless(auth()->user()->isAccountant(), 403);
 

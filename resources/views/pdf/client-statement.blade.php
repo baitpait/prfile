@@ -267,6 +267,10 @@ body {
             <span>إجمالي الدفعات</span>
             <span>{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
         </div>
+        <div class="summary-row">
+            <span>إجمالي التسويات</span>
+            <span>{{ number_format($section['total_adjusted'], 2) }} {{ $currency }}</span>
+        </div>
         <div class="summary-row summary-total">
             <span>الرصيد المستحق</span>
             <span>{{ number_format($section['balance'], 2) }} {{ $currency }}</span>
@@ -330,24 +334,25 @@ body {
             </tr>
             @endif
 
-            @else
-            {{-- ===== صف الدفعة ===== --}}
+            @elseif($event['type'] === 'payment')
             @php
                 $pay = $event['model'];
-                $payNo = $pay->bank_reference ?? ('#' . str_pad($pay->id, 6, '0', STR_PAD_LEFT));
+                $payNo = $pay->bank_reference ?? ('#'.$pay->id);
                 $methodLabel = $methods[$pay->method] ?? $pay->method ?? '';
             @endphp
             <tr class="row-payment">
                 <td class="ltr" style="font-size:8.5pt;">{{ $event['date']->format('d/m/Y') }}</td>
                 <td>
-                    <span class="pay-desc">
-                        عملية الدفع {{ $payNo }}#
-                        @if($methodLabel) ({{ $methodLabel }})@endif
-                    </span>
+                    <span class="pay-desc">دفعة {{ $payNo }}@if($methodLabel) ({{ $methodLabel }})@endif</span>
                 </td>
-                <td class="ltr amt-negative">
-                    −{{ number_format($event['amount'], 2) }}
-                </td>
+                <td class="ltr amt-negative">−{{ number_format($event['amount'], 2) }}</td>
+            </tr>
+            @else
+            @php $adj = $event['model']; @endphp
+            <tr class="row-payment" style="background:#F5F3FF;">
+                <td class="ltr" style="font-size:8.5pt;">{{ $event['date']->format('d/m/Y') }}</td>
+                <td>تسوية #{{ $adj->id }} ({{ $adj->typeLabel() }})@if($adj->reason) — {{ $adj->reason }}@endif</td>
+                <td class="ltr" style="color:#7C3AED;font-weight:bold;">−{{ number_format($event['amount'], 2) }}</td>
             </tr>
             @endif
 

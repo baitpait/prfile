@@ -28,19 +28,51 @@
   }
 
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     margin-bottom: 28px;
-    padding-bottom: 20px;
+    padding-bottom: 0;
     border-bottom: 3px solid #C9A227;
   }
 
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand img { width: 64px; height: 64px; object-fit: contain; }
-  .brand-text { line-height: 1.4; }
-  .brand-name { font-size: 15px; font-weight: 700; color: #3D3D3D; }
-  .brand-sub  { font-size: 11px; color: #888; margin-top: 2px; }
+  .header-row {
+    display: flex;
+    flex-direction: row;
+    direction: ltr;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .header-side-doc {
+    flex: 0 0 auto;
+    min-width: 120px;
+    text-align: left;
+  }
+
+  .header-logo {
+    flex: 0 0 auto;
+    text-align: center;
+  }
+
+  .header-logo img {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .header-side-brand {
+    flex: 0 0 auto;
+    min-width: 200px;
+    max-width: 260px;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .brand-text { line-height: 1.5; }
+  .brand-name { font-size: 16px; font-weight: 700; color: #3D3D3D; }
+  .brand-sub  { font-size: 12px; color: #888; margin-top: 4px; }
 
   .doc-title {
     font-size: 36px;
@@ -52,8 +84,8 @@
   .doc-subtitle {
     font-size: 12px;
     color: #666;
-    text-align: left;
     margin-top: 4px;
+    text-align: left;
   }
 
   .info-row {
@@ -227,16 +259,20 @@
 <div class="page">
 
   <div class="header">
-    <div class="brand">
-      <img src="{{ asset('branding/logo.png') }}" alt="Logo" onerror="this.style.display='none'">
-      <div class="brand-text">
-        <div class="brand-name">{{ $appName }}</div>
-        <div class="brand-sub">وكالة إعلام وإنتاج</div>
+    <div class="header-row">
+      <div class="header-side-doc">
+        <div class="doc-title">سند قبض</div>
+        <div class="doc-subtitle">Receipt Voucher</div>
       </div>
-    </div>
-    <div>
-      <div class="doc-title">سند قبض</div>
-      <div class="doc-subtitle">Receipt Voucher</div>
+      <div class="header-logo">
+        <img src="{{ asset('branding/logo.png') }}" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="header-side-brand">
+        <div class="brand-text">
+          <div class="brand-name">{{ $appName }}</div>
+          <div class="brand-sub">شركة إنتاج إعلامي وتسويق رقمي</div>
+        </div>
+      </div>
     </div>
   </div>
 

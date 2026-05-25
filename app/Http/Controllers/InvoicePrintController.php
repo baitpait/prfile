@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Services\ClientStatementService;
 
 class InvoicePrintController extends Controller
 {
@@ -11,12 +12,44 @@ class InvoicePrintController extends Controller
         $invoice->load(['lines', 'client']);
 
         $client = $invoice->client;
+        $currencyCode = $invoice->currency_code ?? 'ILS';
+        $clientBalanceDue = $this->clientBalanceDue($client, $currencyCode, $invoice);
+
         $amountInWords = $this->toArabicWords(
             (float) $invoice->total_amount,
-            $invoice->currency_code ?? 'ILS'
+            $currencyCode
         );
 
-        return view('invoices.print', compact('invoice', 'client', 'amountInWords'));
+        return view('invoices.print', compact('invoice', 'client', 'amountInWords', 'clientBalanceDue'));
+    }
+
+    /**
+     * Business Purpose: On print, show total amount due only when the client had prior balance
+     * in this currency (not only the current invoice).
+     */
+    private function clientBalanceDue(?\App\Models\Client $client, string $currencyCode, Invoice $invoice): ?float
+    {
+        if ($client === null) {
+            return null;
+        }
+
+        $statement = (new ClientStatementService)->forClient($client);
+        $balance = (float) ($statement[$currencyCode]['balance'] ?? 0);
+
+        if ($balance <= 0.00001) {
+            return null;
+        }
+
+        $priorBalance = $balance;
+        if ($invoice->status === 'issued' && $invoice->currency_code === $currencyCode) {
+            $priorBalance = $balance - (float) $invoice->total_amount;
+        }
+
+        if ($priorBalance <= 0.00001) {
+            return null;
+        }
+
+        return round($balance, 2);
     }
 
     private function toArabicWords(float $amount, string $currency): string

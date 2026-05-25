@@ -24,13 +24,17 @@ class PaymentForm extends Component
 
     public string $notes = '';
 
+    public string $clientSearch = '';
+
     public function mount(?ClientPayment $payment = null): void
     {
         abort_unless(auth()->user()->isAccountant(), 403);
 
         if ($payment && $payment->exists) {
+            $payment->loadMissing('client');
             $this->recordId = $payment->id;
             $this->client_id = (string) $payment->client_id;
+            $this->clientSearch = $payment->client?->displayName() ?? '';
             $this->amount = (string) $payment->amount;
             $this->currency_code = $payment->currency_code ?? 'ILS';
             $this->paid_at = $payment->paid_at?->format('Y-m-d') ?? '';
@@ -40,8 +44,12 @@ class PaymentForm extends Component
         } else {
             $this->paid_at = now()->format('Y-m-d');
             $prefillClientId = request()->integer('client');
-            if ($prefillClientId > 0 && Client::query()->whereKey($prefillClientId)->exists()) {
-                $this->client_id = (string) $prefillClientId;
+            if ($prefillClientId > 0) {
+                $prefill = Client::query()->whereKey($prefillClientId)->whereNull('deleted_at')->first();
+                if ($prefill !== null) {
+                    $this->client_id = (string) $prefill->id;
+                    $this->clientSearch = $prefill->displayName();
+                }
             }
         }
     }
@@ -77,10 +85,51 @@ class PaymentForm extends Component
         $this->redirect(route('payments.index'), navigate: true);
     }
 
+    /**
+     * Business Purpose: Narrow client dropdown while typing name, phone, or email on payment form.
+     *
+     * @return \Illuminate\Support\Collection<int, Client>
+     */
+    protected function clientsForSelect()
+    {
+        $query = Client::query()
+            ->whereNull('deleted_at')
+            ->orderBy('business_name')
+            ->orderBy('first_name')
+            ->orderBy('id');
+
+        $term = trim($this->clientSearch);
+        if ($term !== '') {
+            $like = '%'.$term.'%';
+            $query->where(function ($q) use ($like): void {
+                $q->where('business_name', 'like', $like)
+                    ->orWhere('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)
+                    ->orWhere('phone_primary', 'like', $like)
+                    ->orWhere('phone_secondary', 'like', $like)
+                    ->orWhere('email', 'like', $like);
+            });
+        }
+
+        $clients = $query->limit(80)->get();
+
+        if ($this->client_id !== '') {
+            $selectedId = (int) $this->client_id;
+            if ($selectedId > 0 && ! $clients->contains('id', $selectedId)) {
+                $selected = Client::query()->whereKey($selectedId)->whereNull('deleted_at')->first();
+                if ($selected !== null) {
+                    $clients->prepend($selected);
+                }
+            }
+        }
+
+        return $clients;
+    }
+
     public function render()
     {
         return view('livewire.payment-form', [
-            'clients' => Client::orderBy('business_name')->orderBy('first_name')->get(),
+            'clients' => $this->clientsForSelect(),
         ]);
     }
 }

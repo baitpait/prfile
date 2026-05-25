@@ -26,24 +26,66 @@
     padding: 40px 45px;
     box-shadow: 0 2px 20px rgba(0,0,0,.12);
     position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* ── Header ── */
+  .page-print-date {
+    margin-top: auto;
+    padding-top: 16px;
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+    direction: ltr;
+  }
+
+  /* ── Header: فاتورة يسار | شعار وسط | بيانات الشركة يمين ── */
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     margin-bottom: 28px;
-    padding-bottom: 20px;
+    padding-bottom: 0;
     border-bottom: 3px solid #C9A227;
   }
 
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand img { width: 64px; height: 64px; object-fit: contain; }
-  .brand-text { line-height: 1.4; }
-  .brand-name { font-size: 15px; font-weight: 700; color: #3D3D3D; }
-  .brand-sub  { font-size: 11px; color: #888; margin-top: 2px; }
-  .brand-wa   { font-size: 11px; color: #C9A227; margin-top: 2px; direction: ltr; }
+  .header-row {
+    display: flex;
+    flex-direction: row;
+    direction: ltr;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .header-side-invoice {
+    flex: 0 0 auto;
+    min-width: 120px;
+    text-align: left;
+  }
+
+  .header-logo {
+    flex: 0 0 auto;
+    text-align: center;
+  }
+
+  .header-logo img {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .header-side-brand {
+    flex: 0 0 auto;
+    min-width: 200px;
+    max-width: 260px;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .brand-text { line-height: 1.5; }
+  .brand-name { font-size: 16px; font-weight: 700; color: #3D3D3D; }
+  .brand-sub  { font-size: 12px; color: #888; margin-top: 4px; }
 
   .invoice-title {
     font-size: 42px;
@@ -157,8 +199,8 @@
   tbody td.num { text-align: left; direction: ltr; font-weight: 600; }
   tbody td.center { text-align: center; }
 
-  .line-title { font-weight: 600; color: #3D3D3D; margin-bottom: 2px; }
-  .line-desc  { font-size: 11px; color: #888; }
+  .line-title { font-weight: 600; color: #3D3D3D; }
+  .line-desc  { font-size: 11px; color: #666; }
 
   /* ── Totals ── */
   .totals-section {
@@ -180,8 +222,7 @@
 
   .totals-table td:last-child { text-align: left; direction: ltr; font-weight: 600; }
   .totals-table .grand td { font-weight: 800; font-size: 15px; color: #C9A227; border-top: 2px solid #C9A227; border-bottom: 2px solid #C9A227; }
-  .totals-table .paid-row td { color: #16a34a; }
-  .totals-table .balance-row td { color: #dc2626; font-weight: 800; }
+  .totals-table .balance-due-row td { color: #dc2626; font-weight: 800; font-size: 14px; }
 
   /* ── Amount words ── */
   .amount-words {
@@ -202,9 +243,40 @@
     padding-top: 14px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     font-size: 11px;
     color: #aaa;
+  }
+
+  .footer-main {
+    direction: rtl;
+    text-align: right;
+    line-height: 1.65;
+  }
+
+  .footer-thanks {
+    color: #888;
+    font-size: 11px;
+  }
+
+  .footer-contact-block {
+    direction: rtl;
+    text-align: left;
+    line-height: 1.65;
+  }
+
+  .footer-contact {
+    color: #666;
+    font-size: 11px;
+  }
+
+  .footer-phone {
+    margin-top: 4px;
+    color: #C9A227;
+    font-weight: 700;
+    font-size: 13px;
+    direction: ltr;
+    text-align: left;
   }
 
   /* ── Print button (screen only) ── */
@@ -241,15 +313,20 @@
 
   {{-- ── Header ── --}}
   <div class="header">
-    <div class="brand">
-      <img src="{{ asset('branding/logo.png') }}" alt="Logo">
-      <div class="brand-text">
-        <div class="brand-name">Profile Media Prodution</div>
-        <div class="brand-sub">وكالة إعلام وإنتاج</div>
-        <div class="brand-wa" dir="ltr">WhatsApp: 0569224006</div>
+    <div class="header-row">
+      <div class="header-side-invoice">
+        <div class="invoice-title">فاتورة</div>
+      </div>
+      <div class="header-logo">
+        <img src="{{ asset('branding/logo.png') }}" alt="Logo">
+      </div>
+      <div class="header-side-brand">
+        <div class="brand-text">
+          <div class="brand-name">Profile Media Prodution</div>
+          <div class="brand-sub">شركة إنتاج إعلامي وتسويق رقمي</div>
+        </div>
       </div>
     </div>
-    <div class="invoice-title">فاتورة</div>
   </div>
 
   {{-- ── Info boxes ── --}}
@@ -301,7 +378,8 @@
     <thead>
       <tr>
         <th style="width:36px">#</th>
-        <th>البند / الوصف</th>
+        <th>البند</th>
+        <th>الوصف</th>
         <th style="width:100px">سعر الوحدة</th>
         <th style="width:70px; text-align:center">الكمية</th>
         <th style="width:110px">المجموع</th>
@@ -311,10 +389,8 @@
       @foreach($invoice->lines as $line)
       <tr>
         <td class="center" style="color:#aaa">{{ $loop->iteration }}</td>
-        <td>
-          <div class="line-title">{{ $line->title }}</div>
-          @if($line->description)<div class="line-desc">{{ $line->description }}</div>@endif
-        </td>
+        <td class="line-title">{{ $line->title }}</td>
+        <td class="line-desc">{{ $line->description ?: '—' }}</td>
         <td class="num">{{ number_format((float)$line->unit_price, 2) }}</td>
         <td class="center">{{ rtrim(rtrim(number_format((float)$line->quantity, 2), '0'), '.') }}</td>
         <td class="num">{{ number_format((float)$line->line_total, 2) }}</td>
@@ -331,6 +407,12 @@
         <td>مجموع الفاتورة</td>
         <td>{{ number_format((float) $invoice->total_amount, 2) }} {{ $invoice->currency_code }}</td>
       </tr>
+      @if($clientBalanceDue !== null)
+      <tr class="balance-due-row">
+        <td>المبلغ المستحق</td>
+        <td>{{ number_format((float) $clientBalanceDue, 2) }} {{ $invoice->currency_code }}</td>
+      </tr>
+      @endif
     </table>
   </div>
 
@@ -345,9 +427,16 @@
 
   {{-- ── Footer ── --}}
   <div class="footer">
-    <span>Profile Media Prodution — شكراً لثقتكم</span>
-    <span dir="ltr">{{ now()->format('Y-m-d') }}</span>
+    <div class="footer-main">
+      <div class="footer-thanks">Profile Media Prodution — شكراً لثقتكم</div>
+    </div>
+    <div class="footer-contact-block">
+      <div class="footer-contact">لاستفساراتكم تواصل معنا على الرقم</div>
+      <div class="footer-phone">0569224006</div>
+    </div>
   </div>
+
+  <div class="page-print-date">تاريخ الطباعة: {{ now()->format('Y-m-d') }}</div>
 
 </div>
 

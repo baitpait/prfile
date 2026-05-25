@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltersClientsForSelect;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
@@ -13,9 +14,13 @@ use Livewire\Component;
 
 class InvoiceForm extends Component
 {
+    use FiltersClientsForSelect;
+
     public ?int $invoiceId = null;
 
     public string $client_id = '';
+
+    public string $clientSearch = '';
 
     public string $legacy_invoice_no = '';
 
@@ -61,9 +66,10 @@ class InvoiceForm extends Component
 
         if ($invoice && $invoice->exists) {
             Gate::authorize('update', $invoice);
-            $invoice->load(['lines.product']);
+            $invoice->load(['lines.product', 'client']);
             $this->invoiceId = $invoice->id;
             $this->client_id = (string) $invoice->client_id;
+            $this->clientSearch = $invoice->client?->displayName() ?? '';
             $this->legacy_invoice_no = $invoice->legacy_invoice_no ?? '';
             $this->document_date = $invoice->document_date?->format('Y-m-d') ?? '';
             $this->due_date = $invoice->due_date?->format('Y-m-d') ?? '';
@@ -84,10 +90,7 @@ class InvoiceForm extends Component
         } else {
             Gate::authorize('create', Invoice::class);
             $this->document_date = now()->format('Y-m-d');
-            $prefillClientId = request()->integer('client');
-            if ($prefillClientId > 0 && Client::query()->whereKey($prefillClientId)->exists()) {
-                $this->client_id = (string) $prefillClientId;
-            }
+            $this->prefillClientSelect(request()->integer('client'));
         }
 
         if (count($this->lines) === 0) {
@@ -470,13 +473,11 @@ class InvoiceForm extends Component
 
     public function render()
     {
-        $clients = Client::orderBy('business_name')->orderBy('first_name')->get();
-
         $hasTitledLines = collect($this->lines)
             ->contains(fn ($l) => trim((string) ($l['title'] ?? '')) !== '');
 
         return view('livewire.invoice-form', [
-            'clients' => $clients,
+            'clients' => $this->clientsForSelect(),
             'subtotal' => collect($this->lines)
                 ->filter(fn ($l) => trim((string) ($l['title'] ?? '')) !== '')
                 ->sum(fn ($l) => (float) ($l['line_total'] ?? 0)),

@@ -110,7 +110,7 @@ test('manager can delete a payment', function () {
     $this->assertTrue($this->manager->can('delete', $payment));
 });
 
-// CSV يعيد نفس الأرقام الظاهرة
+// CSV يعيد نفس الأرقام والترتيب الزمني مع ملخص الفترة
 test('csv export rows match statement totals', function () {
     $client = Client::factory()->create();
 
@@ -133,17 +133,12 @@ test('csv export rows match statement totals', function () {
     $statement = $service->forClient($client);
     $rows = $service->toCsvRows($statement);
 
-    // الصف الأول هو الترويسة
     expect($rows[0])->toContain('العملة');
-
-    $invoiceRow = $rows[1];
-    expect($invoiceRow[0])->toBe('ILS');
-    expect($invoiceRow[1])->toBe('فاتورة');
-    expect($invoiceRow[4])->toBe('2,500.00');
-
-    $paymentRow = $rows[2];
-    expect($paymentRow[1])->toBe('دفعة');
-    expect($paymentRow[4])->toBe('1,000.00');
+    expect($rows[1][3])->toBe('+2500.00');
+    expect($rows[2][3])->toBe('-1000.00');
+    expect($rows[4][3])->toBe('1000.00');
+    expect($rows[5][2])->toContain('الرصيد المستحق');
+    expect($rows[5][3])->toBe('1500.00');
 });
 
 test('client statement page loads for viewer', function () {
@@ -177,12 +172,14 @@ test('client statement page shows invoice line details and actions', function ()
     $this->actingAs($this->accountant);
     $this->get(route('clients.statement', $client))
         ->assertOk()
+        ->assertSee('إجمالي الفواتير')
+        ->assertSee('إجمالي الدفعات')
+        ->assertSee('الرصيد المستحق')
         ->assertSee('حركة الحساب')
         ->assertSee('ERP-SALE-3')
         ->assertSee('حملة انتخابية')
-        ->assertSee('عرض')
-        ->assertSee('طباعة')
-        ->assertSee('تعديل');
+        ->assertSee('+1,600.00')
+        ->assertSee('المبلغ (ILS)');
 });
 
 test('viewer cannot download client statement pdf', function () {

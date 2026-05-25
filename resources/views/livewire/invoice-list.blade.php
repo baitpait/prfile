@@ -258,14 +258,13 @@
 
                 <p style="font-size:10px;font-weight:700;color:#9CA3AF;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;">معلومات الفاتورة</p>
 
-                <div>
-                    <label class="label">العميل <span class="text-red-400">*</span></label>
-                    <select wire:model="client_id" class="input select" style="font-size:12px;padding:6px 10px;">
-                        <option value="">— اختر —</option>
-                        @foreach($clients as $c)<option value="{{ $c->id }}">{{ $c->displayName() }}</option>@endforeach
-                    </select>
-                    @error('client_id')<p class="field-error">{{ $message }}</p>@enderror
-                </div>
+                @include('livewire.partials.client-select-with-search', [
+                    'clients' => $clients,
+                    'inputStyle' => 'font-size:12px;padding:6px 10px;',
+                    'selectStyle' => 'font-size:12px;padding:6px 10px;',
+                    'placeholder' => '— اختر —',
+                    'hintStyle' => 'font-size:10px;',
+                ])
 
                 <div style="display:flex;gap:8px;">
                     <div style="flex:1;">

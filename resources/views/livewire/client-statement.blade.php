@@ -11,7 +11,7 @@
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium">
                 تصدير CSV
             </button>
-            <a href="{{ route('clients.statement.pdf', $client) }}"
+            <a href="{{ route('clients.statement.pdf', $client) }}{{ ($dateFrom || $dateTo) ? '?'.http_build_query(array_filter(['date_from' => $dateFrom ?: null, 'date_to' => $dateTo ?: null])) : '' }}"
                target="_blank"
                class="px-4 py-2 text-sm bg-[#C9A227] text-white rounded hover:opacity-90 font-medium">
                 طباعة PDF
@@ -52,22 +52,30 @@
     @php $payMethods = ['cash' => 'نقداً', 'bank' => 'بنك', 'check' => 'شيك', 'transfer' => 'تحويل']; @endphp
     <div class="mb-8" id="currency-{{ $currency }}">
 
-        {{-- عنوان العملة --}}
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-bold text-[#3D3D3D]">
-                عملة:
-                <span dir="ltr" class="text-[#C9A227] font-mono">{{ $currency }}</span>
-            </h2>
-            <span class="text-sm font-medium {{ $section['balance'] > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]' }}">
-                الرصيد:
-                <span dir="ltr" class="font-mono font-bold">
-                    {{ number_format($section['balance'], 2) }}
-                    {{ $currency }}
+        <h2 class="text-lg font-bold text-[#3D3D3D] mb-3">
+            عملة: <span dir="ltr" class="text-[#C9A227] font-mono">{{ $currency }}</span>
+        </h2>
+
+        {{-- ملخص: إجمالي الفواتير − الدفعات --}}
+        <div class="bg-[#FAFAFA] border border-[#E0E0E0] rounded-lg p-4 mb-4 max-w-md">
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">إجمالي الفواتير</span>
+                <span class="font-mono font-semibold" dir="ltr">{{ number_format($section['total_invoiced'], 2) }} {{ $currency }}</span>
+            </div>
+            <div class="flex justify-between text-sm mb-3">
+                <span class="text-gray-600">إجمالي الدفعات</span>
+                <span class="font-mono font-semibold text-[#16A34A]" dir="ltr">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
+            </div>
+            <div class="border-t border-[#E0E0E0] pt-3 flex justify-between font-bold">
+                <span>الرصيد المستحق</span>
+                <span class="font-mono {{ $section['balance'] > 0 ? 'text-[#DC2626]' : ($section['balance'] < 0 ? 'text-[#16A34A]' : 'text-[#3D3D3D]') }}" dir="ltr">
+                    {{ number_format($section['balance'], 2) }} {{ $currency }}
                 </span>
-            </span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">الرصيد = إجمالي الفواتير − إجمالي الدفعات</p>
         </div>
 
-        {{-- حركة الحساب: فواتير (مع البنود) + دفعات — مطابق لـ PDF --}}
+        {{-- حركة الحساب: فواتير (مع البنود) + دفعات --}}
         @if(!empty($section['timeline']))
         <div class="mb-4">
             <h3 class="text-sm font-semibold text-[#3D3D3D] mb-2 bg-[#F5F5F5] px-3 py-1.5 rounded-t border border-[#E0E0E0]">
@@ -79,8 +87,7 @@
                         <tr>
                             <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0] w-28">التاريخ</th>
                             <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]">العملية</th>
-                            <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0] w-32" dir="ltr">المبلغ ({{ $currency }})</th>
-                            <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0] w-32" dir="ltr">الرصيد المستحق</th>
+                            <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0] w-36" dir="ltr">المبلغ ({{ $currency }})</th>
                             <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0] w-44"></th>
                         </tr>
                     </thead>
@@ -97,8 +104,7 @@
                                         <span class="font-bold text-[#3D3D3D]">فاتورة {{ $invNo }}</span>
                                         <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded mr-2">صادرة</span>
                                     </td>
-                                    <td class="px-3 py-2 font-mono font-semibold" dir="ltr">{{ number_format($event['amount'], 2) }}</td>
-                                    <td class="px-3 py-2 font-mono font-bold" dir="ltr">{{ number_format($event['running_balance'], 2) }}</td>
+                                    <td class="px-3 py-2 font-mono font-semibold" dir="ltr">+{{ number_format($event['amount'], 2) }}</td>
                                     <td class="px-3 py-2">
                                         <div class="flex items-center gap-1 justify-end flex-wrap">
                                             <a href="{{ route('invoices.show', $inv) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
@@ -111,7 +117,7 @@
                                 </tr>
                                 @if($inv->lines->isNotEmpty())
                                 <tr class="border-b border-[#E0E0E0]">
-                                    <td colspan="5" class="p-0">
+                                    <td colspan="4" class="p-0">
                                         <table class="w-full text-xs">
                                             <thead>
                                                 <tr class="bg-[#C9A227] text-white">
@@ -148,7 +154,7 @@
                                 @endif
                                 @if($inv->notes)
                                 <tr class="border-b border-[#E0E0E0] bg-amber-50/50">
-                                    <td colspan="5" class="px-3 py-2 text-xs text-amber-900">
+                                    <td colspan="4" class="px-3 py-2 text-xs text-amber-900">
                                         <span class="font-semibold">ملاحظات:</span> {{ $inv->notes }}
                                     </td>
                                 </tr>
@@ -168,10 +174,7 @@
                                         <p class="text-xs text-gray-400 mt-0.5">{{ $pay->notes }}</p>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-2 font-mono font-semibold text-[#DC2626]" dir="ltr">({{ number_format($event['amount'], 2) }})</td>
-                                    <td class="px-3 py-2 font-mono font-bold {{ $event['running_balance'] > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]' }}" dir="ltr">
-                                        {{ number_format($event['running_balance'], 2) }}
-                                    </td>
+                                    <td class="px-3 py-2 font-mono font-semibold text-[#16A34A]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>
                                     <td class="px-3 py-2">
                                         <div class="flex items-center gap-1 justify-end flex-wrap">
                                             <a href="{{ route('payments.show', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
@@ -184,37 +187,10 @@
                             @endif
                         @endforeach
                     </tbody>
-                    <tfoot>
-                        <tr class="bg-[#3D3D3D] text-white font-bold">
-                            <td colspan="3" class="px-3 py-2.5 text-right">رصيد نهاية المدة</td>
-                            <td class="px-3 py-2.5 font-mono" dir="ltr">{{ number_format($section['balance'], 2) }}</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
         @endif
-
-        {{-- ملخص العملة --}}
-        <div class="flex justify-end">
-            <div class="bg-white border border-[#E0E0E0] rounded p-4 min-w-64">
-                <div class="flex justify-between text-sm mb-1">
-                    <span>إجمالي الفواتير</span>
-                    <span class="font-mono" dir="ltr">{{ number_format($section['total_invoiced'], 2) }} {{ $currency }}</span>
-                </div>
-                <div class="flex justify-between text-sm mb-2">
-                    <span>إجمالي الدفعات</span>
-                    <span class="font-mono text-[#16A34A]" dir="ltr">{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
-                </div>
-                <div class="border-t border-[#E0E0E0] pt-2 flex justify-between font-bold">
-                    <span>الرصيد المستحق</span>
-                    <span class="font-mono {{ $section['balance'] > 0 ? 'text-[#DC2626]' : 'text-[#16A34A]' }}" dir="ltr">
-                        {{ number_format($section['balance'], 2) }} {{ $currency }}
-                    </span>
-                </div>
-            </div>
-        </div>
     </div>
     @endforeach
 

@@ -112,36 +112,40 @@ class ClientStatementService
         return $result;
     }
 
+    /**
+     * Business Purpose: Export movements in chronological order plus period totals (invoices − payments).
+     */
     public function toCsvRows(array $statement): array
     {
-        $rows = [['العملة', 'النوع', 'التاريخ', 'المرجع', 'المبلغ', 'الرصيد التراكمي']];
+        $rows = [['العملة', 'التاريخ', 'البيان', 'المبلغ']];
 
         foreach ($statement as $currency => $section) {
-            $running = 0.0;
-
-            foreach ($section['invoices'] as $inv) {
-                $running += (float) $inv->total_amount;
-                $rows[] = [
-                    $currency,
-                    'فاتورة',
-                    $inv->document_date->format('Y-m-d'),
-                    $inv->legacy_invoice_no ?? "#{$inv->id}",
-                    number_format((float) $inv->total_amount, 2),
-                    number_format($running, 2),
-                ];
+            foreach ($section['timeline'] ?? [] as $event) {
+                if ($event['type'] === 'invoice') {
+                    $inv = $event['model'];
+                    $ref = $inv->legacy_invoice_no ?? "#{$inv->id}";
+                    $rows[] = [
+                        $currency,
+                        $event['date']->format('Y-m-d'),
+                        "فاتورة {$ref}",
+                        '+'.number_format((float) $event['amount'], 2, '.', ''),
+                    ];
+                } else {
+                    $pay = $event['model'];
+                    $ref = $pay->bank_reference ?? "#{$pay->id}";
+                    $rows[] = [
+                        $currency,
+                        $event['date']->format('Y-m-d'),
+                        "دفعة {$ref}",
+                        '-'.number_format((float) $event['amount'], 2, '.', ''),
+                    ];
+                }
             }
 
-            foreach ($section['payments'] as $pay) {
-                $running -= (float) $pay->amount;
-                $rows[] = [
-                    $currency,
-                    'دفعة',
-                    $pay->paid_at->format('Y-m-d'),
-                    $pay->bank_reference ?? "#{$pay->id}",
-                    number_format((float) $pay->amount, 2),
-                    number_format($running, 2),
-                ];
-            }
+            $rows[] = [$currency, '', 'إجمالي الفواتير', number_format((float) $section['total_invoiced'], 2, '.', '')];
+            $rows[] = [$currency, '', 'إجمالي الدفعات', number_format((float) $section['total_paid'], 2, '.', '')];
+            $rows[] = [$currency, '', 'الرصيد المستحق (فواتير − دفعات)', number_format((float) $section['balance'], 2, '.', '')];
+            $rows[] = ['', '', '', ''];
         }
 
         return $rows;

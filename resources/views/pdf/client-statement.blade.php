@@ -191,6 +191,33 @@ body {
 
 /* currency section spacing */
 .currency-block { margin-bottom: 24pt; }
+
+.summary-box {
+    border: 1pt solid #CCCCCC;
+    background: #FAFAFA;
+    padding: 8pt 10pt;
+    margin-bottom: 10pt;
+    width: 58%;
+}
+.summary-row {
+    width: 100%;
+    font-size: 9.5pt;
+    margin-bottom: 4pt;
+    overflow: hidden;
+}
+.summary-row span:first-child { float: right; color: #555; }
+.summary-row span:last-child {
+    float: left;
+    direction: ltr;
+    font-weight: bold;
+}
+.summary-total {
+    border-top: 1pt solid #CCCCCC;
+    padding-top: 5pt;
+    margin-top: 5pt;
+    font-size: 11pt;
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -231,6 +258,21 @@ body {
 @foreach($statement as $currency => $section)
 <div class="currency-block">
 
+    <div class="summary-box">
+        <div class="summary-row">
+            <span>إجمالي الفواتير</span>
+            <span>{{ number_format($section['total_invoiced'], 2) }} {{ $currency }}</span>
+        </div>
+        <div class="summary-row">
+            <span>إجمالي الدفعات</span>
+            <span>{{ number_format($section['total_paid'], 2) }} {{ $currency }}</span>
+        </div>
+        <div class="summary-row summary-total">
+            <span>الرصيد المستحق</span>
+            <span>{{ number_format($section['balance'], 2) }} {{ $currency }}</span>
+        </div>
+    </div>
+
     <div class="section-title">حركة الحساب حتى {{ $printDate }}</div>
 
     <table class="main-table">
@@ -238,8 +280,7 @@ body {
             <tr>
                 <th style="width:70pt;">التاريخ</th>
                 <th>العملية</th>
-                <th style="width:80pt;" class="ltr">المبلغ {{ $currency }}</th>
-                <th style="width:80pt;" class="ltr">المبلغ المستحق</th>
+                <th style="width:90pt;" class="ltr">المبلغ ({{ $currency }})</th>
             </tr>
         </thead>
         <tbody>
@@ -252,18 +293,18 @@ body {
             {{-- رأس الفاتورة --}}
             <tr class="row-invoice-header">
                 <td class="ltr" style="font-size:8.5pt;">{{ $event['date']->format('d/m/Y') }}</td>
-                <td colspan="2">
-                    <span class="inv-number">فاتورة {{ $invNo }}#</span>
+                <td>
+                    <span class="inv-number">فاتورة {{ $invNo }}</span>
                 </td>
                 <td class="ltr" style="font-weight:bold;">
-                    {{ number_format($event['running_balance'], 2) }} ش.ج
+                    +{{ number_format($event['amount'], 2) }}
                 </td>
             </tr>
 
             {{-- بنود الفاتورة --}}
             @if($inv->lines->count() > 0)
             <tr class="row-invoice-lines">
-                <td colspan="4">
+                <td colspan="3">
                     <table class="lines-table">
                         <thead>
                             <tr>
@@ -289,18 +330,6 @@ body {
             </tr>
             @endif
 
-            {{-- إجمالي الفاتورة --}}
-            <tr class="row-invoice-total">
-                <td colspan="2" class="label-cell">
-                    {{ number_format($event['amount'], 2) }} ش.ج
-                </td>
-                <td class="ltr">
-                    <strong>{{ $currency }}</strong>
-                    {{ number_format($event['amount'], 2) }} ش.ج
-                </td>
-                <td class="ltr"></td>
-            </tr>
-
             @else
             {{-- ===== صف الدفعة ===== --}}
             @php
@@ -317,25 +346,12 @@ body {
                     </span>
                 </td>
                 <td class="ltr amt-negative">
-                    ({{ number_format($event['amount'], 2) }} ش.ج)
-                    <span style="font-size:8pt;font-weight:normal;color:#888;"> {{ $currency }}</span>
-                </td>
-                <td class="ltr" style="font-weight:bold;
-                    {{ $event['running_balance'] > 0 ? 'color:#DC2626;' : ($event['running_balance'] < 0 ? 'color:#16A34A;' : '') }}">
-                    {{ number_format($event['running_balance'], 2) }} ش.ج
+                    −{{ number_format($event['amount'], 2) }}
                 </td>
             </tr>
             @endif
 
         @endforeach
-
-        {{-- ===== رصيد نهاية المدة ===== --}}
-        <tr class="row-final">
-            <td colspan="3" class="rtl">رصيد نهاية المدة</td>
-            <td class="balance-col ltr">
-                {{ number_format($section['balance'], 2) }} ش.ج
-            </td>
-        </tr>
 
         </tbody>
     </table>

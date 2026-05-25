@@ -2,12 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltersClientsForSelect;
 use App\Models\Client;
 use App\Models\ClientPayment;
 use Livewire\Component;
 
 class PaymentForm extends Component
 {
+    use FiltersClientsForSelect;
     public ?int $recordId = null;
 
     public string $client_id = '';
@@ -43,14 +45,7 @@ class PaymentForm extends Component
             $this->notes = $payment->notes ?? '';
         } else {
             $this->paid_at = now()->format('Y-m-d');
-            $prefillClientId = request()->integer('client');
-            if ($prefillClientId > 0) {
-                $prefill = Client::query()->whereKey($prefillClientId)->whereNull('deleted_at')->first();
-                if ($prefill !== null) {
-                    $this->client_id = (string) $prefill->id;
-                    $this->clientSearch = $prefill->displayName();
-                }
-            }
+            $this->prefillClientSelect(request()->integer('client'));
         }
     }
 
@@ -83,47 +78,6 @@ class PaymentForm extends Component
 
         session()->flash('toast', $this->recordId ? 'تم تحديث الدفعة' : 'تم تسجيل الدفعة بنجاح');
         $this->redirect(route('payments.index'), navigate: true);
-    }
-
-    /**
-     * Business Purpose: Narrow client dropdown while typing name, phone, or email on payment form.
-     *
-     * @return \Illuminate\Support\Collection<int, Client>
-     */
-    protected function clientsForSelect()
-    {
-        $query = Client::query()
-            ->whereNull('deleted_at')
-            ->orderBy('business_name')
-            ->orderBy('first_name')
-            ->orderBy('id');
-
-        $term = trim($this->clientSearch);
-        if ($term !== '') {
-            $like = '%'.$term.'%';
-            $query->where(function ($q) use ($like): void {
-                $q->where('business_name', 'like', $like)
-                    ->orWhere('first_name', 'like', $like)
-                    ->orWhere('last_name', 'like', $like)
-                    ->orWhere('phone_primary', 'like', $like)
-                    ->orWhere('phone_secondary', 'like', $like)
-                    ->orWhere('email', 'like', $like);
-            });
-        }
-
-        $clients = $query->limit(80)->get();
-
-        if ($this->client_id !== '') {
-            $selectedId = (int) $this->client_id;
-            if ($selectedId > 0 && ! $clients->contains('id', $selectedId)) {
-                $selected = Client::query()->whereKey($selectedId)->whereNull('deleted_at')->first();
-                if ($selected !== null) {
-                    $clients->prepend($selected);
-                }
-            }
-        }
-
-        return $clients;
     }
 
     public function render()

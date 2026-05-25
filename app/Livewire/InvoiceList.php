@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltersClientsForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -13,6 +14,7 @@ use Livewire\WithPagination;
 
 class InvoiceList extends Component
 {
+    use FiltersClientsForSelect;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -43,6 +45,8 @@ class InvoiceList extends Component
     public ?int $viewingId = null;
 
     public string $client_id = '';
+
+    public string $clientSearch = '';
 
     public string $legacy_invoice_no = '';
 
@@ -166,9 +170,10 @@ class InvoiceList extends Component
 
     public function openEdit(int $id): void
     {
-        $inv = Invoice::with('lines')->findOrFail($id);
+        $inv = Invoice::with(['lines', 'client'])->findOrFail($id);
         $this->editingId = $id;
         $this->client_id = (string) $inv->client_id;
+        $this->clientSearch = $inv->client?->displayName() ?? '';
         $this->legacy_invoice_no = $inv->legacy_invoice_no ?? '';
         $this->document_date = $inv->document_date?->format('Y-m-d') ?? '';
         $this->due_date = $inv->due_date?->format('Y-m-d') ?? '';
@@ -316,7 +321,7 @@ class InvoiceList extends Component
     private function resetForm(): void
     {
         $this->reset([
-            'client_id', 'legacy_invoice_no', 'document_date', 'due_date', 'notes',
+            'client_id', 'clientSearch', 'legacy_invoice_no', 'document_date', 'due_date', 'notes',
         ]);
         $this->currency_code = 'ILS';
         $this->status = 'draft';
@@ -374,14 +379,9 @@ class InvoiceList extends Component
 
         $rows = $this->paginateWithPerPage($query);
 
-        $clients = Client::query()
-            ->orderBy('business_name')
-            ->orderBy('first_name')
-            ->get();
-
         return view('livewire.invoice-list', [
             'rows' => $rows,
-            'clients' => $clients,
+            'clients' => $this->clientsForSelect(),
             'invoiceCurrencies' => $invoiceCurrencies,
             'viewingRecord' => $this->viewingRecord,
         ]);

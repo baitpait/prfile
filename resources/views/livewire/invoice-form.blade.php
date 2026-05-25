@@ -38,16 +38,7 @@
     <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
         <p style="font-size:11px;font-weight:700;color:#9CA3AF;letter-spacing:.06em;text-transform:uppercase;">معلومات الفاتورة</p>
 
-        <div>
-            <label class="label">العميل <span class="text-red-400">*</span></label>
-            <select wire:model="client_id" class="input select">
-                <option value="">— اختر العميل —</option>
-                @foreach($clients as $c)
-                <option value="{{ $c->id }}">{{ $c->displayName() }}</option>
-                @endforeach
-            </select>
-            @error('client_id')<p class="field-error">{{ $message }}</p>@enderror
-        </div>
+        @include('livewire.partials.client-select-with-search', ['clients' => $clients])
 
         <div style="display:flex;flex-wrap:wrap;gap:14px;">
             <div style="flex:1;min-width:min(100%,200px);">

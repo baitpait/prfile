@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\FiltersCashflowList;
 use App\Livewire\Concerns\FiltersSuppliersForSelect;
+use App\Livewire\Concerns\UsesCommittedPaymentListFilters;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
@@ -15,6 +16,7 @@ class SupplierPaymentList extends Component
 {
     use FiltersCashflowList;
     use FiltersSuppliersForSelect;
+    use UsesCommittedPaymentListFilters;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -24,12 +26,19 @@ class SupplierPaymentList extends Component
     #[Url(as: 'sp_supplier')]
     public string $filterSupplierId = '';
 
+    public function applyListFilters(): void
+    {
+        $this->commitPaymentListFilterDrafts();
+        $this->resetPage();
+    }
+
     public function clearListFilters(): void
     {
         $this->search = '';
         $this->filterSupplierId = '';
         $this->supplierSearch = '';
         $this->resetCashflowFilters();
+        $this->syncPaymentListFilterDrafts();
         $this->resetPage();
     }
 

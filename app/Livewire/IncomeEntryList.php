@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\AppliesListFiltersOnAction;
+use App\Livewire\Concerns\UsesCommittedSearchFilter;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\IncomeEntry;
 use Livewire\Attributes\Url;
@@ -11,23 +11,12 @@ use Livewire\WithPagination;
 
 class IncomeEntryList extends Component
 {
-    use AppliesListFiltersOnAction;
+    use UsesCommittedSearchFilter;
     use WithPagination;
     use WithPerPagePagination;
 
     #[Url(as: 'q')]
     public string $search = '';
-
-    public function clearListFilters(): void
-    {
-        $this->search = '';
-        $this->resetPage();
-    }
-
-    public function hasActiveListFilters(): bool
-    {
-        return trim($this->search) !== '';
-    }
 
     public function deleteRecord(int $id): void
     {

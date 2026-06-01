@@ -15,7 +15,7 @@
             @if(!empty($generalSearchPlaceholder))
             <div class="min-w-0">
                 <label class="label">بحث عام</label>
-                <input type="search" wire:model="search" class="input w-full text-sm" placeholder="{{ $generalSearchPlaceholder }}" autocomplete="off">
+                <input type="search" wire:model="searchDraft" class="input w-full text-sm" placeholder="{{ $generalSearchPlaceholder }}" autocomplete="off">
             </div>
             @endif
 
@@ -23,9 +23,9 @@
             <div class="min-w-0">
                 <label class="label">بحث {{ $partyLabel }}</label>
                 @if($isClient)
-                <input type="search" wire:model="clientSearch" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
+                <input type="search" wire:model="clientSearchDraft" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
                 @else
-                <input type="search" wire:model="supplierSearch" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
+                <input type="search" wire:model="supplierSearchDraft" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
                 @endif
             </div>
 
@@ -33,14 +33,14 @@
                 <div class="min-w-0">
                     <label class="label">{{ $partyLabel }}</label>
                     @if($isClient)
-                    <select wire:model="filterClientId" class="input w-full">
+                    <select wire:model="filterClientIdDraft" class="input w-full">
                         <option value="">{{ $partyAllLabel }}</option>
                         @foreach($parties as $party)
                             <option value="{{ $party->id }}">{{ $party->displayName() }}</option>
                         @endforeach
                     </select>
                     @else
-                    <select wire:model="filterSupplierId" class="input w-full">
+                    <select wire:model="filterSupplierIdDraft" class="input w-full">
                         <option value="">{{ $partyAllLabel }}</option>
                         @foreach($parties as $party)
                             <option value="{{ $party->id }}">{{ $party->displayName() }}</option>
@@ -51,7 +51,7 @@
                 @if($showMethod ?? true)
                 <div class="min-w-0">
                     <label class="label">طريقة الدفع</label>
-                    <select wire:model="filterMethod" class="input w-full">
+                    <select wire:model="filterMethodDraft" class="input w-full">
                         <option value="">الكل</option>
                         <option value="cash">نقدي</option>
                         <option value="bank">بنكي</option>
@@ -67,7 +67,7 @@
             <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="min-w-0">
                     <label class="label">العملة</label>
-                    <select wire:model="filterCurrency" class="input w-full">
+                    <select wire:model="filterCurrencyDraft" class="input w-full">
                         <option value="">كل العملات</option>
                         @foreach($currencies as $code)
                             <option value="{{ $code }}">{{ $code }}</option>
@@ -80,11 +80,11 @@
             <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="min-w-0">
                     <label class="label">من {{ $dateLabel }}</label>
-                    <input wire:model="filterDateFrom" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateFromDraft" type="date" class="input w-full" dir="ltr">
                 </div>
                 <div class="min-w-0">
                     <label class="label">إلى {{ $dateLabel }}</label>
-                    <input wire:model="filterDateTo" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateToDraft" type="date" class="input w-full" dir="ltr">
                 </div>
             </div>
         </div>

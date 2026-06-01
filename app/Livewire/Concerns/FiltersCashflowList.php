@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
  */
 trait FiltersCashflowList
 {
-    use AppliesListFiltersOnAction;
+    use UsesCommittedCashflowFilters;
 
     #[\Livewire\Attributes\Url(as: 'cf_method')]
     public string $filterMethod = '';
@@ -23,6 +23,21 @@ trait FiltersCashflowList
 
     #[\Livewire\Attributes\Url(as: 'cf_to')]
     public string $filterDateTo = '';
+
+    public function applyListFilters(): void
+    {
+        $this->commitCashflowFilterDrafts();
+        $this->resetPage();
+    }
+
+    protected function resetCashflowFilters(): void
+    {
+        $this->filterMethod = '';
+        $this->filterCurrency = '';
+        $this->filterDateFrom = '';
+        $this->filterDateTo = '';
+        $this->clearCashflowFilterDrafts();
+    }
 
     /**
      * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
@@ -73,14 +88,6 @@ trait FiltersCashflowList
         }
 
         return $query;
-    }
-
-    protected function resetCashflowFilters(): void
-    {
-        $this->filterMethod = '';
-        $this->filterCurrency = '';
-        $this->filterDateFrom = '';
-        $this->filterDateTo = '';
     }
 
     public function hasActiveCashflowFilters(): bool

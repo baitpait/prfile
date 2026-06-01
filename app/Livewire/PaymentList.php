@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\FiltersCashflowList;
 use App\Livewire\Concerns\FiltersClientsForSelect;
+use App\Livewire\Concerns\UsesCommittedPaymentListFilters;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Client;
 use App\Models\ClientPayment;
@@ -15,6 +16,7 @@ class PaymentList extends Component
 {
     use FiltersCashflowList;
     use FiltersClientsForSelect;
+    use UsesCommittedPaymentListFilters;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -26,12 +28,19 @@ class PaymentList extends Component
 
     public string $clientSearch = '';
 
+    public function applyListFilters(): void
+    {
+        $this->commitPaymentListFilterDrafts();
+        $this->resetPage();
+    }
+
     public function clearListFilters(): void
     {
         $this->search = '';
         $this->filterClientId = '';
         $this->clientSearch = '';
         $this->resetCashflowFilters();
+        $this->syncPaymentListFilterDrafts();
         $this->resetPage();
     }
 

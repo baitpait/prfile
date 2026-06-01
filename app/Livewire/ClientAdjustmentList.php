@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\FiltersClientsForSelect;
+use App\Livewire\Concerns\UsesCommittedSearchFilter;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\ClientBalanceAdjustment;
 use Livewire\Attributes\Url;
@@ -12,8 +12,8 @@ use Livewire\WithPagination;
 
 class ClientAdjustmentList extends Component
 {
-    use AppliesListFiltersOnAction;
     use FiltersClientsForSelect;
+    use UsesCommittedSearchFilter;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -27,17 +27,6 @@ class ClientAdjustmentList extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()->isAccountant(), 403);
-    }
-
-    public function clearListFilters(): void
-    {
-        $this->search = '';
-        $this->resetPage();
-    }
-
-    public function hasActiveListFilters(): bool
-    {
-        return trim($this->search) !== '';
     }
 
     public function goCreate(): void

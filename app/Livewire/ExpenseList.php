@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\FiltersCashflowList;
+use App\Livewire\Concerns\UsesCommittedSearchFilter;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Expense;
 use Livewire\Attributes\Url;
@@ -12,15 +13,24 @@ use Livewire\WithPagination;
 class ExpenseList extends Component
 {
     use FiltersCashflowList;
+    use UsesCommittedSearchFilter;
     use WithPagination;
     use WithPerPagePagination;
 
     #[Url(as: 'q')]
     public string $search = '';
 
+    public function applyListFilters(): void
+    {
+        $this->search = trim($this->searchDraft);
+        $this->commitCashflowFilterDrafts();
+        $this->resetPage();
+    }
+
     public function clearListFilters(): void
     {
         $this->search = '';
+        $this->searchDraft = '';
         $this->resetCashflowFilters();
         $this->resetPage();
     }

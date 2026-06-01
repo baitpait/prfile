@@ -12,11 +12,6 @@ trait AppliesListFiltersOnAction
         $this->resetPage();
     }
 
-    public function applyPartyFilters(): void
-    {
-        $this->resetPage();
-    }
-
     public function applyInvoiceFilters(): void
     {
         $this->resetPage();

@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\FiltersPartyDirectory;
+use App\Livewire\Concerns\ListsPartyDirectory;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Supplier;
 use Livewire\Component;
@@ -10,7 +10,7 @@ use Livewire\WithPagination;
 
 class SupplierList extends Component
 {
-    use FiltersPartyDirectory;
+    use ListsPartyDirectory;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -31,7 +31,6 @@ class SupplierList extends Component
 
         return view('livewire.supplier-list', [
             'rows' => $rows,
-            'cities' => $this->partyFilterCities(),
         ]);
     }
 }

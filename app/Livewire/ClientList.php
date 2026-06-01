@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\FiltersPartyDirectory;
+use App\Livewire\Concerns\ListsPartyDirectory;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Client;
 use Livewire\Component;
@@ -10,7 +10,7 @@ use Livewire\WithPagination;
 
 class ClientList extends Component
 {
-    use FiltersPartyDirectory;
+    use ListsPartyDirectory;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -31,7 +31,6 @@ class ClientList extends Component
 
         return view('livewire.client-list', [
             'rows' => $rows,
-            'cities' => $this->partyFilterCities(),
         ]);
     }
 }

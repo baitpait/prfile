@@ -15,8 +15,8 @@
     @endif
 </div>
 
-@include('livewire.partials.party-directory-filters', [
-    'searchPlaceholder' => 'بحث بالاسم، الهاتف، البريد، المدينة...',
+@include('livewire.partials.party-name-search', [
+    'searchPlaceholder' => 'بحث بالاسم...',
 ])
 
 <div class="card overflow-hidden">
@@ -63,7 +63,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <p class="text-sm">{{ $search || $filterCity ? 'لا توجد نتائج للبحث أو الفلتر' : 'لا يوجد عملاء بعد' }}</p>
+                        <p class="text-sm">{{ $search ? 'لا توجد نتائج للبحث' : 'لا يوجد عملاء بعد' }}</p>
                     </div>
                 </td>
             </tr>

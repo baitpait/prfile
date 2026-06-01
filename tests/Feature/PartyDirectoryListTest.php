@@ -7,7 +7,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use Livewire\Livewire;
 
-test('client list filters by business name search', function () {
+test('client list shows all clients', function () {
     $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
 
     Client::factory()->create(['business_name' => 'شركة ألفا للإعلام']);
@@ -15,27 +15,38 @@ test('client list filters by business name search', function () {
 
     Livewire::actingAs($user)
         ->test(ClientList::class)
-        ->set('searchDraft', 'ألفا')
-        ->call('applyPartyFilters')
+        ->assertSee('شركة ألفا للإعلام')
+        ->assertSee('متجر بيتا');
+});
+
+test('client list filters by name search', function () {
+    $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
+
+    Client::factory()->create(['business_name' => 'شركة ألفا للإعلام']);
+    Client::factory()->create(['business_name' => 'متجر بيتا']);
+
+    Livewire::actingAs($user)
+        ->test(ClientList::class)
+        ->set('search', 'ألفا')
         ->assertSee('شركة ألفا للإعلام')
         ->assertDontSee('متجر بيتا');
 });
 
-test('client list filters by city', function () {
+test('client list name search ignores phone and city', function () {
     $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
 
-    Client::factory()->create(['business_name' => 'عميل رام الله', 'city' => 'رام الله']);
-    Client::factory()->create(['business_name' => 'عميل نابلس', 'city' => 'نابلس']);
+    Client::factory()->create(['business_name' => 'شركة ألفا', 'phone_primary' => '0599123456', 'city' => 'رام الله']);
+    Client::factory()->create(['business_name' => 'متجر بيتا', 'phone_primary' => '0599765432', 'city' => 'نابلس']);
 
     Livewire::actingAs($user)
         ->test(ClientList::class)
-        ->set('filterCityDraft', 'رام الله')
-        ->call('applyPartyFilters')
-        ->assertSee('عميل رام الله')
-        ->assertDontSee('عميل نابلس');
+        ->set('search', '0599123456')
+        ->assertDontSee('شركة ألفا')
+        ->assertDontSee('متجر بيتا')
+        ->assertSee('لا توجد نتائج للبحث');
 });
 
-test('supplier list filters by business name search', function () {
+test('supplier list shows all suppliers', function () {
     $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
 
     Supplier::factory()->create(['business_name' => 'مطبعة جاما']);
@@ -43,35 +54,19 @@ test('supplier list filters by business name search', function () {
 
     Livewire::actingAs($user)
         ->test(SupplierList::class)
-        ->set('searchDraft', 'جاما')
-        ->call('applyPartyFilters')
+        ->assertSee('مطبعة جاما')
+        ->assertSee('ورشة دلتا');
+});
+
+test('supplier list filters by name search', function () {
+    $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
+
+    Supplier::factory()->create(['business_name' => 'مطبعة جاما']);
+    Supplier::factory()->create(['business_name' => 'ورشة دلتا']);
+
+    Livewire::actingAs($user)
+        ->test(SupplierList::class)
+        ->set('search', 'جاما')
         ->assertSee('مطبعة جاما')
         ->assertDontSee('ورشة دلتا');
-});
-
-test('party directory search draft does not filter until apply is clicked', function () {
-    $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
-
-    Client::factory()->create(['business_name' => 'شركة ألفا للإعلام']);
-    Client::factory()->create(['business_name' => 'متجر بيتا']);
-
-    Livewire::actingAs($user)
-        ->test(ClientList::class)
-        ->set('searchDraft', 'ألفا')
-        ->assertSee('متجر بيتا')
-        ->call('applyPartyFilters')
-        ->assertDontSee('متجر بيتا');
-});
-
-test('party directory clear filters resets search and city', function () {
-    $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
-
-    Livewire::actingAs($user)
-        ->test(ClientList::class)
-        ->set('searchDraft', 'اختبار')
-        ->set('filterCityDraft', 'رام الله')
-        ->call('clearPartyFilters')
-        ->assertSet('search', '')
-        ->assertSet('filterCity', '')
-        ->assertSet('sort', 'newest');
 });

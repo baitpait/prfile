@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen font-sans" dir="rtl" style="background: #0f0f0f;">
+<body class="min-h-screen font-sans flex flex-col" dir="rtl" style="background: #0f0f0f;">
 
 {{-- خلفية ديناميكية --}}
 <div class="fixed inset-0 overflow-hidden pointer-events-none">
@@ -30,7 +30,7 @@
 </div>
 
 {{-- المحتوى المركزي --}}
-<div class="relative min-h-screen flex flex-col items-center justify-center px-4 py-12">
+<div class="relative flex-1 flex flex-col items-center justify-center px-4 py-12">
 
     {{-- البطاقة --}}
     <div style="width:100%;max-width:420px;">
@@ -128,6 +128,8 @@
 
     </div>
 </div>
+
+@include('components.layouts.footer', ['dark' => true])
 
 </body>
 </html>

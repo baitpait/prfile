@@ -13,18 +13,73 @@
     @endcan
 </div>
 
-<div class="card px-4 py-3 mb-5 flex flex-wrap items-center gap-3">
+<div class="card px-4 py-3 mb-5 flex items-center gap-3">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-    <input wire:model.live.debounce.300ms="search" type="search" placeholder="بحث برقم المستند أو المورد..." class="flex-1 min-w-[12rem] bg-transparent text-sm focus:outline-none placeholder:text-gray-300">
-    @if($search)<button wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none">&times;</button>@endif
-    <div class="flex items-center gap-2 shrink-0">
-        <label class="text-xs text-gray-500 whitespace-nowrap">المورد</label>
-        <select wire:model.live="filterSupplierId" class="input select text-sm py-1.5 min-w-[10rem]">
-            <option value="">الكل</option>
-            @foreach($suppliers as $s)
-                <option value="{{ $s->id }}">{{ $s->displayName() }}</option>
-            @endforeach
-        </select>
+    <input wire:model.live.debounce.300ms="search" type="search"
+           placeholder="بحث برقم المستند، المورد، الهاتف، أو الملاحظات..."
+           class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-300"
+           autocomplete="off">
+    @if($search !== '')
+    <button type="button" wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none" aria-label="مسح البحث">&times;</button>
+    @endif
+</div>
+
+<div class="card p-4 mb-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+        <div class="flex min-w-0 flex-1 flex-col gap-3">
+            <div class="min-w-0 w-full">
+                <label class="label">بحث المورد</label>
+                <input type="search" wire:model.live.debounce.300ms="supplierSearch" class="input w-full text-sm" placeholder="ابحث باسم المورد..." autocomplete="off">
+            </div>
+
+            <div class="grid min-w-0 w-full grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="min-w-0">
+                    <label class="label">الحالة</label>
+                    <select wire:model.live="filterStatus" class="input w-full">
+                        <option value="">الكل</option>
+                        <option value="draft">مسودة</option>
+                        <option value="issued">صادر</option>
+                        <option value="void">ملغى</option>
+                    </select>
+                </div>
+                <div class="min-w-0">
+                    <label class="label">المورد</label>
+                    <select wire:model.live="filterSupplierId" class="input w-full">
+                        <option value="">كل الموردين</option>
+                        @foreach($suppliers as $s)
+                            <option value="{{ $s->id }}">{{ $s->displayName() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            @if(count($poCurrencies) > 0)
+            <div class="min-w-0 w-full sm:max-w-xs">
+                <label class="label">العملة</label>
+                <select wire:model.live="filterCurrency" class="input w-full">
+                    <option value="">كل العملات</option>
+                    @foreach($poCurrencies as $code)
+                        <option value="{{ $code }}">{{ $code }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
+            <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="min-w-0">
+                    <label class="label">من تاريخ المستند</label>
+                    <input wire:model.live="filterDateFrom" type="date" class="input w-full" dir="ltr">
+                </div>
+                <div class="min-w-0">
+                    <label class="label">إلى تاريخ المستند</label>
+                    <input wire:model.live="filterDateTo" type="date" class="input w-full" dir="ltr">
+                </div>
+            </div>
+        </div>
+        @if($this->hasActivePurchaseOrderFilters())
+        <button type="button" wire:click="clearPurchaseOrderFilters" class="btn btn-secondary shrink-0 self-start whitespace-nowrap lg:self-end">
+            مسح الفلاتر
+        </button>
+        @endif
     </div>
 </div>
 
@@ -72,7 +127,7 @@
             @empty
             <tr><td colspan="6">
                 <div class="text-center py-16 text-gray-300">
-                    <p class="text-sm">{{ $search || $filterSupplierId ? 'لا توجد نتائج' : 'لا توجد فواتير مشتريات بعد — أضف مستنداً أو استورد من XML' }}</p>
+                    <p class="text-sm">{{ $search || $this->hasActivePurchaseOrderFilters() ? 'لا توجد نتائج للبحث أو الفلتر' : 'لا توجد فواتير مشتريات بعد — أضف مستنداً أو استورد من XML' }}</p>
                 </div>
             </td></tr>
             @endforelse

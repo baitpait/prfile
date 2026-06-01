@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltersSuppliersForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -13,6 +15,7 @@ use Livewire\WithPagination;
 
 class PurchaseOrderList extends Component
 {
+    use FiltersSuppliersForSelect;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -21,6 +24,18 @@ class PurchaseOrderList extends Component
 
     #[Url(as: 'po_supplier')]
     public string $filterSupplierId = '';
+
+    #[Url(as: 'po_status')]
+    public string $filterStatus = '';
+
+    #[Url(as: 'po_cur')]
+    public string $filterCurrency = '';
+
+    #[Url(as: 'po_from')]
+    public string $filterDateFrom = '';
+
+    #[Url(as: 'po_to')]
+    public string $filterDateTo = '';
 
     public ?int $confirmDeleteId = null;
 
@@ -34,6 +49,46 @@ class PurchaseOrderList extends Component
     public function updatedFilterSupplierId(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterCurrency(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterDateFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterDateTo(): void
+    {
+        $this->resetPage();
+    }
+
+    public function clearPurchaseOrderFilters(): void
+    {
+        $this->filterStatus = '';
+        $this->filterSupplierId = '';
+        $this->filterCurrency = '';
+        $this->filterDateFrom = '';
+        $this->filterDateTo = '';
+        $this->supplierSearch = '';
+        $this->resetPage();
+    }
+
+    public function hasActivePurchaseOrderFilters(): bool
+    {
+        return $this->filterStatus !== ''
+            || $this->filterSupplierId !== ''
+            || $this->filterCurrency !== ''
+            || $this->filterDateFrom !== ''
+            || $this->filterDateTo !== '';
     }
 
     public function openView(int $id): void
@@ -78,31 +133,58 @@ class PurchaseOrderList extends Component
 
     public function render()
     {
-        $suppliers = Supplier::query()
-            ->orderBy('business_name')
-            ->orderBy('first_name')
-            ->get();
+        $poCurrencies = PurchaseOrder::query()
+            ->whereNotNull('currency_code')
+            ->where('currency_code', '!=', '')
+            ->distinct()
+            ->orderBy('currency_code')
+            ->pluck('currency_code')
+            ->values()
+            ->all();
+
+        $filterCur = strtoupper(trim($this->filterCurrency));
+        $currencyFilterActive = $filterCur !== '' && in_array($filterCur, $poCurrencies, true);
 
         $query = PurchaseOrder::with('supplier')
             ->when($this->search, function ($q) {
-                $s = "%{$this->search}%";
+                $s = '%'.$this->search.'%';
                 $q->where(fn ($q) => $q->where('legacy_po_no', 'like', $s)
                     ->orWhere('notes', 'like', $s)
                     ->orWhereHas('supplier', fn ($q) => $q->where('business_name', 'like', $s)
                         ->orWhere('first_name', 'like', $s)
                         ->orWhere('last_name', 'like', $s)
+                        ->orWhere('phone_primary', 'like', $s)
+                        ->orWhere('email', 'like', $s)
                     )
                 );
             })
+            ->when(in_array($this->filterStatus, ['draft', 'issued', 'void'], true), fn ($q) => $q->where('status', $this->filterStatus)
+            )
             ->when(ctype_digit($this->filterSupplierId) && Supplier::whereKey((int) $this->filterSupplierId)->exists(), fn ($q) => $q->where('supplier_id', (int) $this->filterSupplierId)
             )
+            ->when($currencyFilterActive, fn ($q) => $q->where('currency_code', $filterCur))
+            ->when($this->filterDateFrom !== '', function ($q) {
+                try {
+                    $from = Carbon::parse($this->filterDateFrom)->startOfDay();
+                    $q->whereDate('document_date', '>=', $from);
+                } catch (\Throwable) {
+                }
+            })
+            ->when($this->filterDateTo !== '', function ($q) {
+                try {
+                    $to = Carbon::parse($this->filterDateTo)->endOfDay();
+                    $q->whereDate('document_date', '<=', $to);
+                } catch (\Throwable) {
+                }
+            })
             ->latest('document_date');
 
         $rows = $this->paginateWithPerPage($query);
 
         return view('livewire.purchase-order-list', [
             'rows' => $rows,
-            'suppliers' => $suppliers,
+            'suppliers' => $this->suppliersForSelect(),
+            'poCurrencies' => $poCurrencies,
             'viewingRecord' => $this->viewingRecord,
         ]);
     }

@@ -137,7 +137,8 @@ docs/                       ← دستور المشروع والوثائق
 branding/                   ← الشعار والهوية البصرية
 ```
 
-**مرجع واجهات الفواتير (عملاء + مشتريات):** `docs/ar_invoices_and_purchase_orders_ui.md`
+**مرجع واجهات الفواتير (عملاء + مشتريات):** `docs/ar_invoices_and_purchase_orders_ui.md`  
+**تسويات الذمة وكشف الحساب:** `docs/09_BALANCE_ADJUSTMENTS_AND_STATEMENTS_AR.md`
 
 ---
 

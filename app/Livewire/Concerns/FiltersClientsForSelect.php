@@ -36,8 +36,9 @@ trait FiltersClientsForSelect
 
         $clients = $query->limit(80)->get();
 
-        if ($this->client_id !== '') {
-            $selectedId = (int) $this->client_id;
+        $selectedRaw = $this->selectedClientIdForSelect();
+        if ($selectedRaw !== '') {
+            $selectedId = (int) $selectedRaw;
             if ($selectedId > 0 && ! $clients->contains('id', $selectedId)) {
                 $selected = Client::query()->whereKey($selectedId)->whereNull('deleted_at')->first();
                 if ($selected !== null) {
@@ -47,6 +48,15 @@ trait FiltersClientsForSelect
         }
 
         return $clients;
+    }
+
+    protected function selectedClientIdForSelect(): string
+    {
+        if (property_exists($this, 'filterClientId')) {
+            return (string) $this->filterClientId;
+        }
+
+        return (string) ($this->client_id ?? '');
     }
 
     protected function prefillClientSelect(int $clientId): void

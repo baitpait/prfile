@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\ClientReceivablesAgingController;
 use App\Http\Controllers\ClientStatementController;
 use App\Http\Controllers\ClientPaymentPrintController;
@@ -279,6 +280,15 @@ Route::middleware(['auth'])->group(function () {
 
         return view('users.edit', compact('user'));
     })->name('users.edit');
+
+    Route::get('/database-backup', function () {
+        abort_unless(auth()->user()->isManager(), 403);
+
+        return view('database-backup.index');
+    })->name('database-backup.index');
+
+    Route::get('/database-backup/download/{filename}', [DatabaseBackupController::class, 'download'])
+        ->name('database-backup.download');
 });
 
 require __DIR__.'/auth.php';

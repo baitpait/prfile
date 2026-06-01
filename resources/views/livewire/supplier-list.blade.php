@@ -15,17 +15,9 @@
     @endif
 </div>
 
-<div class="card px-4 py-3 mb-5 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-    </svg>
-    <input wire:model.live.debounce.300ms="search" type="search"
-           placeholder="بحث بالاسم، البريد، الهاتف، المدينة..."
-           class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-300">
-    @if($search)
-    <button wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 transition text-lg leading-none">&times;</button>
-    @endif
-</div>
+@include('livewire.partials.party-directory-filters', [
+    'searchPlaceholder' => 'بحث بالاسم، الهاتف، البريد، المدينة...',
+])
 
 <div class="card overflow-hidden">
     <div wire:loading.delay class="h-0.5 bg-[#C9A227]/20 relative overflow-hidden">
@@ -61,7 +53,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
-                    <p class="text-sm">{{ $search ? 'لا توجد نتائج' : 'لا يوجد موردون بعد' }}</p>
+                    <p class="text-sm">{{ $search || $filterCity ? 'لا توجد نتائج للبحث أو الفلتر' : 'لا يوجد موردون بعد' }}</p>
                 </div>
             </td></tr>
             @endforelse

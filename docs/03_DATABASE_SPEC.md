@@ -82,7 +82,28 @@
 ### `supplier_payments`
 - مطابق للمورد.
 
-> **كشف الحساب:** يُحسب **لكل عملة** على حدة: مجموع المستندات − مجموع الدفعات (نفس العملة)، مع سياسة داخلية للحالات الحدية (دفعة بعملة مختلفة عن المستند).
+### `client_balance_adjustments`
+| الحقل | الوصف |
+|--------|--------|
+| client_id | |
+| amount | **موجب دائماً** — خصم/إعفاء على الذمة |
+| currency_code | |
+| adjustment_date | |
+| type | `settlement_discount` \| `write_off` \| `other` |
+| reason, notes | |
+| recorded_by_user_id | |
+| deleted_at | soft delete |
+
+**فهرس:** `cba_client_cur_date_idx` على `(client_id, currency_code, adjustment_date)`.
+
+### `supplier_balance_adjustments`
+- مطابق للمورد؛ فهرس `sba_supplier_cur_date_idx`.
+
+> **كشف الحساب:** يُحسب **لكل عملة** على حدة:
+> - **عميل:** مجموع الفواتير الصادرة − مجموع الدفعات − **مجموع التسويات**
+> - **مورد:** مجموع أوامر الشراء الصادرة − مجموع الدفعات − **مجموع التسويات**
+>
+> التفاصيل: `docs/09_BALANCE_ADJUSTMENTS_AND_STATEMENTS_AR.md`
 
 ---
 
@@ -106,6 +127,8 @@
 ## 6) فهارس مقترحة
 - `(client_id, currency_code, document_date)` على الفواتير.
 - `(client_id, paid_at)` على الدفعات.
+- `cba_client_cur_date_idx` على `(client_id, currency_code, adjustment_date)` في `client_balance_adjustments`.
+- `sba_supplier_cur_date_idx` على `(supplier_id, currency_code, adjustment_date)` في `supplier_balance_adjustments`.
 - `(is_deleted)` حيث يُستخدم بكثرة في التصفية.
 
 ---

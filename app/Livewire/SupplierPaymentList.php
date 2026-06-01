@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltersCashflowList;
+use App\Livewire\Concerns\FiltersSuppliersForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
@@ -11,6 +13,8 @@ use Livewire\WithPagination;
 
 class SupplierPaymentList extends Component
 {
+    use FiltersCashflowList;
+    use FiltersSuppliersForSelect;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -30,33 +34,57 @@ class SupplierPaymentList extends Component
         $this->resetPage();
     }
 
+    public function clearListFilters(): void
+    {
+        $this->filterSupplierId = '';
+        $this->supplierSearch = '';
+        $this->resetCashflowFilters();
+        $this->resetPage();
+    }
+
+    public function hasActiveListFilters(): bool
+    {
+        return $this->filterSupplierId !== ''
+            || $this->hasActiveCashflowFilters();
+    }
+
     public function render()
     {
-        $suppliers = Supplier::query()
-            ->orderBy('business_name')
-            ->orderBy('first_name')
-            ->get();
+        $currencies = SupplierPayment::query()
+            ->whereNotNull('currency_code')
+            ->where('currency_code', '!=', '')
+            ->distinct()
+            ->orderBy('currency_code')
+            ->pluck('currency_code')
+            ->values()
+            ->all();
 
         $query = SupplierPayment::with('supplier')
             ->when($this->search, function ($q) {
-                $s = "%{$this->search}%";
+                $s = '%'.$this->search.'%';
                 $q->where(fn ($q) => $q->where('bank_reference', 'like', $s)
                     ->orWhere('notes', 'like', $s)
                     ->orWhereHas('supplier', fn ($q) => $q->where('business_name', 'like', $s)
                         ->orWhere('first_name', 'like', $s)
                         ->orWhere('last_name', 'like', $s)
+                        ->orWhere('phone_primary', 'like', $s)
+                        ->orWhere('email', 'like', $s)
                     )
                 );
             })
             ->when(ctype_digit($this->filterSupplierId) && Supplier::whereKey((int) $this->filterSupplierId)->exists(), fn ($q) => $q->where('supplier_id', (int) $this->filterSupplierId)
-            )
-            ->latest('paid_at');
+            );
 
-        $rows = $this->paginateWithPerPage($query);
+        $this->applyCashflowMethodFilter($query);
+        $this->applyCashflowCurrencyFilter($query, $currencies);
+        $this->applyCashflowDateFilters($query, 'paid_at');
+
+        $rows = $this->paginateWithPerPage($query->latest('paid_at'));
 
         return view('livewire.supplier-payment-list', [
             'rows' => $rows,
-            'suppliers' => $suppliers,
+            'suppliers' => $this->suppliersForSelect(),
+            'currencies' => $currencies,
         ]);
     }
 }

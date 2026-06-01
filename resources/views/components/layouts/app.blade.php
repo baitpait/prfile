@@ -13,7 +13,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-screen font-sans antialiased">
+<body class="min-h-screen font-sans antialiased flex flex-col">
 
 {{-- ═══ شريط التنقل العلوي ═══ --}}
 <header class="bg-white border-b border-[#E2E4E9] h-14 flex items-center px-5 sticky top-0 z-30 shadow-sm">
@@ -25,8 +25,8 @@
         </div>
     </div>
     @auth
-    <div class="flex items-center gap-3">
-        <div class="text-left hidden sm:block">
+    <div class="flex items-center gap-3 shrink-0">
+        <div class="hidden sm:block text-left">
             <div class="text-xs font-semibold text-[#3D3D3D]">{{ auth()->user()->full_name }}</div>
             <div class="text-[10px] text-gray-400">
                 {{ match(auth()->user()->role) { 'manager' => 'مدير', 'accountant' => 'محاسب', default => 'مشاهد' } }}
@@ -50,7 +50,7 @@
 </header>
 
 {{-- ═══ الهيكل الرئيسي ═══ --}}
-<div class="flex min-h-[calc(100vh-3.5rem)]">
+<div class="flex flex-1 min-h-0">
 
     {{-- ═══ القائمة الجانبية ═══ --}}
     <aside class="w-56 bg-white border-l border-[#E2E4E9] hidden md:flex flex-col py-3 shrink-0">
@@ -214,6 +214,16 @@
                     </svg>
                 </x-slot>
             </x-nav-link>
+
+            <x-nav-link :route="route('database-backup.index')" label="نسخ احتياطي"
+                        :active="request()->routeIs('database-backup.*')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
             @endif
 
         </nav>
@@ -224,6 +234,8 @@
         {{ $slot }}
     </main>
 </div>
+
+@include('components.layouts.footer')
 
 {{-- ═══ نظام الإشعارات (Toast) ═══ --}}
 <div x-data="toastManager"

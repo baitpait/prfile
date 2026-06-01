@@ -1,6 +1,6 @@
 # نظرة شاملة على النظام — بروفايل ميدا
 
-> **الغرض:** وصف **الحالة الفعلية للتطبيق** (مسارات، نماذج، تجميعات لوحة التحكم، سياسات) لمرجع الفريق دون تكرار مواصفة المفاهيم بالكامل؛ للتفاصيل المنطقية للجداول راجع `docs/03_DATABASE_SPEC.md`. للمصفوفة التقريرية راجع `docs/04_REPORTS_AND_UI_MATRIX.md`.
+> **الغرض:** وصف **الحالة الفعلية للتطبيق** (مسارات، نماذج، تجميعات لوحة التحكم، سياسات) لمرجع الفريق دون تكرار مواصفة المفاهيم بالكامل؛ للتفاصيل المنطقية للجداول راجع `docs/03_DATABASE_SPEC.md`. للمصفوفة التقريرية راجع `docs/04_REPORTS_AND_UI_MATRIX.md`. **لتسويات الذمة وكشف الحساب:** `docs/09_BALANCE_ADJUSTMENTS_AND_STATEMENTS_AR.md`.
 
 ---
 
@@ -44,6 +44,8 @@
 | `/clients` … | `clients.*` | إنشاء/تعديل: محاسب؛ حذف: مدير؛ كشف/PDF: سياسة العميل |
 | `/invoices` … | `invoices.*` | إنشاء/تعديل: محاسب؛ طباعة: مسار عام ضمن `auth` |
 | `/payments` … | `payments.*` | إنشاء/تعديل: محاسب؛ حذف: مدير |
+| `/client-adjustments` … | `client-adjustments.*`, `clients.adjustments.*` | قائمة وتسجيل **تسويات العملاء**؛ محاسب؛ حذف: مدير |
+| `/supplier-adjustments` … | `supplier-adjustments.*`, `suppliers.adjustments.*` | **تسويات الموردين**؛ نفس الصلاحيات |
 | `/products` … | `products.*` | سياسة `Product` (إنشاء/تعديل محاسب؛ حذف مدير) |
 | `/expenses` … | `expenses.*` | إنشاء/تعديل: محاسب؛ حذف: مدير |
 | `/suppliers` … | `suppliers.*` | إنشاء/تعديل: محاسب؛ حذف: مدير |
@@ -63,6 +65,8 @@
 | عملاء | `client-list`, `client-form` |
 | فواتير | `invoice-list`, `invoice-form` |
 | دفعات عملاء | `payment-list`, `payment-form` |
+| تسويات عملاء | `client-adjustment-list`, `client-adjustment-form` |
+| تسويات موردين | `supplier-adjustment-list`, `supplier-adjustment-form` |
 | منتجات مبيعات | `product-list`, `product-form` |
 | مصروفات | `expense-list`, `expense-form` |
 | موردون | `supplier-list`, `supplier-form` |
@@ -84,8 +88,10 @@
 - **المبيعات:** `invoices` ← `invoice_lines` (حقل اختياري `product_id` → `products`)
 - **المنتجات:** `products` ← `product_currency_prices` (تسعير لكل عملة مدعومة)
 - **التحصيل:** `client_payments` → `clients`
+- **تسويات العملاء:** `client_balance_adjustments` → `clients` (خصم/إعفاء على الذمة **دون** تعديل الفاتورة)
 - **المشتريات:** `purchase_orders` ← `purchase_order_lines` → `suppliers`
 - **دفعات الموردين:** `supplier_payments` → `suppliers`
+- **تسويات الموردين:** `supplier_balance_adjustments` → `suppliers`
 - **اليومية:** `expenses` (مع `recorded_by_user_id` → `users`)؛ جدول `income_entries` قد يبقى في المخطط لكن **واجهة المسارات الحالية** تدمج الإدخال مع دفعات العملاء
 - **أرشيف:** `legacy_catalog_products` (قراءة/بحث؛ ترحيل إلى `products` عبر أمر Artisan)
 - **هوية:** `users`
@@ -99,6 +105,7 @@ erDiagram
     clients ||--o{ client_contacts : has
     clients ||--o{ invoices : has
     clients ||--o{ client_payments : has
+    clients ||--o{ client_balance_adjustments : has
     invoices ||--o{ invoice_lines : has
     products ||--o{ invoice_lines : "optional product_id"
     products ||--o{ product_currency_prices : has
@@ -106,6 +113,7 @@ erDiagram
     suppliers ||--o{ purchase_orders : has
     purchase_orders ||--o{ purchase_order_lines : has
     suppliers ||--o{ supplier_payments : has
+    suppliers ||--o{ supplier_balance_adjustments : has
 ```
 
 ---

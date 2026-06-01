@@ -201,6 +201,7 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | `HTTP 500` على الصفحة الرئيسية | غالباً صلاحيات أو cache قديم | `chmod -R ug+rwx storage bootstrap/cache` ثم `php artisan optimize:clear` ثم `config:cache` |
 | `Vite manifest not found` | لم يُبنَ `public/build/manifest.json` | `npm ci && npm run build` على السيرفر (أو ارفع `public/build` من المحلي) |
 | `Table 'users' already exists` عند `migrate` | جداول من محاولة سابقة و`migrations` فارغ | `php artisan migrate:fresh --force` (يحذف الكل) |
+| `Identifier name ... is too long` (MySQL) | اسم فهرس تلقائي > 64 حرف (مثلاً `client_balance_adjustments_...`) | اسحب آخر `main` (commit `93f88b0+`) ثم `php artisan migrate --force`؛ الترحيل idempotent. إن بقي جدول بلا فهرس: `DROP TABLE client_balance_adjustments, supplier_balance_adjustments` ثم `migrate --force` |
 | `Foreign key constraint is incorrectly formed` | استيراد dump ERP داخل قاعدة Laravel | افصل: ERP في `baitpait_profileMedia`، Laravel في `baitpait_profile` |
 | `1064 ... '/usr/bin/mysqldump: Deprecated'` في phpMyAdmin | السطر الأول في dump رسالة تحذير وليس SQL | استخدم نسخة `*_phpmyadmin_clean.sql` (بعد `sed '1,2d'`) |
 | `APP_NAME` لا يظهر | القالب كان يحوي نصاً ثابتاً | بعد commit `46eb03d` صار يقرأ `config('app.name')` — أعد `php artisan config:cache && view:cache` |

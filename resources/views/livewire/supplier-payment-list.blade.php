@@ -13,20 +13,23 @@
     @endif
 </div>
 
-<div class="card px-4 py-3 mb-5 flex flex-wrap items-center gap-3">
+<div class="card px-4 py-3 mb-5 flex items-center gap-3">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-    <input wire:model.live.debounce.300ms="search" type="search" placeholder="بحث باسم المورد أو المرجع..." class="flex-1 min-w-[12rem] bg-transparent text-sm focus:outline-none placeholder:text-gray-300">
-    @if($search)<button wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none">&times;</button>@endif
-    <div class="flex items-center gap-2 shrink-0">
-        <label class="text-xs text-gray-500 whitespace-nowrap">المورد</label>
-        <select wire:model.live="filterSupplierId" class="input select text-sm py-1.5 min-w-[10rem]">
-            <option value="">الكل</option>
-            @foreach($suppliers as $s)
-                <option value="{{ $s->id }}">{{ $s->displayName() }}</option>
-            @endforeach
-        </select>
-    </div>
+    <input wire:model.live.debounce.300ms="search" type="search"
+           placeholder="بحث باسم المورد، المرجع، الهاتف، أو الملاحظات..."
+           class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-300"
+           autocomplete="off">
+    @if($search !== '')
+    <button type="button" wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none" aria-label="مسح البحث">&times;</button>
+    @endif
 </div>
+
+@include('livewire.partials.cashflow-list-filters', [
+    'partyType' => 'supplier',
+    'parties' => $suppliers,
+    'currencies' => $currencies,
+    'dateLabel' => 'تاريخ الدفع',
+])
 
 <div class="card overflow-hidden">
     <div wire:loading.delay class="h-0.5 bg-[#C9A227]/20 relative overflow-hidden"><div class="absolute inset-y-0 right-0 w-1/3 bg-[#C9A227] animate-pulse"></div></div>
@@ -61,7 +64,7 @@
             @empty
             <tr><td colspan="6">
                 <div class="text-center py-16 text-gray-300">
-                    <p class="text-sm">{{ $search || $filterSupplierId ? 'لا توجد نتائج' : 'لا توجد دفعات بعد — تظهر هنا بعد استيراد XML أو التسجيل اليدوي' }}</p>
+                    <p class="text-sm">{{ $search || $this->hasActiveListFilters() ? 'لا توجد نتائج للبحث أو الفلتر' : 'لا توجد دفعات بعد — تظهر هنا بعد استيراد XML أو التسجيل اليدوي' }}</p>
                 </div>
             </td></tr>
             @endforelse

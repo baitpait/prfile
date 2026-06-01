@@ -80,3 +80,16 @@
 - **تنبيه:** أي قالب جديد يجب أن يستخدم `config('app.name')` لا نصاً ثابتاً. بعد تغيير `APP_NAME` في الإنتاج: `php artisan config:clear && config:cache && view:clear && view:cache`.
 
 ---
+
+## [2026-05-25] - تسويات الذمة + كشف حساب مبسّط + بحث عميل في الفاتورة
+- **الهدف:** تسجيل خصم/إعفاء على ذمة العميل/المورد **دون** تعديل الفواتير؛ تبسيط كشف الحساب (ملخص + مبالغ موقّعة)؛ بحث عميل في نماذج الفاتورة.
+- **التغييرات:**
+  - جداول `client_balance_adjustments`، `supplier_balance_adjustments` + Livewire (قائمة/نموذج) + مسارات + قائمة جانبية.
+  - تحديث `ClientStatementService` / `SupplierStatementService` (معادلة: مستندات − دفعات − تسويات).
+  - Trait `FiltersClientsForSelect` في الفواتير والدفعات.
+  - إصلاح أسماء فهارس MySQL (`cba_client_cur_date_idx`) بعد فشل `migrate` على الإنتاج.
+  - توثيق: `docs/09_BALANCE_ADJUSTMENTS_AND_STATEMENTS_AR.md` + تحديث `03`، `04`، `07`، `08`.
+- **الأدوات:** Laravel migrations، Livewire، PHPUnit.
+- **تنبيه:** التسوية **ليست** دفعة نقدية — لا تدخل صناديق التحصيل. بعد النشر: `git pull && php artisan migrate --force && php artisan optimize:clear`.
+
+---

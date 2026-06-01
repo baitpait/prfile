@@ -37,12 +37,7 @@ class SupplierStatement extends Component
         );
     }
 
-    public function updatedDateFrom(): void
-    {
-        $this->loadStatement();
-    }
-
-    public function updatedDateTo(): void
+    public function applyStatementFilters(): void
     {
         $this->loadStatement();
     }

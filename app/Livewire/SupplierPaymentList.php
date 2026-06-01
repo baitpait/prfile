@@ -24,18 +24,9 @@ class SupplierPaymentList extends Component
     #[Url(as: 'sp_supplier')]
     public string $filterSupplierId = '';
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterSupplierId(): void
-    {
-        $this->resetPage();
-    }
-
     public function clearListFilters(): void
     {
+        $this->search = '';
         $this->filterSupplierId = '';
         $this->supplierSearch = '';
         $this->resetCashflowFilters();
@@ -44,7 +35,8 @@ class SupplierPaymentList extends Component
 
     public function hasActiveListFilters(): bool
     {
-        return $this->filterSupplierId !== ''
+        return trim($this->search) !== ''
+            || $this->filterSupplierId !== ''
             || trim($this->supplierSearch) !== ''
             || $this->hasActiveCashflowFilters();
     }

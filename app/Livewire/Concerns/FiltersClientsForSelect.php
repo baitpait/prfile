@@ -60,13 +60,6 @@ trait FiltersClientsForSelect
         return (string) ($this->client_id ?? '');
     }
 
-    public function updatedClientSearch(): void
-    {
-        if (method_exists($this, 'resetPage')) {
-            $this->resetPage();
-        }
-    }
-
     /**
      * Business Purpose: When no explicit client is selected, narrow cashflow rows by typed client name/phone.
      *

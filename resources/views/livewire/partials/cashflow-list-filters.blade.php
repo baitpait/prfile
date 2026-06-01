@@ -5,18 +5,27 @@
     $partyLabel = $isClient ? 'العميل' : 'المورد';
     $partySearchPlaceholder = $isClient ? 'ابحث باسم العميل...' : 'ابحث باسم المورد...';
     $partyAllLabel = $isClient ? 'كل العملاء' : 'كل الموردين';
+    $applyMethod = $applyMethod ?? 'applyListFilters';
+    $clearMethod = $clearMethod ?? 'clearListFilters';
 @endphp
 
-<div class="card p-4 mb-5">
+<form wire:submit.prevent="{{ $applyMethod }}" class="card p-4 mb-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div class="flex min-w-0 flex-1 flex-col gap-3">
+            @if(!empty($generalSearchPlaceholder))
+            <div class="min-w-0">
+                <label class="label">بحث عام</label>
+                <input type="search" wire:model="search" class="input w-full text-sm" placeholder="{{ $generalSearchPlaceholder }}" autocomplete="off">
+            </div>
+            @endif
+
             @if($showParty ?? true)
             <div class="min-w-0">
                 <label class="label">بحث {{ $partyLabel }}</label>
                 @if($isClient)
-                <input type="search" wire:model.live.debounce.300ms="clientSearch" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
+                <input type="search" wire:model="clientSearch" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
                 @else
-                <input type="search" wire:model.live.debounce.300ms="supplierSearch" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
+                <input type="search" wire:model="supplierSearch" class="input w-full text-sm" placeholder="{{ $partySearchPlaceholder }}" autocomplete="off">
                 @endif
             </div>
 
@@ -24,14 +33,14 @@
                 <div class="min-w-0">
                     <label class="label">{{ $partyLabel }}</label>
                     @if($isClient)
-                    <select wire:model.live="filterClientId" class="input w-full">
+                    <select wire:model="filterClientId" class="input w-full">
                         <option value="">{{ $partyAllLabel }}</option>
                         @foreach($parties as $party)
                             <option value="{{ $party->id }}">{{ $party->displayName() }}</option>
                         @endforeach
                     </select>
                     @else
-                    <select wire:model.live="filterSupplierId" class="input w-full">
+                    <select wire:model="filterSupplierId" class="input w-full">
                         <option value="">{{ $partyAllLabel }}</option>
                         @foreach($parties as $party)
                             <option value="{{ $party->id }}">{{ $party->displayName() }}</option>
@@ -42,7 +51,7 @@
                 @if($showMethod ?? true)
                 <div class="min-w-0">
                     <label class="label">طريقة الدفع</label>
-                    <select wire:model.live="filterMethod" class="input w-full">
+                    <select wire:model="filterMethod" class="input w-full">
                         <option value="">الكل</option>
                         <option value="cash">نقدي</option>
                         <option value="bank">بنكي</option>
@@ -55,10 +64,10 @@
             @endif
 
             @if(count($currencies) > 0)
-            <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 {{ ($showParty ?? true) || ($showMethod ?? true) ? '' : '' }}">
-                <div class="min-w-0 {{ !($showParty ?? true) && !($showMethod ?? true) ? 'sm:col-span-1' : 'sm:col-span-2 md:col-span-1' }}">
+            <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="min-w-0">
                     <label class="label">العملة</label>
-                    <select wire:model.live="filterCurrency" class="input w-full">
+                    <select wire:model="filterCurrency" class="input w-full">
                         <option value="">كل العملات</option>
                         @foreach($currencies as $code)
                             <option value="{{ $code }}">{{ $code }}</option>
@@ -71,18 +80,18 @@
             <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="min-w-0">
                     <label class="label">من {{ $dateLabel }}</label>
-                    <input wire:model.live="filterDateFrom" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateFrom" type="date" class="input w-full" dir="ltr">
                 </div>
                 <div class="min-w-0">
                     <label class="label">إلى {{ $dateLabel }}</label>
-                    <input wire:model.live="filterDateTo" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateTo" type="date" class="input w-full" dir="ltr">
                 </div>
             </div>
         </div>
-        @if($this->hasActiveListFilters())
-        <button type="button" wire:click="clearListFilters" class="btn btn-secondary shrink-0 self-start whitespace-nowrap lg:self-end">
-            مسح الفلاتر
-        </button>
-        @endif
+        @include('livewire.partials.list-filter-actions', [
+            'applyMethod' => $applyMethod,
+            'clearMethod' => $clearMethod,
+            'showClear' => $this->hasActiveListFilters(),
+        ])
     </div>
-</div>
+</form>

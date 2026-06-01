@@ -21,20 +21,14 @@
         </div>
     </div>
 
-    <div class="bg-white border border-[#E0E0E0] rounded p-4 mb-6">
+    <form wire:submit.prevent="applyReportFilters" class="bg-white border border-[#E0E0E0] rounded p-4 mb-6">
         <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
             <h2 class="text-sm font-bold text-[#3D3D3D]">تصفية النتائج</h2>
-            @if($currency !== '' || $agingBucket !== '' || $daysMin !== '' || $daysMax !== '' || $minBalance !== '' || $search !== '')
-            <button type="button" wire:click="clearFilters"
-                    class="text-xs text-gray-500 hover:text-[#3D3D3D] underline">
-                مسح الفلاتر
-            </button>
-            @endif
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <div>
                 <label class="block text-xs font-medium text-[#3D3D3D] mb-1">العملة</label>
-                <select wire:model.live="currency"
+                <select wire:model="currency"
                         class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-[#C9A227]">
                     <option value="">كل العملات</option>
                     @foreach($currencyOptions as $c)
@@ -44,7 +38,7 @@
             </div>
             <div>
                 <label class="block text-xs font-medium text-[#3D3D3D] mb-1">فئة التأخير</label>
-                <select wire:model.live="agingBucket"
+                <select wire:model="agingBucket"
                         class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-[#C9A227]"
                         @disabled($daysMin !== '' || $daysMax !== '')>
                     <option value="">الكل</option>
@@ -56,27 +50,27 @@
             </div>
             <div>
                 <label class="block text-xs font-medium text-[#3D3D3D] mb-1">أيام من (حد أدنى)</label>
-                <input type="number" min="0" step="1" wire:model.live="daysMin" dir="ltr"
+                <input type="number" min="0" step="1" wire:model="daysMin" dir="ltr"
                        placeholder="—"
                        @disabled($agingBucket !== '')
                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full font-mono focus:outline-none focus:border-[#C9A227] disabled:bg-[#F5F5F5]">
             </div>
             <div>
                 <label class="block text-xs font-medium text-[#3D3D3D] mb-1">أيام إلى (حد أقصى)</label>
-                <input type="number" min="0" step="1" wire:model.live="daysMax" dir="ltr"
+                <input type="number" min="0" step="1" wire:model="daysMax" dir="ltr"
                        placeholder="—"
                        @disabled($agingBucket !== '')
                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full font-mono focus:outline-none focus:border-[#C9A227] disabled:bg-[#F5F5F5]">
             </div>
             <div>
                 <label class="block text-xs font-medium text-[#3D3D3D] mb-1">حد أدنى للمبلغ</label>
-                <input type="number" min="0" step="0.01" wire:model.live="minBalance" dir="ltr"
+                <input type="number" min="0" step="0.01" wire:model="minBalance" dir="ltr"
                        placeholder="0"
                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full font-mono focus:outline-none focus:border-[#C9A227]">
             </div>
             <div class="sm:col-span-2 lg:col-span-1 xl:col-span-2">
                 <label class="block text-xs font-medium text-[#3D3D3D] mb-1">بحث (اسم أو هاتف)</label>
-                <input type="search" wire:model.live.debounce.300ms="search"
+                <input type="search" wire:model="search"
                        placeholder="ابحث..."
                        class="border border-[#E0E0E0] rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-[#C9A227]">
             </div>
@@ -86,7 +80,14 @@
         @elseif($daysMin !== '' || $daysMax !== '')
         <p class="text-xs text-gray-500 mt-2">نطاق الأيام مخصّص — اختر «الكل» في فئة التأخير لاستخدامه.</p>
         @endif
-    </div>
+        <div class="flex flex-wrap gap-2 mt-4">
+            @include('livewire.partials.list-filter-actions', [
+                'applyMethod' => 'applyReportFilters',
+                'clearMethod' => 'clearFilters',
+                'showClear' => $this->hasActiveReportFilters(),
+            ])
+        </div>
+    </form>
 
     @if(count($rows) === 0)
         <div class="text-center py-16 text-gray-400 bg-white border border-[#E0E0E0] rounded">

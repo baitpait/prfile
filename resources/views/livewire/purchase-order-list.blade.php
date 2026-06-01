@@ -13,29 +13,22 @@
     @endcan
 </div>
 
-<div class="card px-4 py-3 mb-5 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-    <input wire:model.live.debounce.300ms="search" type="search"
-           placeholder="بحث برقم المستند، المورد، الهاتف، أو الملاحظات..."
-           class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-300"
-           autocomplete="off">
-    @if($search !== '')
-    <button type="button" wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none" aria-label="مسح البحث">&times;</button>
-    @endif
-</div>
-
-<div class="card p-4 mb-5">
+<form wire:submit.prevent="applyPurchaseOrderFilters" class="card p-4 mb-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div class="flex min-w-0 flex-1 flex-col gap-3">
             <div class="min-w-0 w-full">
+                <label class="label">بحث عام</label>
+                <input type="search" wire:model="search" class="input w-full text-sm" placeholder="بحث برقم المستند، المورد، الهاتف، أو الملاحظات..." autocomplete="off">
+            </div>
+            <div class="min-w-0 w-full">
                 <label class="label">بحث المورد</label>
-                <input type="search" wire:model.live.debounce.300ms="supplierSearch" class="input w-full text-sm" placeholder="ابحث باسم المورد..." autocomplete="off">
+                <input type="search" wire:model="supplierSearch" class="input w-full text-sm" placeholder="ابحث باسم المورد..." autocomplete="off">
             </div>
 
             <div class="grid min-w-0 w-full grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="min-w-0">
                     <label class="label">الحالة</label>
-                    <select wire:model.live="filterStatus" class="input w-full">
+                    <select wire:model="filterStatus" class="input w-full">
                         <option value="">الكل</option>
                         <option value="draft">مسودة</option>
                         <option value="issued">صادر</option>
@@ -44,7 +37,7 @@
                 </div>
                 <div class="min-w-0">
                     <label class="label">المورد</label>
-                    <select wire:model.live="filterSupplierId" class="input w-full">
+                    <select wire:model="filterSupplierId" class="input w-full">
                         <option value="">كل الموردين</option>
                         @foreach($suppliers as $s)
                             <option value="{{ $s->id }}">{{ $s->displayName() }}</option>
@@ -56,7 +49,7 @@
             @if(count($poCurrencies) > 0)
             <div class="min-w-0 w-full sm:max-w-xs">
                 <label class="label">العملة</label>
-                <select wire:model.live="filterCurrency" class="input w-full">
+                <select wire:model="filterCurrency" class="input w-full">
                     <option value="">كل العملات</option>
                     @foreach($poCurrencies as $code)
                         <option value="{{ $code }}">{{ $code }}</option>
@@ -67,21 +60,21 @@
             <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="min-w-0">
                     <label class="label">من تاريخ المستند</label>
-                    <input wire:model.live="filterDateFrom" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateFrom" type="date" class="input w-full" dir="ltr">
                 </div>
                 <div class="min-w-0">
                     <label class="label">إلى تاريخ المستند</label>
-                    <input wire:model.live="filterDateTo" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateTo" type="date" class="input w-full" dir="ltr">
                 </div>
             </div>
         </div>
-        @if($this->hasActivePurchaseOrderFilters())
-        <button type="button" wire:click="clearPurchaseOrderFilters" class="btn btn-secondary shrink-0 self-start whitespace-nowrap lg:self-end">
-            مسح الفلاتر
-        </button>
-        @endif
+        @include('livewire.partials.list-filter-actions', [
+            'applyMethod' => 'applyPurchaseOrderFilters',
+            'clearMethod' => 'clearPurchaseOrderFilters',
+            'showClear' => $this->hasActivePurchaseOrderFilters(),
+        ])
     </div>
-</div>
+</form>
 
 <div class="card overflow-hidden">
     <div wire:loading.delay class="h-0.5 bg-[#C9A227]/20 relative overflow-hidden"><div class="absolute inset-y-0 right-0 w-1/3 bg-[#C9A227] animate-pulse"></div></div>

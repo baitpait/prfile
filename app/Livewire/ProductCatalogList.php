@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\LegacyCatalogProduct;
 use Livewire\Attributes\Url;
@@ -10,15 +11,22 @@ use Livewire\WithPagination;
 
 class ProductCatalogList extends Component
 {
+    use AppliesListFiltersOnAction;
     use WithPagination;
     use WithPerPagePagination;
 
     #[Url(as: 'q')]
     public string $search = '';
 
-    public function updatedSearch(): void
+    public function clearListFilters(): void
     {
+        $this->search = '';
         $this->resetPage();
+    }
+
+    public function hasActiveListFilters(): bool
+    {
+        return trim($this->search) !== '';
     }
 
     public function render()

@@ -30,6 +30,7 @@ test('client payment list filters by client search text', function () {
     Livewire::actingAs($user)
         ->test(PaymentList::class)
         ->set('clientSearch', 'ألفا')
+        ->call('applyListFilters')
         ->assertSee('PAY-ALPHA')
         ->assertDontSee('PAY-BETA');
 });

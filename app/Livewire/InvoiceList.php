@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\FiltersClientsForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Client;
@@ -14,6 +15,7 @@ use Livewire\WithPagination;
 
 class InvoiceList extends Component
 {
+    use AppliesListFiltersOnAction;
     use FiltersClientsForSelect;
     use WithPagination;
     use WithPerPagePagination;
@@ -67,38 +69,9 @@ class InvoiceList extends Component
     /** @var array<int, array{title:string, description:string, unit_price:string, quantity:string, line_total:string}> */
     public array $lines = [];
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterStatus(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterClientId(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterCurrency(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterDateFrom(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterDateTo(): void
-    {
-        $this->resetPage();
-    }
-
     public function clearInvoiceFilters(): void
     {
+        $this->search = '';
         $this->filterStatus = '';
         $this->filterClientId = '';
         $this->filterCurrency = '';
@@ -109,7 +82,8 @@ class InvoiceList extends Component
 
     public function hasActiveInvoiceFilters(): bool
     {
-        return $this->filterStatus !== ''
+        return trim($this->search) !== ''
+            || $this->filterStatus !== ''
             || $this->filterClientId !== ''
             || $this->filterCurrency !== ''
             || $this->filterDateFrom !== ''

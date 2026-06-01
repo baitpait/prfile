@@ -25,24 +25,23 @@
         </div>
     </div>
 
-    <div class="bg-white border border-[#E0E0E0] rounded p-4 mb-6 flex flex-wrap gap-4 items-end">
+    <form wire:submit.prevent="applyStatementFilters" class="bg-white border border-[#E0E0E0] rounded p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div>
             <label class="block text-xs font-medium text-[#3D3D3D] mb-1">من تاريخ</label>
-            <input type="date" wire:model.live="dateFrom"
+            <input type="date" wire:model="dateFrom"
                    class="border border-[#E0E0E0] rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#C9A227]">
         </div>
         <div>
             <label class="block text-xs font-medium text-[#3D3D3D] mb-1">إلى تاريخ</label>
-            <input type="date" wire:model.live="dateTo"
+            <input type="date" wire:model="dateTo"
                    class="border border-[#E0E0E0] rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#C9A227]">
         </div>
-        @if($dateFrom || $dateTo)
-            <button wire:click="resetDates"
-                    class="text-sm text-[#DC2626] hover:underline">
-                مسح الفلتر
-            </button>
-        @endif
-    </div>
+        @include('livewire.partials.list-filter-actions', [
+            'applyMethod' => 'applyStatementFilters',
+            'clearMethod' => 'resetDates',
+            'showClear' => (bool) ($dateFrom || $dateTo),
+        ])
+    </form>
 
     @if(empty($statement))
         <div class="text-center py-16 text-gray-400">

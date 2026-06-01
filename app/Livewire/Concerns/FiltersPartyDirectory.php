@@ -11,6 +11,8 @@ use Livewire\Attributes\Url;
  */
 trait FiltersPartyDirectory
 {
+    use AppliesListFiltersOnAction;
+
     #[Url(as: 'q')]
     public string $search = '';
 
@@ -20,21 +22,6 @@ trait FiltersPartyDirectory
     /** @var 'newest'|'name' */
     #[Url(as: 'sort')]
     public string $sort = 'newest';
-
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterCity(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedSort(): void
-    {
-        $this->resetPage();
-    }
 
     public function clearPartyFilters(): void
     {

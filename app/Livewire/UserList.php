@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\User;
 use Livewire\Component;
@@ -9,6 +10,7 @@ use Livewire\WithPagination;
 
 class UserList extends Component
 {
+    use AppliesListFiltersOnAction;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -16,9 +18,15 @@ class UserList extends Component
 
     public ?int $confirmDeleteId = null;
 
-    public function updatedSearch(): void
+    public function clearListFilters(): void
     {
+        $this->search = '';
         $this->resetPage();
+    }
+
+    public function hasActiveListFilters(): bool
+    {
+        return trim($this->search) !== '';
     }
 
     public function toggleActive(int $id): void

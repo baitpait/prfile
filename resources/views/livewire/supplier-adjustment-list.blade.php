@@ -25,9 +25,10 @@
     </div>
 </div>
 
-<div class="card px-4 py-3 mb-5">
-    <input wire:model.live.debounce.300ms="search" type="search" placeholder="بحث..." class="w-full bg-transparent text-sm focus:outline-none">
-</div>
+@include('livewire.partials.list-search-form', [
+    'searchPlaceholder' => 'بحث بالمورد أو السبب...',
+    'hasActive' => $this->hasActiveListFilters(),
+])
 
 <div class="card overflow-hidden">
     <table class="data-table">

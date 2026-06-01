@@ -13,22 +13,17 @@
     @endif
 </div>
 
-<div class="card px-4 py-3 mb-5 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-    <input wire:model.live.debounce.300ms="search" type="search"
-           placeholder="بحث باسم العميل أو رقم الفاتورة..."
-           class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-300">
-    @if($search)<button wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none">&times;</button>@endif
-</div>
-
-<div class="card p-4 mb-5">
+<form wire:submit.prevent="applyInvoiceFilters" class="card p-4 mb-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div class="flex min-w-0 flex-1 flex-col gap-3">
-            {{-- صف 1: الحالة، العميل، العملة (من sm يظهر عمودان، من lg ثلاثة عند وجود عملات) --}}
+            <div class="min-w-0">
+                <label class="label">بحث</label>
+                <input wire:model="search" type="search" placeholder="بحث باسم العميل أو رقم الفاتورة..." class="input w-full">
+            </div>
             <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 {{ count($invoiceCurrencies) > 0 ? 'md:grid-cols-3' : '' }}">
                 <div class="min-w-0">
                     <label class="label">الحالة</label>
-                    <select wire:model.live="filterStatus" class="input w-full">
+                    <select wire:model="filterStatus" class="input w-full">
                         <option value="">الكل</option>
                         <option value="draft">مسودة</option>
                         <option value="issued">صادرة</option>
@@ -37,7 +32,7 @@
                 </div>
                 <div class="min-w-0">
                     <label class="label">العميل</label>
-                    <select wire:model.live="filterClientId" class="input w-full">
+                    <select wire:model="filterClientId" class="input w-full">
                         <option value="">كل العملاء</option>
                         @foreach($clients as $c)
                             <option value="{{ $c->id }}">{{ $c->displayName() }}</option>
@@ -47,7 +42,7 @@
                 @if(count($invoiceCurrencies) > 0)
                 <div class="min-w-0 sm:col-span-2 md:col-span-1">
                     <label class="label">العملة</label>
-                    <select wire:model.live="filterCurrency" class="input w-full">
+                    <select wire:model="filterCurrency" class="input w-full">
                         <option value="">كل العملات</option>
                         @foreach($invoiceCurrencies as $code)
                             <option value="{{ $code }}">{{ $code }}</option>
@@ -60,21 +55,21 @@
             <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="min-w-0">
                     <label class="label">من تاريخ الفاتورة</label>
-                    <input wire:model.live="filterDateFrom" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateFrom" type="date" class="input w-full" dir="ltr">
                 </div>
                 <div class="min-w-0">
                     <label class="label">إلى تاريخ الفاتورة</label>
-                    <input wire:model.live="filterDateTo" type="date" class="input w-full" dir="ltr">
+                    <input wire:model="filterDateTo" type="date" class="input w-full" dir="ltr">
                 </div>
             </div>
         </div>
-        @if($this->hasActiveInvoiceFilters())
-        <button type="button" wire:click="clearInvoiceFilters" class="btn btn-secondary shrink-0 self-start whitespace-nowrap lg:self-end">
-            مسح الفلاتر
-        </button>
-        @endif
+        @include('livewire.partials.list-filter-actions', [
+            'applyMethod' => 'applyInvoiceFilters',
+            'clearMethod' => 'clearInvoiceFilters',
+            'showClear' => $this->hasActiveInvoiceFilters(),
+        ])
     </div>
-</div>
+</form>
 
 <div class="card overflow-hidden">
     <div wire:loading.delay class="h-0.5 bg-[#C9A227]/20 relative overflow-hidden">

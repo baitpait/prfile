@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
  */
 trait FiltersCashflowList
 {
+    use AppliesListFiltersOnAction;
+
     #[\Livewire\Attributes\Url(as: 'cf_method')]
     public string $filterMethod = '';
 
@@ -21,26 +23,6 @@ trait FiltersCashflowList
 
     #[\Livewire\Attributes\Url(as: 'cf_to')]
     public string $filterDateTo = '';
-
-    public function updatedFilterMethod(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterCurrency(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterDateFrom(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterDateTo(): void
-    {
-        $this->resetPage();
-    }
 
     /**
      * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query

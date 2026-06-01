@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Supplier;
 use App\Models\SupplierBalanceAdjustment;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 
 class SupplierAdjustmentList extends Component
 {
+    use AppliesListFiltersOnAction;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -26,9 +28,15 @@ class SupplierAdjustmentList extends Component
         abort_unless(auth()->user()->isAccountant(), 403);
     }
 
-    public function updatedSearch(): void
+    public function clearListFilters(): void
     {
+        $this->search = '';
         $this->resetPage();
+    }
+
+    public function hasActiveListFilters(): bool
+    {
+        return trim($this->search) !== '';
     }
 
     public function goCreate(): void

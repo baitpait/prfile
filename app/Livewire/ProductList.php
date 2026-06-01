@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Product;
 use Illuminate\Support\Facades\Gate;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 
 class ProductList extends Component
 {
+    use AppliesListFiltersOnAction;
     use WithPagination;
     use WithPerPagePagination;
 
@@ -22,9 +24,15 @@ class ProductList extends Component
         Gate::authorize('viewAny', Product::class);
     }
 
-    public function updatedSearch(): void
+    public function clearListFilters(): void
     {
+        $this->search = '';
         $this->resetPage();
+    }
+
+    public function hasActiveListFilters(): bool
+    {
+        return trim($this->search) !== '';
     }
 
     public function deleteRecord(int $id): void

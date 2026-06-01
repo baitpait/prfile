@@ -13,22 +13,12 @@
     @endif
 </div>
 
-<div class="card px-4 py-3 mb-5 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-    <input wire:model.live.debounce.300ms="search" type="search"
-           placeholder="بحث باسم العميل، المرجع، الهاتف، أو الملاحظات..."
-           class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-300"
-           autocomplete="off">
-    @if($search !== '')
-    <button type="button" wire:click="$set('search','')" class="text-gray-300 hover:text-gray-500 text-lg leading-none" aria-label="مسح البحث">&times;</button>
-    @endif
-</div>
-
 @include('livewire.partials.cashflow-list-filters', [
     'partyType' => 'client',
     'parties' => $clients,
     'currencies' => $currencies,
     'dateLabel' => 'تاريخ الدفع',
+    'generalSearchPlaceholder' => 'بحث باسم العميل، المرجع، الهاتف، أو الملاحظات...',
 ])
 
 <div class="card overflow-hidden">

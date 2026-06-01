@@ -18,20 +18,17 @@ class ExpenseList extends Component
     #[Url(as: 'q')]
     public string $search = '';
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
     public function clearListFilters(): void
     {
+        $this->search = '';
         $this->resetCashflowFilters();
         $this->resetPage();
     }
 
     public function hasActiveListFilters(): bool
     {
-        return $this->hasActiveCashflowFilters();
+        return trim($this->search) !== ''
+            || $this->hasActiveCashflowFilters();
     }
 
     public function deleteRecord(int $id): void

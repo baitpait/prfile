@@ -53,13 +53,6 @@ trait FiltersSuppliersForSelect
         return $suppliers;
     }
 
-    public function updatedSupplierSearch(): void
-    {
-        if (method_exists($this, 'resetPage')) {
-            $this->resetPage();
-        }
-    }
-
     /**
      * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
      */

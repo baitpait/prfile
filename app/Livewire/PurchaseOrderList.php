@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Livewire\Concerns\FiltersSuppliersForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\PurchaseOrder;
@@ -15,6 +16,7 @@ use Livewire\WithPagination;
 
 class PurchaseOrderList extends Component
 {
+    use AppliesListFiltersOnAction;
     use FiltersSuppliersForSelect;
     use WithPagination;
     use WithPerPagePagination;
@@ -41,38 +43,9 @@ class PurchaseOrderList extends Component
 
     public ?int $viewingId = null;
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterSupplierId(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterStatus(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterCurrency(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterDateFrom(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterDateTo(): void
-    {
-        $this->resetPage();
-    }
-
     public function clearPurchaseOrderFilters(): void
     {
+        $this->search = '';
         $this->filterStatus = '';
         $this->filterSupplierId = '';
         $this->filterCurrency = '';
@@ -84,8 +57,10 @@ class PurchaseOrderList extends Component
 
     public function hasActivePurchaseOrderFilters(): bool
     {
-        return $this->filterStatus !== ''
+        return trim($this->search) !== ''
+            || $this->filterStatus !== ''
             || $this->filterSupplierId !== ''
+            || trim($this->supplierSearch) !== ''
             || $this->filterCurrency !== ''
             || $this->filterDateFrom !== ''
             || $this->filterDateTo !== '';
@@ -161,7 +136,11 @@ class PurchaseOrderList extends Component
             ->when(in_array($this->filterStatus, ['draft', 'issued', 'void'], true), fn ($q) => $q->where('status', $this->filterStatus)
             )
             ->when(ctype_digit($this->filterSupplierId) && Supplier::whereKey((int) $this->filterSupplierId)->exists(), fn ($q) => $q->where('supplier_id', (int) $this->filterSupplierId)
-            )
+            );
+
+        $this->applySupplierSearchToPartyRelation($query);
+
+        $query
             ->when($currencyFilterActive, fn ($q) => $q->where('currency_code', $filterCur))
             ->when($this->filterDateFrom !== '', function ($q) {
                 try {

@@ -26,18 +26,9 @@ class PaymentList extends Component
 
     public string $clientSearch = '';
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterClientId(): void
-    {
-        $this->resetPage();
-    }
-
     public function clearListFilters(): void
     {
+        $this->search = '';
         $this->filterClientId = '';
         $this->clientSearch = '';
         $this->resetCashflowFilters();
@@ -46,7 +37,8 @@ class PaymentList extends Component
 
     public function hasActiveListFilters(): bool
     {
-        return $this->filterClientId !== ''
+        return trim($this->search) !== ''
+            || $this->filterClientId !== ''
             || trim($this->clientSearch) !== ''
             || $this->hasActiveCashflowFilters();
     }

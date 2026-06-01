@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\AppliesListFiltersOnAction;
 use App\Services\ClientReceivablesAgingFilters;
 use App\Services\ClientReceivablesAgingService;
 use Illuminate\Support\Facades\Gate;
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClientReceivablesAgingReport extends Component
 {
+    use AppliesListFiltersOnAction;
+
     #[Url]
     public string $currency = '';
 
@@ -49,48 +52,29 @@ class ClientReceivablesAgingReport extends Component
         $this->loadRows();
     }
 
-    public function updatedCurrency(): void
-    {
-        $this->refreshCurrencyOptions();
-        $this->loadRows();
-    }
-
-    public function updatedAgingBucket(): void
+    public function applyReportFilters(): void
     {
         if ($this->agingBucket !== '') {
             $this->daysMin = '';
             $this->daysMax = '';
         }
 
-        $this->loadRows();
-    }
-
-    public function updatedDaysMin(): void
-    {
-        if ($this->daysMin !== '') {
+        if ($this->daysMin !== '' || $this->daysMax !== '') {
             $this->agingBucket = '';
         }
 
+        $this->refreshCurrencyOptions();
         $this->loadRows();
     }
 
-    public function updatedDaysMax(): void
+    public function hasActiveReportFilters(): bool
     {
-        if ($this->daysMax !== '') {
-            $this->agingBucket = '';
-        }
-
-        $this->loadRows();
-    }
-
-    public function updatedMinBalance(): void
-    {
-        $this->loadRows();
-    }
-
-    public function updatedSearch(): void
-    {
-        $this->loadRows();
+        return $this->currency !== ''
+            || $this->agingBucket !== ''
+            || $this->daysMin !== ''
+            || $this->daysMax !== ''
+            || $this->minBalance !== ''
+            || trim($this->search) !== '';
     }
 
     public function clearFilters(): void

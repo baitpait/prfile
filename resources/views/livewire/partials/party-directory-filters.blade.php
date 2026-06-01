@@ -1,5 +1,5 @@
 {{-- Business Purpose: Shared search + filters for client/supplier directory lists. --}}
-<form wire:submit.prevent="applyPartyFilters" class="card p-4 mb-5 space-y-4">
+<x-list-filter-form applyMethod="applyPartyFilters" class="card p-4 mb-5 space-y-4">
     <div class="min-w-0">
         <label class="label">بحث</label>
         <input wire:model.blur="searchDraft"
@@ -34,4 +34,4 @@
             'showClear' => $this->hasActivePartyFilters(),
         ])
     </div>
-</form>
+</x-list-filter-form>

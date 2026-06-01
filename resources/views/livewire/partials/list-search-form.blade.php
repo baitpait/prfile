@@ -4,7 +4,7 @@
     $clearMethod = $clearMethod ?? 'clearListFilters';
     $hasActive = $hasActive ?? false;
 @endphp
-<form wire:submit.prevent="{{ $applyMethod }}" class="card p-4 mb-5">
+<x-list-filter-form applyMethod="{{ $applyMethod }}" class="card p-4 mb-5">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div class="min-w-0 flex-1">
             <label class="label">بحث</label>
@@ -16,4 +16,4 @@
             'showClear' => $hasActive,
         ])
     </div>
-</form>
+</x-list-filter-form>

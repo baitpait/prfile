@@ -9,7 +9,7 @@
     $clearMethod = $clearMethod ?? 'clearListFilters';
 @endphp
 
-<form wire:submit.prevent="{{ $applyMethod }}" class="card p-4 mb-5">
+<x-list-filter-form applyMethod="{{ $applyMethod }}" class="card p-4 mb-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div class="flex min-w-0 flex-1 flex-col gap-3">
             @if(!empty($generalSearchPlaceholder))
@@ -94,4 +94,4 @@
             'showClear' => $this->hasActiveListFilters(),
         ])
     </div>
-</form>
+</x-list-filter-form>

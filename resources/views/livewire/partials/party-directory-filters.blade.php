@@ -2,8 +2,8 @@
 <form wire:submit.prevent="applyPartyFilters" class="card p-4 mb-5 space-y-4">
     <div class="min-w-0">
         <label class="label">بحث</label>
-        <input wire:model="searchDraft"
-               type="search"
+        <input wire:model.blur="searchDraft"
+               type="text"
                placeholder="{{ $searchPlaceholder }}"
                class="input w-full"
                autocomplete="off">
@@ -13,7 +13,7 @@
         <div class="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
             <div class="min-w-0">
                 <label class="label">المدينة</label>
-                <select wire:model="filterCityDraft" class="input w-full">
+                <select wire:model.change="filterCityDraft" class="input w-full">
                     <option value="">كل المدن</option>
                     @foreach($cities as $city)
                         <option value="{{ $city }}">{{ $city }}</option>
@@ -22,7 +22,7 @@
             </div>
             <div class="min-w-0">
                 <label class="label">الترتيب</label>
-                <select wire:model="sortDraft" class="input w-full">
+                <select wire:model.change="sortDraft" class="input w-full">
                     <option value="newest">الأحدث أولاً</option>
                     <option value="name">حسب الاسم (أ–ي)</option>
                 </select>

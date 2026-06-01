@@ -3,6 +3,8 @@
 database/database.sqlite
 database/backups/*.sql
 database/backups/laravel_*
+/storage/app/database-backups/*
+!/storage/app/database-backups/.gitignore
 .env
 .env.backup
 .env.production

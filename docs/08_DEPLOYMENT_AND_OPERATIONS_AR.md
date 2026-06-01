@@ -142,7 +142,7 @@ cd /home/baitpait/public_html/profile && git pull origin main && \
 | تصدير لـ MySQL | `php artisan export:mysql-data` (يكتب على سطح المكتب افتراضياً) |
 | MySQL إنتاج | `mysqldump -u baitpait_profile -p baitpait_profile > backup_$(date +%Y%m%d).sql` |
 
-ملفات `database/backups/laravel_*` و`*.sql` **مستثناة من Git** — انسخها يدوياً لقرص خارجي/سحابة.
+من الواجهة (مدير): **الإدارة → نسخ احتياطي** — الملفات في `storage/app/database-backups/` (نسخ قديمة قد تبقى في `database/backups/`). **مستثناة من Git** — انسخها لقرص خارجي/سحابة.
 
 ---
 
@@ -206,6 +206,8 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | `1064 ... '/usr/bin/mysqldump: Deprecated'` في phpMyAdmin | السطر الأول في dump رسالة تحذير وليس SQL | استخدم نسخة `*_phpmyadmin_clean.sql` (بعد `sed '1,2d'`) |
 | `APP_NAME` لا يظهر | القالب كان يحوي نصاً ثابتاً | بعد commit `46eb03d` صار يقرأ `config('app.name')` — أعد `php artisan config:cache && view:cache` |
 | `fatal: 'prfile' does not appear to be a git repository` | اسم الـ remote على السيرفر مختلف | تحقق `git remote -v`، عادة الاسم `origin` |
+| `Permission denied` عند نسخ قاعدة البيانات من الواجهة | PHP لا يكتب في `database/` | اسحب آخر `main` (يحفظ في `storage/app/database-backups`) ثم `chmod -R ug+rwx storage` |
+| الفلاتر/البحث في القوائم لا يتفاعل | Livewire/Vite غير محمّل (`public/build` ناقص) | `npm ci && npm run build` ثم `php artisan optimize:clear`؛ في المتصفح: F12 → Network → تأكد أن طلبات `/livewire/update` تنجح (200) |
 
 ---
 

@@ -19,6 +19,14 @@ test('database backup page is manager only', function () {
         ->assertSee('نسخ احتياطي لقاعدة البيانات');
 });
 
+test('backup directory defaults to writable storage path', function () {
+    $service = app(DatabaseBackupService::class);
+
+    expect($service->backupDirectory())->toBe(storage_path('app/database-backups'));
+    expect(is_dir($service->backupDirectory()))->toBeTrue();
+    expect(is_writable($service->backupDirectory()))->toBeTrue();
+});
+
 test('sqlite backup creates downloadable file', function () {
     if (config('database.connections.sqlite.database') === ':memory:') {
         $this->markTestSkipped('In-memory SQLite in tests');

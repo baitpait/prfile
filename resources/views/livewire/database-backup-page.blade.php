@@ -3,7 +3,7 @@
         <h1 class="text-xl font-bold text-[#3D3D3D]">نسخ احتياطي لقاعدة البيانات</h1>
         <p class="text-sm text-gray-400 mt-0.5">
             اتصال حالي: <span class="font-medium text-[#3D3D3D]">{{ $driverLabel }}</span>
-            — الملفات تُحفظ في <code class="text-xs bg-gray-100 px-1 rounded" dir="ltr">database/backups/</code> (خارج Git)
+            — الملفات تُحفظ في <code class="text-xs bg-gray-100 px-1 rounded" dir="ltr">{{ $backupDir }}</code> (خارج Git)
         </p>
     </div>
 

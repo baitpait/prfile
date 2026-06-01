@@ -231,6 +231,7 @@ return [
     */
     'backup' => [
         'mysqldump_path' => env('MYSQLDUMP_PATH', 'mysqldump'),
+        'path' => env('DATABASE_BACKUP_PATH'),
     ],
 
 ];

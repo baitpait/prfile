@@ -16,12 +16,56 @@ class DatabaseBackupService
 
     public function backupDirectory(): string
     {
-        $dir = database_path('backups');
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+        $dir = $this->configuredBackupDirectory();
+        $this->ensureDirectoryIsWritable($dir);
 
         return $dir;
+    }
+
+    /**
+     * Business Purpose: Prefer storage/app (writable by PHP-FPM) over database/ on shared hosting.
+     */
+    private function configuredBackupDirectory(): string
+    {
+        $path = config('database.backup.path');
+
+        if (is_string($path) && $path !== '') {
+            return $path;
+        }
+
+        return storage_path('app/database-backups');
+    }
+
+    private function ensureDirectoryIsWritable(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            if (! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
+                throw new RuntimeException(
+                    'تعذّر إنشاء مجلد النسخ الاحتياطي. تحقق من صلاحيات مجلد storage على السيرفر.'
+                );
+            }
+        }
+
+        if (! is_writable($dir)) {
+            throw new RuntimeException(
+                'مجلد النسخ الاحتياطي غير قابل للكتابة ('.$dir.'). نفّذ: chmod -R ug+rwx storage'
+            );
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function backupSearchDirectories(): array
+    {
+        $dirs = [$this->backupDirectory()];
+        $legacy = database_path('backups');
+
+        if ($legacy !== $dirs[0] && is_dir($legacy)) {
+            $dirs[] = $legacy;
+        }
+
+        return $dirs;
     }
 
     public function connectionName(): string
@@ -49,8 +93,8 @@ class DatabaseBackupService
      */
     public function listBackups(int $limit = 15): array
     {
-        $dir = $this->backupDirectory();
-        $files = collect(File::files($dir))
+        $files = collect($this->backupSearchDirectories())
+            ->flatMap(fn (string $dir) => File::files($dir))
             ->filter(fn ($file) => preg_match(self::FILENAME_PATTERN, $file->getFilename()) === 1)
             ->sortByDesc(fn ($file) => $file->getMTime())
             ->take($limit)
@@ -139,12 +183,14 @@ class DatabaseBackupService
             throw new RuntimeException('اسم ملف غير صالح.');
         }
 
-        $path = $this->backupDirectory().DIRECTORY_SEPARATOR.$filename;
-        if (! is_file($path)) {
-            throw new RuntimeException('الملف غير موجود.');
+        foreach ($this->backupSearchDirectories() as $dir) {
+            $path = $dir.DIRECTORY_SEPARATOR.$filename;
+            if (is_file($path)) {
+                return $path;
+            }
         }
 
-        return $path;
+        throw new RuntimeException('الملف غير موجود.');
     }
 
     private function runMysqldump(string $targetPath): void

@@ -207,7 +207,7 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | `APP_NAME` لا يظهر | القالب كان يحوي نصاً ثابتاً | بعد commit `46eb03d` صار يقرأ `config('app.name')` — أعد `php artisan config:cache && view:cache` |
 | `fatal: 'prfile' does not appear to be a git repository` | اسم الـ remote على السيرفر مختلف | تحقق `git remote -v`، عادة الاسم `origin` |
 | `Permission denied` عند نسخ قاعدة البيانات من الواجهة | PHP لا يكتب في `database/` | اسحب آخر `main` (يحفظ في `storage/app/database-backups`) ثم `chmod -R ug+rwx storage` |
-| الفلاتر/البحث في القوائم لا يتفاعل | Livewire/Vite غير محمّل (`public/build` ناقص) | `npm ci && npm run build` ثم `php artisan optimize:clear`؛ في المتصفح: F12 → Network → تأكد أن طلبات `/livewire/update` تنجح (200) |
+| الفلاتر/البحث في القوائم لا يتفاعل | Livewire/Vite غير محمّل أو تهيئة مزدوجة | `npm ci && npm run build` ثم `php artisan config:clear && php artisan config:cache` (يجب `inject_assets=false` في `config/livewire.php`)؛ F12 → Network → `/livewire/update` = 200 |
 
 ---
 

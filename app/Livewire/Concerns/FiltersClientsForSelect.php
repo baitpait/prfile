@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Client;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -57,6 +58,40 @@ trait FiltersClientsForSelect
         }
 
         return (string) ($this->client_id ?? '');
+    }
+
+    public function updatedClientSearch(): void
+    {
+        if (method_exists($this, 'resetPage')) {
+            $this->resetPage();
+        }
+    }
+
+    /**
+     * Business Purpose: When no explicit client is selected, narrow cashflow rows by typed client name/phone.
+     *
+     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     */
+    protected function applyClientSearchToPartyRelation(Builder $query, string $relation = 'client'): void
+    {
+        if (property_exists($this, 'filterClientId') && (string) $this->filterClientId !== '') {
+            return;
+        }
+
+        $term = trim($this->clientSearch);
+        if ($term === '') {
+            return;
+        }
+
+        $like = '%'.$term.'%';
+        $query->whereHas($relation, function ($q) use ($like): void {
+            $q->where('business_name', 'like', $like)
+                ->orWhere('first_name', 'like', $like)
+                ->orWhere('last_name', 'like', $like)
+                ->orWhere('phone_primary', 'like', $like)
+                ->orWhere('phone_secondary', 'like', $like)
+                ->orWhere('email', 'like', $like);
+        });
     }
 
     protected function prefillClientSelect(int $clientId): void

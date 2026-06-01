@@ -47,6 +47,7 @@ class PaymentList extends Component
     public function hasActiveListFilters(): bool
     {
         return $this->filterClientId !== ''
+            || trim($this->clientSearch) !== ''
             || $this->hasActiveCashflowFilters();
     }
 
@@ -82,6 +83,8 @@ class PaymentList extends Component
             })
             ->when(ctype_digit($this->filterClientId) && Client::whereKey((int) $this->filterClientId)->exists(), fn ($q) => $q->where('client_id', (int) $this->filterClientId)
             );
+
+        $this->applyClientSearchToPartyRelation($query);
 
         $this->applyCashflowMethodFilter($query);
         $this->applyCashflowCurrencyFilter($query, $currencies);

@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Supplier;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -50,5 +51,37 @@ trait FiltersSuppliersForSelect
         }
 
         return $suppliers;
+    }
+
+    public function updatedSupplierSearch(): void
+    {
+        if (method_exists($this, 'resetPage')) {
+            $this->resetPage();
+        }
+    }
+
+    /**
+     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     */
+    protected function applySupplierSearchToPartyRelation(Builder $query, string $relation = 'supplier'): void
+    {
+        if (property_exists($this, 'filterSupplierId') && (string) $this->filterSupplierId !== '') {
+            return;
+        }
+
+        $term = trim($this->supplierSearch);
+        if ($term === '') {
+            return;
+        }
+
+        $like = '%'.$term.'%';
+        $query->whereHas($relation, function ($q) use ($like): void {
+            $q->where('business_name', 'like', $like)
+                ->orWhere('first_name', 'like', $like)
+                ->orWhere('last_name', 'like', $like)
+                ->orWhere('phone_primary', 'like', $like)
+                ->orWhere('phone_secondary', 'like', $like)
+                ->orWhere('email', 'like', $like);
+        });
     }
 }

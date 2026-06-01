@@ -11,6 +11,29 @@ use App\Models\SupplierPayment;
 use App\Models\User;
 use Livewire\Livewire;
 
+test('client payment list filters by client search text', function () {
+    $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
+
+    $clientA = Client::factory()->create(['business_name' => 'شركة ألفا للدفع']);
+    $clientB = Client::factory()->create(['business_name' => 'شركة بيتا للدفع']);
+
+    ClientPayment::factory()->create([
+        'client_id' => $clientA->id,
+        'bank_reference' => 'PAY-ALPHA',
+    ]);
+
+    ClientPayment::factory()->create([
+        'client_id' => $clientB->id,
+        'bank_reference' => 'PAY-BETA',
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(PaymentList::class)
+        ->set('clientSearch', 'ألفا')
+        ->assertSee('PAY-ALPHA')
+        ->assertDontSee('PAY-BETA');
+});
+
 test('client payment list filters by client and method', function () {
     $user = User::factory()->create(['role' => 'accountant', 'is_active' => true]);
 

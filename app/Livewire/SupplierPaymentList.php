@@ -45,6 +45,7 @@ class SupplierPaymentList extends Component
     public function hasActiveListFilters(): bool
     {
         return $this->filterSupplierId !== ''
+            || trim($this->supplierSearch) !== ''
             || $this->hasActiveCashflowFilters();
     }
 
@@ -74,6 +75,8 @@ class SupplierPaymentList extends Component
             })
             ->when(ctype_digit($this->filterSupplierId) && Supplier::whereKey((int) $this->filterSupplierId)->exists(), fn ($q) => $q->where('supplier_id', (int) $this->filterSupplierId)
             );
+
+        $this->applySupplierSearchToPartyRelation($query);
 
         $this->applyCashflowMethodFilter($query);
         $this->applyCashflowCurrencyFilter($query, $currencies);

@@ -57,7 +57,16 @@
     }
     .input::placeholder { color: #C0C4CC; }
 
-    select.input { cursor: pointer; }
+    select.input {
+        cursor: pointer;
+        color-scheme: light;
+        color: var(--color-brand-grey);
+        background-color: #fff;
+    }
+    select.input option {
+        color: var(--color-brand-grey);
+        background-color: #fff;
+    }
     textarea.input { resize: vertical; }
 
     /* ── أزرار ── */

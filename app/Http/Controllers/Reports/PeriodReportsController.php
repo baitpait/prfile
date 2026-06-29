@@ -20,6 +20,8 @@ use App\Services\Reports\SupplierAdjustmentsPeriodReportService;
 use App\Services\Reports\SupplierPaymentsReportService;
 use App\Services\Reports\SupplierPayablesSummaryService;
 use App\Services\Reports\UnifiedActivityLogService;
+use App\Services\Hr\SalaryPeriodReportService;
+use App\Services\Reports\ProfitLossReportService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -61,6 +63,34 @@ class PeriodReportsController extends Controller
         $this->authorize('view-period-reports');
 
         return view('reports.expenses');
+    }
+
+    public function salaries(): View
+    {
+        $this->authorize('view-period-reports');
+
+        return view('reports.salaries');
+    }
+
+    public function profitLoss(): View
+    {
+        $this->authorize('view-period-reports');
+
+        return view('reports.profit-loss');
+    }
+
+    public function profitLossCash(): View
+    {
+        $this->authorize('view-period-reports');
+
+        return view('reports.profit-loss-cash');
+    }
+
+    public function profitLossIls(): View
+    {
+        $this->authorize('view-period-reports');
+
+        return view('reports.profit-loss-ils');
     }
 
     public function sales(): View
@@ -191,6 +221,76 @@ class PeriodReportsController extends Controller
             'filterLabels' => $filters->describeActive(),
             'reportTitle' => 'المصروفات',
         ], 'expenses-'.now()->format('Ymd-His').'.pdf', 'المصروفات');
+    }
+
+    public function salariesPdf(Request $request, ArabicPdfRenderer $pdfRenderer)
+    {
+        $this->authorize('export-period-reports');
+
+        $filters = ReportPeriodFilters::fromRequest($request);
+        $svc = new SalaryPeriodReportService;
+
+        return $this->streamPdf($pdfRenderer, 'pdf.reports.salaries', [
+            'rows' => $svc->rows($filters),
+            'totals' => $svc->totalsByCurrency($filters),
+            'filterLabels' => $filters->describeActive(),
+            'reportTitle' => 'تقرير الرواتب',
+        ], 'salaries-'.now()->format('Ymd-His').'.pdf', 'تقرير الرواتب');
+    }
+
+    public function profitLossPdf(Request $request, ArabicPdfRenderer $pdfRenderer)
+    {
+        $this->authorize('export-period-reports');
+
+        $filters = ReportPeriodFilters::fromRequest($request);
+        $svc = new ProfitLossReportService;
+        $mode = ProfitLossReportService::MODE_ACCRUAL;
+        $rows = $svc->byCurrency($filters, $mode);
+
+        return $this->streamPdf($pdfRenderer, 'pdf.reports.profit-loss', [
+            'rows' => collect($rows),
+            'filterLabels' => $filters->describeActive(),
+            'reportTitle' => 'قائمة الربح والخسارة — كامل (فواتير)',
+            'salesLabel' => 'مبيعات (فواتير)',
+            'purchaseLabel' => 'مشتريات (أوامر)',
+        ], 'profit-loss-'.now()->format('Ymd-His').'.pdf', 'قائمة الربح والخسارة');
+    }
+
+    public function profitLossCashPdf(Request $request, ArabicPdfRenderer $pdfRenderer)
+    {
+        $this->authorize('export-period-reports');
+
+        $filters = ReportPeriodFilters::fromRequest($request);
+        $svc = new ProfitLossReportService;
+        $rows = $svc->byCurrency($filters, ProfitLossReportService::MODE_CASH);
+
+        return $this->streamPdf($pdfRenderer, 'pdf.reports.profit-loss', [
+            'rows' => collect($rows),
+            'filterLabels' => $filters->describeActive(),
+            'reportTitle' => 'قائمة الربح والخسارة — بدون دين',
+            'salesLabel' => 'دفعات العملاء',
+            'purchaseLabel' => 'دفعات الموردين',
+        ], 'profit-loss-cash-'.now()->format('Ymd-His').'.pdf', 'الربح والخسارة بدون دين');
+    }
+
+    public function profitLossIlsPdf(Request $request, ArabicPdfRenderer $pdfRenderer)
+    {
+        $this->authorize('export-period-reports');
+
+        $filters = ReportPeriodFilters::fromRequest($request);
+        $basis = $request->query('basis', ProfitLossReportService::MODE_ACCRUAL);
+        if (! in_array($basis, [ProfitLossReportService::MODE_ACCRUAL, ProfitLossReportService::MODE_CASH], true)) {
+            $basis = ProfitLossReportService::MODE_ACCRUAL;
+        }
+
+        $svc = new ProfitLossReportService;
+        $totals = $svc->consolidatedIls($filters, $basis);
+
+        return $this->streamPdf($pdfRenderer, 'pdf.reports.profit-loss-ils', [
+            'totals' => $totals,
+            'filterLabels' => $filters->describeActive(),
+            'reportTitle' => 'الربح والخسارة بالشيكل — '.ProfitLossReportService::modeLabel($basis),
+        ], 'profit-loss-ils-'.now()->format('Ymd-His').'.pdf', 'الربح والخسارة بالشيكل');
     }
 
     public function salesPdf(Request $request, ArabicPdfRenderer $pdfRenderer)

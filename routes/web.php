@@ -11,11 +11,13 @@ use App\Http\Controllers\SupplierStatementController;
 use App\Models\Client;
 use App\Models\ClientBalanceAdjustment;
 use App\Models\ClientPayment;
+use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\LegacyCatalogProduct;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\SalaryPayment;
 use App\Models\Supplier;
 use App\Models\SupplierBalanceAdjustment;
 use App\Models\SupplierPayment;
@@ -148,6 +150,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/supplier-payments/pdf', [PeriodReportsController::class, 'supplierPaymentsPdf'])->name('reports.supplier-payments.pdf');
     Route::get('/reports/expenses', [PeriodReportsController::class, 'expenses'])->name('reports.expenses');
     Route::get('/reports/expenses/pdf', [PeriodReportsController::class, 'expensesPdf'])->name('reports.expenses.pdf');
+    Route::get('/reports/salaries', [PeriodReportsController::class, 'salaries'])->name('reports.salaries');
+    Route::get('/reports/salaries/pdf', [PeriodReportsController::class, 'salariesPdf'])->name('reports.salaries.pdf');
+    Route::get('/reports/profit-loss', [PeriodReportsController::class, 'profitLoss'])->name('reports.profit-loss');
+    Route::get('/reports/profit-loss/pdf', [PeriodReportsController::class, 'profitLossPdf'])->name('reports.profit-loss.pdf');
+    Route::get('/reports/profit-loss-cash', [PeriodReportsController::class, 'profitLossCash'])->name('reports.profit-loss-cash');
+    Route::get('/reports/profit-loss-cash/pdf', [PeriodReportsController::class, 'profitLossCashPdf'])->name('reports.profit-loss-cash.pdf');
+    Route::get('/reports/profit-loss-ils', [PeriodReportsController::class, 'profitLossIls'])->name('reports.profit-loss-ils');
+    Route::get('/reports/profit-loss-ils/pdf', [PeriodReportsController::class, 'profitLossIlsPdf'])->name('reports.profit-loss-ils.pdf');
     Route::get('/reports/sales', [PeriodReportsController::class, 'sales'])->name('reports.sales');
     Route::get('/reports/sales/pdf', [PeriodReportsController::class, 'salesPdf'])->name('reports.sales.pdf');
     Route::get('/reports/purchase-orders', [PeriodReportsController::class, 'purchaseOrders'])->name('reports.purchase-orders');
@@ -301,6 +311,40 @@ Route::middleware(['auth'])->group(function () {
 
         return redirect()->route('suppliers.index')->with('toast', 'تم حذف المورد');
     })->name('suppliers.destroy');
+
+    Route::get('/employees', fn () => view('employees.index'))->name('employees.index');
+    Route::get('/employees/create', function () {
+        abort_unless(auth()->user()->can('create', Employee::class), 403);
+
+        return view('employees.create');
+    })->name('employees.create');
+    Route::get('/employees/{employee}/edit', function (Employee $employee) {
+        abort_unless(auth()->user()->can('update', $employee), 403);
+
+        return view('employees.edit', compact('employee'));
+    })->name('employees.edit');
+    Route::get('/employees/{employee}', function (Employee $employee) {
+        abort_unless(auth()->user()->can('view', $employee), 403);
+
+        return view('employees.show', compact('employee'));
+    })->name('employees.show');
+
+    Route::get('/salary-payments', fn () => view('salary-payments.index'))->name('salary-payments.index');
+    Route::get('/salary-payments/create', function () {
+        abort_unless(auth()->user()->can('create', SalaryPayment::class), 403);
+
+        return view('salary-payments.create');
+    })->name('salary-payments.create');
+    Route::get('/salary-payments/{salaryPayment}/edit', function (SalaryPayment $salaryPayment) {
+        abort_unless(auth()->user()->can('update', $salaryPayment), 403);
+
+        return view('salary-payments.edit', compact('salaryPayment'));
+    })->name('salary-payments.edit');
+    Route::get('/salary-payments/{salaryPayment}', function (SalaryPayment $salaryPayment) {
+        abort_unless(auth()->user()->can('view', $salaryPayment), 403);
+
+        return view('salary-payments.show', compact('salaryPayment'));
+    })->name('salary-payments.show');
 
     Route::get('/users', function () {
         abort_unless(auth()->user()->isManager(), 403);

@@ -16,7 +16,31 @@
 | created_at / updated_at | UTC | |
 
 ### `staffs` أو دمج مع `users`
-- يمكن دمج الموظف مع المستخدم أو إبقاء جدول موظفين للبيانات الوظيفية الإضافية.
+- **قرار التنفيذ:** جدول `employees` منفصل عن `users` — لا ربط `user_id` على الموظف.
+- التفاصيل: `docs/10_EMPLOYEES_AND_PAYROLL_AR.md`
+
+### `employees` — الموظفون (HR)
+| الحقل | الوصف |
+|--------|--------|
+| employee_code | اختياري؛ فريد. |
+| full_name | إلزامي. |
+| department, job_title | |
+| base_salary_amount, base_salary_currency | الراتب الأساسي المرجعي. |
+| is_active | |
+| recorded_by_user_id | من أضاف السجل. |
+| deleted_at | soft delete. |
+
+### `salary_payments` — سجل الرواتب
+| الحقل | الوصف |
+|--------|--------|
+| employee_id | FK |
+| period_year, period_month | شهر الراتب. |
+| base_amount, bonus_amount, deduction_amount, net_amount | |
+| currency_code | |
+| status | draft / paid / cancelled |
+| paid_at, method | عند الدفع. |
+| recorded_by_user_id | |
+| **فريد:** | employee + year + month + currency |
 
 ### `clients` — العملاء
 | الحقل | الوصف |

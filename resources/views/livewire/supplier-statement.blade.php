@@ -11,12 +11,15 @@
                 + تسوية على الذمة
             </a>
             @endif
+            @if(auth()->user()->isManager())
+            <livewire:party-currency-converter party-type="supplier" :party-id="$supplier->id" />
+            @endif
             @can('exportStatement', $supplier)
             <button wire:click="exportCsv"
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium">
                 تصدير CSV
             </button>
-            <a href="{{ route('suppliers.statement.pdf', $supplier) }}"
+            <a href="{{ route('suppliers.statement.pdf', $supplier) }}{{ ($dateFrom || $dateTo) ? '?'.http_build_query(array_filter(['date_from' => $dateFrom ?: null, 'date_to' => $dateTo ?: null])) : '' }}"
                target="_blank"
                class="px-4 py-2 text-sm bg-[#C9A227] text-white rounded hover:opacity-90 font-medium">
                 طباعة PDF

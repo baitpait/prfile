@@ -314,6 +314,7 @@ body {
                             <tr>
                                 <th style="width:80pt;">السعر X الكمية</th>
                                 <th>البند</th>
+                                <th>التفاصيل</th>
                                 <th style="width:70pt;">الإجمالي</th>
                             </tr>
                         </thead>
@@ -324,8 +325,9 @@ body {
                                     {{ number_format((float)$line->unit_price, 2) }}
                                     x {{ number_format((float)$line->quantity, 0) }}
                                 </td>
-                                <td>{{ $line->title }}{{ $line->description ? ' - ' . $line->description : '' }}</td>
-                                <td class="ltr">{{ number_format((float)$line->line_total, 2) }} ش.ج</td>
+                                <td>{{ $line->title }}</td>
+                                <td>{{ $line->displayDetails() ?? '—' }}</td>
+                                <td class="ltr">{{ number_format((float)$line->line_total, 2) }} {{ $currency }}</td>
                             </tr>
                             @endforeach
                         </tbody>

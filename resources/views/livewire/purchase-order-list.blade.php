@@ -84,7 +84,8 @@
                 <th>التاريخ</th>
                 <th>المورد</th>
                 <th>رقم المستند</th>
-                <th>الحالة</th>
+                <th>المستند</th>
+                <th>الدفع</th>
                 <th class="text-left" dir="ltr">المبلغ</th>
                 <th class="w-36"></th>
             </tr>
@@ -100,6 +101,11 @@
                     <span class="badge {{ $st==='issued' ? 'badge-green' : ($st==='draft' ? 'badge-yellow' : 'badge-red') }}">
                         {{ $st==='issued' ? 'صادر' : ($st==='draft' ? 'مسودة' : 'ملغى') }}
                     </span>
+                </td>
+                <td>
+                    @include('livewire.partials.invoice-payment-status-badge', [
+                        'paymentStatus' => $paymentStatuses[$po->id] ?? null,
+                    ])
                 </td>
                 <td class="font-mono font-semibold text-xs" dir="ltr">
                     {{ number_format((float) $po->total_amount, 2) }}
@@ -118,7 +124,7 @@
                 </td>
             </tr>
             @empty
-            <tr><td colspan="6">
+            <tr><td colspan="7">
                 <div class="text-center py-16 text-gray-300">
                     <p class="text-sm">{{ $search || $this->hasActivePurchaseOrderFilters() ? 'لا توجد نتائج للبحث أو الفلتر' : 'لا توجد فواتير مشتريات بعد — أضف مستنداً أو استورد من XML' }}</p>
                 </div>

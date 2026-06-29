@@ -190,8 +190,98 @@
                 </x-slot>
             </x-nav-link>
 
-            @can('view-client-receivables-aging')
+            @can('view-period-reports')
             <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">التقارير</div>
+
+            <x-nav-link :route="route('reports.index')" label="مركز التقارير"
+                        :active="request()->routeIs('reports.index')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.financial-period')" label="لوحة الفترة"
+                        :active="request()->routeIs('reports.financial-period')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.activity-log')" label="سجل النشاط"
+                        :active="request()->routeIs('reports.activity-log')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.cashflow')" label="التدفق النقدي"
+                        :active="request()->routeIs('reports.cashflow')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.client-payments')" label="دفعات العملاء"
+                        :active="request()->routeIs('reports.client-payments')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.supplier-payments')" label="دفعات الموردين"
+                        :active="request()->routeIs('reports.supplier-payments')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.expenses')" label="تقرير المصروفات"
+                        :active="request()->routeIs('reports.expenses')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.sales')" label="تقرير المبيعات"
+                        :active="request()->routeIs('reports.sales')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.purchase-orders')" label="تقرير المشتريات"
+                        :active="request()->routeIs('reports.purchase-orders')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
 
             <x-nav-link :route="route('reports.client-receivables-aging')" label="أعمار ذمم العملاء"
                         :active="request()->routeIs('reports.client-receivables-aging')">
@@ -199,6 +289,75 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.supplier-receivables-aging')" label="أعمار ذمم الموردين"
+                        :active="request()->routeIs('reports.supplier-receivables-aging')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.supplier-adjustments')" label="تسويات الموردين"
+                        :active="request()->routeIs('reports.supplier-adjustments')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 14l6-6m-5.5.5h.01m4.99 4.99h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+            <x-nav-link :route="route('reports.client-receivables-summary')" label="ملخص ذمم العملاء"
+                        :active="request()->routeIs('reports.client-receivables-summary')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.aggregated-client-statements')" label="كشوف العملاء"
+                        :active="request()->routeIs('reports.aggregated-client-statements')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.supplier-payables-summary')" label="ملخص ذمم الموردين"
+                        :active="request()->routeIs('reports.supplier-payables-summary')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.aggregated-supplier-statements')" label="كشوف الموردين"
+                        :active="request()->routeIs('reports.aggregated-supplier-statements')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            <x-nav-link :route="route('reports.client-adjustments')" label="تسويات العملاء"
+                        :active="request()->routeIs('reports.client-adjustments')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 14l6-6m-5.5.5h.01m4.99 4.99h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
                     </svg>
                 </x-slot>
             </x-nav-link>

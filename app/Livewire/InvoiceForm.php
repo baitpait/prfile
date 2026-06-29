@@ -3,10 +3,11 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\FiltersClientsForSelect;
-use App\Models\Client;
+use App\Models\ClientPayment;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\ProductCurrencyPrice;
+use App\Services\InvoicePaymentAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,15 @@ class InvoiceForm extends Component
     public string $status = 'draft';
 
     public string $notes = '';
+
+    /** unpaid | partial | paid — create only; persisted via client_payments, not on invoice row */
+    public string $payment_collection = 'unpaid';
+
+    public string $payment_amount = '';
+
+    public string $payment_method = 'cash';
+
+    public string $paid_at = '';
 
     /** @var array<int, array{product_id: string, product_search: string, title: string, description: string, unit_price: string, quantity: string, line_total: string}> */
     public array $lines = [];
@@ -76,7 +86,7 @@ class InvoiceForm extends Component
             $this->currency_code = $invoice->currency_code ?? 'ILS';
             $this->total_amount = (string) $invoice->total_amount;
             $this->discount_amount = (string) ($invoice->discount_amount ?? 0);
-            $this->status = $invoice->status ?? 'draft';
+            $this->status = $invoice->status === 'void' ? 'cancelled' : ($invoice->status ?? 'draft');
             $this->notes = $invoice->notes ?? '';
             $this->lines = $invoice->lines->map(fn ($l) => [
                 'product_id' => $l->product_id ? (string) $l->product_id : '',
@@ -90,6 +100,8 @@ class InvoiceForm extends Component
         } else {
             Gate::authorize('create', Invoice::class);
             $this->document_date = now()->format('Y-m-d');
+            $this->paid_at = now()->format('Y-m-d');
+            $this->status = 'issued';
             $this->prefillClientSelect(request()->integer('client'));
         }
 
@@ -317,6 +329,30 @@ class InvoiceForm extends Component
         $this->recalcTotal();
     }
 
+    public function updatedStatus(): void
+    {
+        if ($this->status !== 'issued') {
+            $this->payment_collection = 'unpaid';
+            $this->payment_amount = '';
+        }
+    }
+
+    public function updatedPaymentCollection(): void
+    {
+        if ($this->payment_collection === 'paid') {
+            $this->payment_amount = $this->total_amount;
+        } elseif ($this->payment_collection === 'unpaid') {
+            $this->payment_amount = '';
+        }
+    }
+
+    public function updatedTotalAmount(): void
+    {
+        if ($this->payment_collection === 'paid') {
+            $this->payment_amount = $this->total_amount;
+        }
+    }
+
     private function recalcTotal(): void
     {
         $titled = collect($this->lines)->filter(fn ($l) => trim((string) ($l['title'] ?? '')) !== '');
@@ -370,7 +406,7 @@ class InvoiceForm extends Component
 
         $this->syncLineTotalsFromInputs();
 
-        $this->validate([
+        $rules = [
             'client_id' => 'required|exists:clients,id',
             'document_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:document_date',
@@ -381,7 +417,20 @@ class InvoiceForm extends Component
             'lines.*.title' => 'required_with:lines|string|max:500',
             'lines.*.quantity' => 'required_with:lines|numeric|min:0',
             'lines.*.unit_price' => 'required_with:lines|numeric|min:0',
-        ], [
+        ];
+
+        if (! $this->invoiceId && $this->status === 'issued') {
+            $rules['payment_collection'] = 'required|in:unpaid,partial,paid';
+            if (in_array($this->payment_collection, ['partial', 'paid'], true)) {
+                $rules['payment_method'] = 'required|in:cash,bank,check,transfer';
+                $rules['paid_at'] = 'required|date';
+            }
+            if ($this->payment_collection === 'partial') {
+                $rules['payment_amount'] = 'required|numeric|min:0.01';
+            }
+        }
+
+        $this->validate($rules, [
             'lines.*.title.required_with' => 'اسم البند مطلوب',
             'lines.*.quantity.required_with' => 'الكمية مطلوبة',
             'lines.*.unit_price.required_with' => 'السعر مطلوب',
@@ -390,7 +439,11 @@ class InvoiceForm extends Component
             'document_date' => 'تاريخ الفاتورة',
             'due_date' => 'تاريخ الاستحقاق',
             'currency_code' => 'العملة',
-            'status' => 'الحالة',
+            'status' => 'حالة المستند',
+            'payment_collection' => 'حالة الدفع',
+            'payment_amount' => 'مبلغ الدفعة',
+            'payment_method' => 'طريقة الدفع',
+            'paid_at' => 'تاريخ الدفع',
         ]);
 
         foreach ($this->lines as $i => $line) {
@@ -433,6 +486,19 @@ class InvoiceForm extends Component
             return;
         }
 
+        $invoiceTotal = (float) $this->total_amount;
+
+        if (! $this->invoiceId && $this->status === 'issued' && $this->payment_collection === 'partial') {
+            $payAmount = (float) $this->payment_amount;
+            if ($payAmount >= $invoiceTotal) {
+                $this->addError('payment_amount', 'للدفع الجزئي يجب أن يكون المبلغ أقل من إجمالي الفاتورة');
+
+                return;
+            }
+        }
+
+        $storedStatus = $this->status === 'cancelled' ? 'void' : $this->status;
+
         $data = [
             'client_id' => $this->client_id,
             'legacy_invoice_no' => $this->legacy_invoice_no ?: null,
@@ -441,33 +507,60 @@ class InvoiceForm extends Component
             'currency_code' => $this->currency_code,
             'total_amount' => $this->total_amount,
             'discount_amount' => $this->discount_amount ?: 0,
-            'status' => $this->status,
+            'status' => $storedStatus,
             'notes' => $this->notes ?: null,
             'recorded_by_user_id' => auth()->id(),
         ];
 
-        if ($this->invoiceId) {
-            $invoice = Invoice::findOrFail($this->invoiceId);
-            $invoice->update($data);
-        } else {
-            $invoice = Invoice::create($data);
-        }
+        $collectPayment = ! $this->invoiceId
+            && $storedStatus === 'issued'
+            && in_array($this->payment_collection, ['partial', 'paid'], true);
 
-        $invoice->lines()->delete();
-        foreach ($titledLines as $i => $line) {
-            $pid = isset($line['product_id']) && $line['product_id'] !== '' ? (int) $line['product_id'] : null;
-            $invoice->lines()->create([
-                'product_id' => $pid,
-                'line_order' => $i + 1,
-                'title' => $line['title'],
-                'description' => $line['description'] ?: null,
-                'unit_price' => (float) ($line['unit_price'] ?? 0),
-                'quantity' => (float) ($line['quantity'] ?? 1),
-                'line_total' => (float) ($line['line_total'] ?? 0),
-            ]);
-        }
+        $paymentAmount = $collectPayment
+            ? ($this->payment_collection === 'paid' ? $invoiceTotal : (float) $this->payment_amount)
+            : null;
 
-        session()->flash('toast', $this->invoiceId ? 'تم تحديث الفاتورة' : 'تم إضافة الفاتورة بنجاح');
+        DB::transaction(function () use ($data, $titledLines, $collectPayment, $paymentAmount): void {
+            if ($this->invoiceId) {
+                $invoice = Invoice::findOrFail($this->invoiceId);
+                $invoice->update($data);
+            } else {
+                $invoice = Invoice::create($data);
+            }
+
+            $invoice->lines()->delete();
+            foreach ($titledLines as $i => $line) {
+                $pid = isset($line['product_id']) && $line['product_id'] !== '' ? (int) $line['product_id'] : null;
+                $invoice->lines()->create([
+                    'product_id' => $pid,
+                    'line_order' => $i + 1,
+                    'title' => $line['title'],
+                    'description' => $line['description'] ?: null,
+                    'unit_price' => (float) ($line['unit_price'] ?? 0),
+                    'quantity' => (float) ($line['quantity'] ?? 1),
+                    'line_total' => (float) ($line['line_total'] ?? 0),
+                ]);
+            }
+
+            if ($collectPayment && $paymentAmount !== null && $paymentAmount > 0) {
+                ClientPayment::query()->create([
+                    'client_id' => $invoice->client_id,
+                    'amount' => $paymentAmount,
+                    'currency_code' => $invoice->currency_code,
+                    'paid_at' => $this->paid_at,
+                    'method' => $this->payment_method,
+                    'bank_reference' => null,
+                    'notes' => 'تحصيل عند إنشاء الفاتورة #'.($invoice->legacy_invoice_no ?? $invoice->id),
+                    'recorded_by_user_id' => auth()->id(),
+                ]);
+            }
+        });
+
+        $toast = $this->invoiceId ? 'تم تحديث الفاتورة' : 'تم إضافة الفاتورة بنجاح';
+        if ($collectPayment) {
+            $toast .= ' وتسجيل الدفعة';
+        }
+        session()->flash('toast', $toast);
         $this->redirect(route('invoices.index'), navigate: true);
     }
 
@@ -476,12 +569,21 @@ class InvoiceForm extends Component
         $hasTitledLines = collect($this->lines)
             ->contains(fn ($l) => trim((string) ($l['title'] ?? '')) !== '');
 
+        $computedPaymentStatus = null;
+        if ($this->invoiceId) {
+            $existing = Invoice::query()->find($this->invoiceId);
+            if ($existing) {
+                $computedPaymentStatus = (new InvoicePaymentAllocationService)->forInvoice($existing);
+            }
+        }
+
         return view('livewire.invoice-form', [
             'clients' => $this->clientsForSelect(),
             'subtotal' => collect($this->lines)
                 ->filter(fn ($l) => trim((string) ($l['title'] ?? '')) !== '')
                 ->sum(fn ($l) => (float) ($l['line_total'] ?? 0)),
             'hasTitledLines' => $hasTitledLines,
+            'computedPaymentStatus' => $computedPaymentStatus,
         ]);
     }
 }

@@ -93,3 +93,16 @@
 - **تنبيه:** التسوية **ليست** دفعة نقدية — لا تدخل صناديق التحصيل. بعد النشر: `git pull && php artisan migrate --force && php artisan optimize:clear`.
 
 ---
+
+## [2026-05-25] - بحث العملاء/الموردين + إصلاح UTF-8 BOM في supplier-list
+- **الهدف:** بحث مباشر بالاسم في قوائم الأطراف؛ إصلاح تعطّل البحث في الموردين.
+- **التغييرات:**
+  - استبدال فلاتر «تطبيق» بـ `ListsPartyDirectory` + `party-name-search.blade.php` (`wire:model.live.debounce.300ms`).
+  - إزالة **UTF-8 BOM** (`EF BB BF`) من `supplier-list.blade.php` — كان يكسر جذر Livewire (`inputInWireRoot: false`).
+  - حذف `FiltersPartyDirectory`، `UsesCommittedPartyDirectoryFilters`، `party-directory-filters.blade.php`.
+  - اختبار: `PartyDirectoryListTest` (5 tests).
+  - توثيق: `docs/troubleshooting/INCIDENT-001-supplier-list-utf8-bom-livewire.md`.
+- **Commit:** `d0260ae`.
+- **تنبيه:** احفظ Blade بـ UTF-8 **بدون BOM**. بعد النشر: `git pull && php artisan view:clear && php artisan view:cache`.
+
+---

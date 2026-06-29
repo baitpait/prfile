@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\ClientReceivablesAgingController;
+use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\Reports\PeriodReportsController;
+use App\Http\Controllers\Reports\SupplierReceivablesAgingController;
 use App\Http\Controllers\ClientStatementController;
 use App\Http\Controllers\ClientPaymentPrintController;
 use App\Http\Controllers\InvoicePrintController;
@@ -88,8 +90,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/purchase-orders/{purchaseOrder}', function (PurchaseOrder $purchaseOrder) {
         abort_unless(auth()->user()->can('view', $purchaseOrder), 403);
         $purchaseOrder->load(['supplier', 'lines']);
+        $paymentStatus = (new \App\Services\PurchaseOrderPaymentAllocationService)->forPurchaseOrder($purchaseOrder);
 
-        return view('purchase-orders.show', compact('purchaseOrder'));
+        return view('purchase-orders.show', compact('purchaseOrder', 'paymentStatus'));
     })->name('purchase-orders.show');
 
     Route::get('/supplier-payments', fn () => view('supplier-payments.index'))->name('supplier-payments.index');
@@ -124,7 +127,9 @@ Route::middleware(['auth'])->group(function () {
     })->name('invoices.edit');
     Route::get('/invoices/{invoice}', function (Invoice $invoice) {
         $invoice->load(['client', 'lines', 'recordedBy']);
-        return view('invoices.show', compact('invoice'));
+        $paymentStatus = (new \App\Services\InvoicePaymentAllocationService)->forInvoice($invoice);
+
+        return view('invoices.show', compact('invoice', 'paymentStatus'));
     })->name('invoices.show');
     Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])->name('invoices.print');
 
@@ -133,6 +138,38 @@ Route::middleware(['auth'])->group(function () {
         ->name('reports.client-receivables-aging');
     Route::get('/reports/client-receivables-aging/pdf', [ClientReceivablesAgingController::class, 'pdf'])
         ->name('reports.client-receivables-aging.pdf');
+
+    Route::get('/reports', [PeriodReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports/cashflow', [PeriodReportsController::class, 'cashflow'])->name('reports.cashflow');
+    Route::get('/reports/cashflow/pdf', [PeriodReportsController::class, 'cashflowPdf'])->name('reports.cashflow.pdf');
+    Route::get('/reports/client-payments', [PeriodReportsController::class, 'clientPayments'])->name('reports.client-payments');
+    Route::get('/reports/client-payments/pdf', [PeriodReportsController::class, 'clientPaymentsPdf'])->name('reports.client-payments.pdf');
+    Route::get('/reports/supplier-payments', [PeriodReportsController::class, 'supplierPayments'])->name('reports.supplier-payments');
+    Route::get('/reports/supplier-payments/pdf', [PeriodReportsController::class, 'supplierPaymentsPdf'])->name('reports.supplier-payments.pdf');
+    Route::get('/reports/expenses', [PeriodReportsController::class, 'expenses'])->name('reports.expenses');
+    Route::get('/reports/expenses/pdf', [PeriodReportsController::class, 'expensesPdf'])->name('reports.expenses.pdf');
+    Route::get('/reports/sales', [PeriodReportsController::class, 'sales'])->name('reports.sales');
+    Route::get('/reports/sales/pdf', [PeriodReportsController::class, 'salesPdf'])->name('reports.sales.pdf');
+    Route::get('/reports/purchase-orders', [PeriodReportsController::class, 'purchaseOrders'])->name('reports.purchase-orders');
+    Route::get('/reports/purchase-orders/pdf', [PeriodReportsController::class, 'purchaseOrdersPdf'])->name('reports.purchase-orders.pdf');
+    Route::get('/reports/supplier-receivables-aging', [SupplierReceivablesAgingController::class, '__invoke'])->name('reports.supplier-receivables-aging');
+    Route::get('/reports/supplier-receivables-aging/pdf', [SupplierReceivablesAgingController::class, 'pdf'])->name('reports.supplier-receivables-aging.pdf');
+    Route::get('/reports/supplier-adjustments', [PeriodReportsController::class, 'supplierAdjustments'])->name('reports.supplier-adjustments');
+    Route::get('/reports/supplier-adjustments/pdf', [PeriodReportsController::class, 'supplierAdjustmentsPdf'])->name('reports.supplier-adjustments.pdf');
+    Route::get('/reports/financial-period', [PeriodReportsController::class, 'financialPeriod'])->name('reports.financial-period');
+    Route::get('/reports/financial-period/pdf', [PeriodReportsController::class, 'financialPeriodPdf'])->name('reports.financial-period.pdf');
+    Route::get('/reports/activity-log', [PeriodReportsController::class, 'activityLog'])->name('reports.activity-log');
+    Route::get('/reports/activity-log/pdf', [PeriodReportsController::class, 'activityLogPdf'])->name('reports.activity-log.pdf');
+    Route::get('/reports/client-adjustments', [PeriodReportsController::class, 'clientAdjustments'])->name('reports.client-adjustments');
+    Route::get('/reports/client-adjustments/pdf', [PeriodReportsController::class, 'clientAdjustmentsPdf'])->name('reports.client-adjustments.pdf');
+    Route::get('/reports/client-receivables-summary', [PeriodReportsController::class, 'clientReceivablesSummary'])->name('reports.client-receivables-summary');
+    Route::get('/reports/client-receivables-summary/pdf', [PeriodReportsController::class, 'clientReceivablesSummaryPdf'])->name('reports.client-receivables-summary.pdf');
+    Route::get('/reports/supplier-payables-summary', [PeriodReportsController::class, 'supplierPayablesSummary'])->name('reports.supplier-payables-summary');
+    Route::get('/reports/supplier-payables-summary/pdf', [PeriodReportsController::class, 'supplierPayablesSummaryPdf'])->name('reports.supplier-payables-summary.pdf');
+    Route::get('/reports/aggregated-client-statements', [PeriodReportsController::class, 'aggregatedClientStatements'])->name('reports.aggregated-client-statements');
+    Route::get('/reports/aggregated-client-statements/pdf', [PeriodReportsController::class, 'aggregatedClientStatementsPdf'])->name('reports.aggregated-client-statements.pdf');
+    Route::get('/reports/aggregated-supplier-statements', [PeriodReportsController::class, 'aggregatedSupplierStatements'])->name('reports.aggregated-supplier-statements');
+    Route::get('/reports/aggregated-supplier-statements/pdf', [PeriodReportsController::class, 'aggregatedSupplierStatementsPdf'])->name('reports.aggregated-supplier-statements.pdf');
     Route::get('/expenses/create', function () {
         abort_unless(auth()->user()->isAccountant(), 403);
 

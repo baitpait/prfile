@@ -4,6 +4,9 @@ namespace App\Livewire;
 
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\SupplierPayment;
+use App\Services\PurchaseOrderPaymentAllocationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -29,6 +32,15 @@ class PurchaseOrderForm extends Component
     public string $status = 'draft';
 
     public string $notes = '';
+
+    /** unpaid | partial | paid — create only; persisted via supplier_payments */
+    public string $payment_collection = 'unpaid';
+
+    public string $payment_amount = '';
+
+    public string $payment_method = 'cash';
+
+    public string $paid_at = '';
 
     /** @var array<int, array{title:string, description:string, unit_price:string, quantity:string, line_total:string}> */
     public array $lines = [];
@@ -60,6 +72,8 @@ class PurchaseOrderForm extends Component
         } else {
             Gate::authorize('create', PurchaseOrder::class);
             $this->document_date = now()->format('Y-m-d');
+            $this->paid_at = now()->format('Y-m-d');
+            $this->status = 'issued';
             $prefillSupplierId = request()->integer('supplier');
             if ($prefillSupplierId > 0 && Supplier::query()->whereKey($prefillSupplierId)->exists()) {
                 $this->supplier_id = (string) $prefillSupplierId;
@@ -86,6 +100,30 @@ class PurchaseOrderForm extends Component
     public function updatedDiscountAmount(): void
     {
         $this->recalcTotal();
+    }
+
+    public function updatedStatus(): void
+    {
+        if ($this->status !== 'issued') {
+            $this->payment_collection = 'unpaid';
+            $this->payment_amount = '';
+        }
+    }
+
+    public function updatedPaymentCollection(): void
+    {
+        if ($this->payment_collection === 'paid') {
+            $this->payment_amount = $this->total_amount;
+        } elseif ($this->payment_collection === 'unpaid') {
+            $this->payment_amount = '';
+        }
+    }
+
+    public function updatedTotalAmount(): void
+    {
+        if ($this->payment_collection === 'paid') {
+            $this->payment_amount = $this->total_amount;
+        }
     }
 
     private function recalcTotal(): void
@@ -135,7 +173,7 @@ class PurchaseOrderForm extends Component
 
         $this->syncLineTotalsFromInputs();
 
-        $this->validate([
+        $rules = [
             'supplier_id' => 'required|exists:suppliers,id',
             'document_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:document_date',
@@ -151,7 +189,20 @@ class PurchaseOrderForm extends Component
             'lines.*.title' => 'required_with:lines|string|max:500',
             'lines.*.quantity' => 'required_with:lines|numeric|min:0',
             'lines.*.unit_price' => 'required_with:lines|numeric|min:0',
-        ], [
+        ];
+
+        if (! $this->purchaseOrderId && $this->status === 'issued') {
+            $rules['payment_collection'] = 'required|in:unpaid,partial,paid';
+            if (in_array($this->payment_collection, ['partial', 'paid'], true)) {
+                $rules['payment_method'] = 'required|in:cash,bank,check,transfer';
+                $rules['paid_at'] = 'required|date';
+            }
+            if ($this->payment_collection === 'partial') {
+                $rules['payment_amount'] = 'required|numeric|min:0.01';
+            }
+        }
+
+        $this->validate($rules, [
             'lines.*.title.required_with' => 'اسم البند مطلوب',
             'lines.*.quantity.required_with' => 'الكمية مطلوبة',
             'lines.*.unit_price.required_with' => 'السعر مطلوب',
@@ -160,8 +211,12 @@ class PurchaseOrderForm extends Component
             'document_date' => 'تاريخ المستند',
             'due_date' => 'تاريخ الاستحقاق',
             'currency_code' => 'العملة',
-            'status' => 'الحالة',
+            'status' => 'حالة المستند',
             'legacy_po_no' => 'رقم المستند',
+            'payment_collection' => 'حالة الدفع',
+            'payment_amount' => 'مبلغ الدفعة',
+            'payment_method' => 'طريقة الدفع',
+            'paid_at' => 'تاريخ الدفع',
         ]);
 
         $titledLines = array_values(array_filter($this->lines, fn ($l) => trim((string) ($l['title'] ?? '')) !== ''));
@@ -180,6 +235,17 @@ class PurchaseOrderForm extends Component
             return;
         }
 
+        $orderTotal = (float) $this->total_amount;
+
+        if (! $this->purchaseOrderId && $this->status === 'issued' && $this->payment_collection === 'partial') {
+            $payAmount = (float) $this->payment_amount;
+            if ($payAmount >= $orderTotal) {
+                $this->addError('payment_amount', 'للدفع الجزئي يجب أن يكون المبلغ أقل من إجمالي المستند');
+
+                return;
+            }
+        }
+
         $data = [
             'supplier_id' => $this->supplier_id,
             'legacy_po_no' => $this->legacy_po_no !== '' ? $this->legacy_po_no : null,
@@ -193,26 +259,53 @@ class PurchaseOrderForm extends Component
             'recorded_by_user_id' => auth()->id(),
         ];
 
-        if ($this->purchaseOrderId) {
-            $po = PurchaseOrder::findOrFail($this->purchaseOrderId);
-            $po->update($data);
-        } else {
-            $po = PurchaseOrder::create($data);
-        }
+        $collectPayment = ! $this->purchaseOrderId
+            && $this->status === 'issued'
+            && in_array($this->payment_collection, ['partial', 'paid'], true);
 
-        $po->lines()->delete();
-        foreach ($titledLines as $i => $line) {
-            $po->lines()->create([
-                'line_order' => $i,
-                'title' => $line['title'],
-                'description' => ($line['description'] ?? '') !== '' ? $line['description'] : null,
-                'unit_price' => (float) ($line['unit_price'] ?? 0),
-                'quantity' => (float) ($line['quantity'] ?? 1),
-                'line_total' => (float) ($line['line_total'] ?? 0),
-            ]);
-        }
+        $paymentAmount = $collectPayment
+            ? ($this->payment_collection === 'paid' ? $orderTotal : (float) $this->payment_amount)
+            : null;
 
-        session()->flash('toast', $this->purchaseOrderId ? 'تم تحديث فاتورة المشتريات' : 'تم إضافة فاتورة المشتريات بنجاح');
+        DB::transaction(function () use ($data, $titledLines, $collectPayment, $paymentAmount): void {
+            if ($this->purchaseOrderId) {
+                $po = PurchaseOrder::findOrFail($this->purchaseOrderId);
+                $po->update($data);
+            } else {
+                $po = PurchaseOrder::create($data);
+            }
+
+            $po->lines()->delete();
+            foreach ($titledLines as $i => $line) {
+                $po->lines()->create([
+                    'line_order' => $i,
+                    'title' => $line['title'],
+                    'description' => ($line['description'] ?? '') !== '' ? $line['description'] : null,
+                    'unit_price' => (float) ($line['unit_price'] ?? 0),
+                    'quantity' => (float) ($line['quantity'] ?? 1),
+                    'line_total' => (float) ($line['line_total'] ?? 0),
+                ]);
+            }
+
+            if ($collectPayment && $paymentAmount !== null && $paymentAmount > 0) {
+                SupplierPayment::query()->create([
+                    'supplier_id' => $po->supplier_id,
+                    'amount' => $paymentAmount,
+                    'currency_code' => $po->currency_code,
+                    'paid_at' => $this->paid_at,
+                    'method' => $this->payment_method,
+                    'bank_reference' => null,
+                    'notes' => 'دفع عند إنشاء فاتورة المشتريات #'.($po->legacy_po_no ?? $po->id),
+                    'recorded_by_user_id' => auth()->id(),
+                ]);
+            }
+        });
+
+        $toast = $this->purchaseOrderId ? 'تم تحديث فاتورة المشتريات' : 'تم إضافة فاتورة المشتريات بنجاح';
+        if ($collectPayment) {
+            $toast .= ' وتسجيل الدفعة';
+        }
+        session()->flash('toast', $toast);
         $this->redirect(route('purchase-orders.index'), navigate: true);
     }
 
@@ -227,9 +320,18 @@ class PurchaseOrderForm extends Component
             ->filter(fn ($l) => trim((string) ($l['title'] ?? '')) !== '')
             ->sum(fn ($l) => (float) ($l['line_total'] ?? 0));
 
+        $computedPaymentStatus = null;
+        if ($this->purchaseOrderId) {
+            $existing = PurchaseOrder::query()->find($this->purchaseOrderId);
+            if ($existing) {
+                $computedPaymentStatus = (new PurchaseOrderPaymentAllocationService)->forPurchaseOrder($existing);
+            }
+        }
+
         return view('livewire.purchase-order-form', [
             'suppliers' => $suppliers,
             'subtotal' => $subtotal,
+            'computedPaymentStatus' => $computedPaymentStatus,
         ]);
     }
 }

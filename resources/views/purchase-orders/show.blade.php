@@ -29,7 +29,7 @@
                     <dd class="font-mono mt-1" dir="ltr">{{ $purchaseOrder->due_date?->format('Y-m-d') ?? '—' }}</dd>
                 </div>
                 <div>
-                    <dt class="text-gray-500">الحالة</dt>
+                    <dt class="text-gray-500">حالة المستند</dt>
                     <dd class="mt-1">
                         @php $s = $purchaseOrder->status; @endphp
                         <span class="badge {{ $s==='issued' ? 'badge-green' : ($s==='draft' ? 'badge-yellow' : 'badge-red') }}">
@@ -37,6 +37,14 @@
                         </span>
                     </dd>
                 </div>
+                @if($paymentStatus ?? null)
+                <div>
+                    <dt class="text-gray-500">حالة الدفع</dt>
+                    <dd class="mt-1">
+                        @include('livewire.partials.invoice-payment-status-badge', ['paymentStatus' => $paymentStatus])
+                    </dd>
+                </div>
+                @endif
             </dl>
             <div class="text-left">
                 <p class="text-xs text-gray-500">الإجمالي</p>

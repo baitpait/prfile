@@ -7,6 +7,7 @@ use App\Livewire\Concerns\FiltersClientsForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Services\InvoicePaymentAllocationService;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -353,11 +354,16 @@ class InvoiceList extends Component
 
         $rows = $this->paginateWithPerPage($query);
 
+        $paymentStatuses = (new InvoicePaymentAllocationService)->forInvoices(
+            collect($rows->items())
+        );
+
         return view('livewire.invoice-list', [
             'rows' => $rows,
             'clients' => $this->clientsForSelect(),
             'invoiceCurrencies' => $invoiceCurrencies,
             'viewingRecord' => $this->viewingRecord,
+            'paymentStatuses' => $paymentStatuses,
         ]);
     }
 }

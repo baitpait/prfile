@@ -46,8 +46,8 @@
                 <input wire:model="legacy_invoice_no" type="text" dir="ltr" class="input" placeholder="اختياري">
             </div>
             <div style="flex:1;min-width:min(100%,200px);">
-                <label class="label">الحالة <span class="text-red-400">*</span></label>
-                <select wire:model="status" class="input select">
+                <label class="label">حالة المستند <span class="text-red-400">*</span></label>
+                <select wire:model.live="status" class="input select">
                     <option value="draft">مسودة</option>
                     <option value="issued">صادرة</option>
                     <option value="cancelled">ملغاة</option>
@@ -74,6 +74,75 @@
             </div>
         </div>
     </div>
+
+    @if(!$invoiceId && $status === 'issued')
+    <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+        <p style="font-size:11px;font-weight:700;color:#9CA3AF;letter-spacing:.06em;text-transform:uppercase;">حالة الدفع</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="radio" wire:model.live="payment_collection" value="unpaid" style="accent-color:#C9A227;">
+                غير مدفوعة
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="radio" wire:model.live="payment_collection" value="partial" style="accent-color:#C9A227;">
+                جزئية
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="radio" wire:model.live="payment_collection" value="paid" style="accent-color:#C9A227;">
+                مدفوعة بالكامل
+            </label>
+        </div>
+        @error('payment_collection')<p class="field-error">{{ $message }}</p>@enderror
+
+        @if(in_array($payment_collection, ['partial', 'paid'], true))
+        <div style="display:flex;flex-wrap:wrap;gap:14px;padding-top:4px;border-top:1px solid #F0F2F5;">
+            @if($payment_collection === 'partial')
+            <div style="flex:1;min-width:min(100%,180px);">
+                <label class="label">مبلغ الدفعة <span class="text-red-400">*</span></label>
+                <input wire:model="payment_amount" type="number" step="0.01" min="0.01" dir="ltr" class="input" placeholder="0.00">
+                @error('payment_amount')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            @endif
+            <div style="flex:1;min-width:min(100%,180px);">
+                <label class="label">تاريخ الدفع <span class="text-red-400">*</span></label>
+                <input wire:model="paid_at" type="date" class="input">
+                @error('paid_at')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            <div style="flex:1;min-width:min(100%,180px);">
+                <label class="label">طريقة الدفع <span class="text-red-400">*</span></label>
+                <select wire:model="payment_method" class="input select">
+                    <option value="cash">نقدي</option>
+                    <option value="bank">بنكي</option>
+                    <option value="check">شيك</option>
+                    <option value="transfer">تحويل</option>
+                </select>
+                @error('payment_method')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+        </div>
+        <p style="font-size:11px;color:#9CA3AF;margin:0;">تُسجَّل الدفعة على حساب العميل — حالة الدفع تُعرض لاحقاً من مجموع الدفعات.</p>
+        @endif
+    </div>
+    @elseif(!$invoiceId && $status !== 'issued')
+    <div class="card" style="padding:14px 20px;background:#F9FAFB;border-style:dashed;">
+        <p style="font-size:12px;color:#6B7280;margin:0;">
+            <strong>حالة الدفع:</strong> متاحة عند اختيار «صادرة» في حالة المستند.
+        </p>
+    </div>
+    @endif
+
+    @if($invoiceId && $status === 'issued' && $computedPaymentStatus)
+    <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px;">
+        <p style="font-size:11px;font-weight:700;color:#9CA3AF;letter-spacing:.06em;text-transform:uppercase;">حالة الدفع (محسوبة)</p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            @include('livewire.partials.invoice-payment-status-badge', ['paymentStatus' => $computedPaymentStatus])
+            <span style="font-size:12px;color:#6B7280;" dir="ltr">
+                {{ number_format($computedPaymentStatus['allocated'], 2) }} / {{ number_format($computedPaymentStatus['total'], 2) }} {{ $currency_code }}
+            </span>
+        </div>
+        <p style="font-size:11px;color:#9CA3AF;margin:0;">تُحدَّث تلقائياً من دفعات العميل — سجّل دفعات إضافية من «الدفعات».</p>
+    </div>
+    @endif
 
     <div class="card" style="width:100%;padding:20px;display:flex;flex-direction:column;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">

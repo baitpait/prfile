@@ -213,6 +213,84 @@ test('accountant can download client statement pdf', function () {
     $this->get(route('clients.statement.pdf', $client))->assertOk();
 });
 
+test('client statement pdf uses dynamic currency on invoice lines', function () {
+    $client = Client::factory()->create();
+
+    $invoice = Invoice::factory()->create([
+        'client_id' => $client->id,
+        'currency_code' => 'USD',
+        'total_amount' => 1600,
+        'status' => 'issued',
+        'document_date' => '2025-06-01',
+        'legacy_invoice_no' => 'INV-USD-1',
+    ]);
+
+    InvoiceLine::query()->create([
+        'invoice_id' => $invoice->id,
+        'line_order' => 1,
+        'title' => 'خدمة إعلانية',
+        'unit_price' => 1600,
+        'quantity' => 1,
+        'line_total' => 1600,
+    ]);
+
+    $statement = (new ClientStatementService)->forClient($client);
+
+    $html = view('pdf.client-statement', [
+        'client' => $client,
+        'statement' => $statement,
+        'dateFrom' => null,
+        'dateTo' => null,
+    ])->render();
+
+    expect($html)->not->toContain('ش.ج');
+    expect($html)->toContain('1,600.00 USD');
+});
+
+test('client statement shows line title and product details in separate columns', function () {
+    $client = Client::factory()->create();
+    $product = \App\Models\Product::factory()->create([
+        'name' => 'تصوير',
+        'description' => 'تصوير مقابلة تلفزيونية مع لقطات',
+    ]);
+
+    $invoice = Invoice::factory()->create([
+        'client_id' => $client->id,
+        'currency_code' => 'USD',
+        'total_amount' => 500,
+        'status' => 'issued',
+        'document_date' => '2025-06-01',
+    ]);
+
+    InvoiceLine::query()->create([
+        'invoice_id' => $invoice->id,
+        'product_id' => $product->id,
+        'line_order' => 1,
+        'title' => 'تصوير',
+        'description' => null,
+        'unit_price' => 500,
+        'quantity' => 1,
+        'line_total' => 500,
+    ]);
+
+    $this->actingAs($this->accountant);
+    $this->get(route('clients.statement', $client))
+        ->assertOk()
+        ->assertSee('تصوير', false)
+        ->assertSee('تصوير مقابلة تلفزيونية مع لقطات', false)
+        ->assertSee('التفاصيل');
+
+    $statement = (new ClientStatementService)->forClient($client);
+    $html = view('pdf.client-statement', [
+        'client' => $client,
+        'statement' => $statement,
+        'dateFrom' => null,
+        'dateTo' => null,
+    ])->render();
+
+    expect($html)->toContain('تصوير مقابلة تلفزيونية مع لقطات');
+});
+
 // الحذف المنطقي لا يظهر في الكشف
 test('soft deleted payment is excluded from statement', function () {
     $client = Client::factory()->create();

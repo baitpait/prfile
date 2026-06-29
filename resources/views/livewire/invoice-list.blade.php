@@ -77,7 +77,7 @@
     </div>
     <table class="data-table">
         <thead><tr>
-            <th>التاريخ</th><th>رقم الفاتورة</th><th>العميل</th><th>الحالة</th><th>المبلغ</th><th class="w-28"></th>
+            <th>التاريخ</th><th>رقم الفاتورة</th><th>العميل</th><th>المستند</th><th>الدفع</th><th>المبلغ</th><th class="w-28"></th>
         </tr></thead>
         <tbody>
             @forelse($rows as $inv)
@@ -90,6 +90,11 @@
                     <span class="badge {{ $s==='issued' ? 'badge-green' : ($s==='draft' ? 'badge-yellow' : 'badge-red') }}">
                         {{ $s==='issued' ? 'صادرة' : ($s==='draft' ? 'مسودة' : 'ملغاة') }}
                     </span>
+                </td>
+                <td>
+                    @include('livewire.partials.invoice-payment-status-badge', [
+                        'paymentStatus' => $paymentStatuses[$inv->id] ?? null,
+                    ])
                 </td>
                 <td class="font-mono font-semibold text-xs" dir="ltr">
                     {{ number_format((float)$inv->total_amount,2) }}
@@ -109,7 +114,7 @@
                 </td>
             </tr>
             @empty
-            <tr><td colspan="6">
+            <tr><td colspan="7">
                 <div class="text-center py-16 text-gray-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <p class="text-sm">{{ $search ? 'لا توجد نتائج' : 'لا توجد فواتير بعد' }}</p>

@@ -208,6 +208,7 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | `fatal: 'prfile' does not appear to be a git repository` | اسم الـ remote على السيرفر مختلف | تحقق `git remote -v`، عادة الاسم `origin` |
 | `Permission denied` عند نسخ قاعدة البيانات من الواجهة | PHP لا يكتب في `database/` | اسحب آخر `main` (يحفظ في `storage/app/database-backups`) ثم `chmod -R ug+rwx storage` |
 | الفلاتر/البحث في القوائم لا يتفاعل | Livewire/Vite غير محمّل أو تهيئة مزدوجة | `npm ci && npm run build` ثم `php artisan config:clear && php artisan config:cache` (يجب `inject_assets=false` في `config/livewire.php`)؛ F12 → Network → `/livewire/update` = 200 |
+| البحث يعمل في صفحة ولا في أخرى (مثلاً عملاء ✓ / موردون ✗) | **UTF-8 BOM** في بداية `.blade.php` يكسر جذر `[wire:id]` | `xxd resources/views/livewire/<file>.blade.php \| head -1` — إن ظهر `efbb bf` أزل BOM واحفظ UTF-8 بدون BOM؛ `php artisan view:clear`. راجع `docs/troubleshooting/INCIDENT-001-supplier-list-utf8-bom-livewire.md` |
 
 ---
 
@@ -230,3 +231,4 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 - `docs/07_SYSTEM_OVERVIEW_AR.md` — مخطط شامل (Mermaid ERD).
 - `docs/DATABASE_BACKUP_AND_RESTORE_AR.md` — تفاصيل النسخ الاحتياطي.
 - `docs/decisions/` — ADRs (قرارات معمارية).
+- `docs/troubleshooting/INCIDENT-001-supplier-list-utf8-bom-livewire.md` — RCA: BOM + Livewire + بحث الأطراف.

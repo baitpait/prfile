@@ -48,5 +48,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('view-client-receivables-aging', fn (User $user): bool => (bool) $user->is_active);
         Gate::define('export-client-receivables-aging-csv', fn (User $user): bool => $user->isAccountant());
+        Gate::define('view-period-reports', fn (User $user): bool => (bool) $user->is_active);
+        Gate::define('export-period-reports', fn (User $user): bool => $user->isAccountant());
     }
 }

@@ -7,6 +7,7 @@ use App\Livewire\Concerns\FiltersSuppliersForSelect;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Services\PurchaseOrderPaymentAllocationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
@@ -160,11 +161,16 @@ class PurchaseOrderList extends Component
 
         $rows = $this->paginateWithPerPage($query);
 
+        $paymentStatuses = (new PurchaseOrderPaymentAllocationService)->forPurchaseOrders(
+            collect($rows->items())
+        );
+
         return view('livewire.purchase-order-list', [
             'rows' => $rows,
             'suppliers' => $this->suppliersForSelect(),
             'poCurrencies' => $poCurrencies,
             'viewingRecord' => $this->viewingRecord,
+            'paymentStatuses' => $paymentStatuses,
         ]);
     }
 }

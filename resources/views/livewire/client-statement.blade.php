@@ -12,6 +12,9 @@
                 + تسوية على الذمة
             </a>
             @endif
+            @if(auth()->user()->isManager())
+            <livewire:party-currency-converter party-type="client" :party-id="$client->id" />
+            @endif
             @can('exportStatement', $client)
             <button wire:click="exportCsv"
                     class="px-4 py-2 text-sm bg-white border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] font-medium">
@@ -131,6 +134,7 @@
                                             <thead>
                                                 <tr class="bg-[#C9A227] text-white">
                                                     <th class="text-right px-3 py-1.5 font-semibold">البند</th>
+                                                    <th class="text-right px-3 py-1.5 font-semibold">التفاصيل</th>
                                                     <th class="text-center px-3 py-1.5 font-semibold w-20">الكمية</th>
                                                     <th class="text-left px-3 py-1.5 font-semibold w-28" dir="ltr">سعر الوحدة</th>
                                                     <th class="text-left px-3 py-1.5 font-semibold w-28" dir="ltr">الإجمالي</th>
@@ -141,9 +145,9 @@
                                                 <tr class="border-t border-[#E8E8E8] bg-white">
                                                     <td class="px-3 py-2">
                                                         <span class="font-medium text-[#3D3D3D]">{{ $line->title }}</span>
-                                                        @if($line->description)
-                                                        <span class="text-gray-400"> — {{ $line->description }}</span>
-                                                        @endif
+                                                    </td>
+                                                    <td class="px-3 py-2 text-gray-500">
+                                                        {{ $line->displayDetails() ?? '—' }}
                                                     </td>
                                                     <td class="px-3 py-2 text-center text-gray-500">
                                                         {{ rtrim(rtrim(number_format((float) $line->quantity, 2), '0'), '.') }}

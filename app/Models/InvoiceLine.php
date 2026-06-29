@@ -28,4 +28,19 @@ class InvoiceLine extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    /**
+     * Business Purpose: Prefer line description; for legacy imports use linked product catalog text.
+     */
+    public function displayDetails(): ?string
+    {
+        $lineDescription = trim((string) ($this->description ?? ''));
+        if ($lineDescription !== '') {
+            return $lineDescription;
+        }
+
+        $productDescription = trim((string) ($this->product?->description ?? ''));
+
+        return $productDescription !== '' ? $productDescription : null;
+    }
 }

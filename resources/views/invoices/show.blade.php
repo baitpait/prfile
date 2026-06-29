@@ -10,11 +10,14 @@
         </a>
         <div>
             @php $s = $invoice->status; @endphp
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
                 <h1 class="text-xl font-bold text-[#3D3D3D]">{{ $invoice->legacy_invoice_no ?? 'فاتورة #'.$invoice->id }}</h1>
                 <span class="badge {{ $s==='issued' ? 'badge-green' : ($s==='draft' ? 'badge-yellow' : 'badge-red') }}">
                     {{ $s==='issued' ? 'صادرة' : ($s==='draft' ? 'مسودة' : 'ملغاة') }}
                 </span>
+                @if($paymentStatus ?? null)
+                @include('livewire.partials.invoice-payment-status-badge', ['paymentStatus' => $paymentStatus])
+                @endif
             </div>
             <p class="text-sm text-[#C9A227] font-semibold mt-0.5">{{ $invoice->client?->displayName() ?? '—' }}</p>
         </div>

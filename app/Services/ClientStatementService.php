@@ -15,7 +15,7 @@ class ClientStatementService
     public function forClient(Client $client, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $invoicesQuery = $client->invoices()
-            ->with('lines')
+            ->with(['lines.product'])
             ->whereIn('status', ['issued'])
             ->whereNull('deleted_at');
 

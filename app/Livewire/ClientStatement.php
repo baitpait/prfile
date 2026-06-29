@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Client;
 use App\Services\ClientStatementService;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,6 +47,12 @@ class ClientStatement extends Component
     {
         $this->dateFrom = '';
         $this->dateTo = '';
+        $this->loadStatement();
+    }
+
+    #[On('currency-converted')]
+    public function onCurrencyConverted(): void
+    {
         $this->loadStatement();
     }
 

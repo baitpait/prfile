@@ -99,12 +99,13 @@
 | amount | |
 | currency_code | قد تختلف عن فاتورة معيّنة. |
 | paid_at | UTC. |
-| method, bank_reference, notes | |
+| method | **كود معياري:** `cash` \| `bank` \| `check` \| `transfer` — لا تخزين نص عربي. التفاصيل: `docs/12_PAYMENT_METHODS_AND_LEGACY_NORMALIZATION_AR.md` |
+| bank_reference, notes | |
 | recorded_by_user_id | |
 | is_deleted | |
 
 ### `supplier_payments`
-- مطابق للمورد.
+- مطابق للمورد؛ نفس قواعد `method`.
 
 ### `client_balance_adjustments`
 | الحقل | الوصف |

@@ -106,3 +106,15 @@
 - **تنبيه:** احفظ Blade بـ UTF-8 **بدون BOM**. بعد النشر: `git pull && php artisan view:clear && php artisan view:cache`.
 
 ---
+
+## [2026-06-29] - تطبيع طرق الدفع + إصلاح عرض القوائم المنسدلة
+- **الهدف:** إصلاح فشل تعديل دفعات قديمة (`طريقة الدفع invalid`)؛ إصلاح `<select>` الأبيض على الإنتاج في Dark Mode.
+- **التغييرات:**
+  - `App\Services\Finance\PaymentMethod` + تطبيع في `SupplierPaymentForm` / `PaymentForm`.
+  - أمر `php artisan payments:normalize-methods`.
+  - CSS: `color-scheme: light` على `select.input`.
+  - توثيق: `docs/12_PAYMENT_METHODS_AND_LEGACY_NORMALIZATION_AR.md`، `INCIDENT-002`، `INCIDENT-003`.
+- **Commits:** `2d18e7c`, `50ceee1`.
+- **تنبيه:** بعد النشر: `git pull && php artisan payments:normalize-methods && npm run build && php artisan view:cache`.
+
+---

@@ -97,7 +97,8 @@ php artisan export:mysql-data
   `php artisan export:mysql-data --sqlite=/المسار/الكامل/database.sqlite --output=/path/to/import.sql`
 
 **النسخ الاحتياطي والاسترجاع:** `docs/DATABASE_BACKUP_AND_RESTORE_AR.md`  
-**النشر والتشغيل (إنتاج):** `docs/08_DEPLOYMENT_AND_OPERATIONS_AR.md`
+**النشر والتشغيل (إنتاج):** `docs/08_DEPLOYMENT_AND_OPERATIONS_AR.md`  
+**طرق الدفع وتطبيع البيانات القديمة:** `docs/12_PAYMENT_METHODS_AND_LEGACY_NORMALIZATION_AR.md`
 
 ---
 

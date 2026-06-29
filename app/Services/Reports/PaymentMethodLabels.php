@@ -2,16 +2,12 @@
 
 namespace App\Services\Reports;
 
+use App\Services\Finance\PaymentMethod;
+
 class PaymentMethodLabels
 {
     public static function label(?string $method): string
     {
-        return match ($method) {
-            'cash' => 'نقداً',
-            'bank' => 'بنك',
-            'check' => 'شيك',
-            'transfer' => 'تحويل',
-            default => $method !== null && $method !== '' ? $method : '—',
-        };
+        return PaymentMethod::label($method);
     }
 }

@@ -13,6 +13,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
+use App\Services\Finance\PaymentMethod;
 use App\Models\User;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
@@ -459,7 +460,9 @@ final class LegacyErpImportService
                 'amount' => $this->toDecimal($p->montant ?? 0),
                 'currency_code' => $currency,
                 'paid_at' => $this->toDateTimeStart($p->date ?? $sale->date ?? now()),
-                'method' => isset($p->payment_method_id) ? 'طريقة #'.$p->payment_method_id : null,
+                'method' => isset($p->payment_method_id)
+                    ? PaymentMethod::normalize('طريقة #'.$p->payment_method_id)
+                    : null,
                 'bank_reference' => $ref,
                 'notes' => $this->truncate((string) ($p->notes ?? ''), 65535),
                 'recorded_by_user_id' => $this->mapUserId((int) ($p->user_id ?? 0)) ?? $recordedBy,
@@ -581,7 +584,9 @@ final class LegacyErpImportService
                 'amount' => $this->toDecimal($p->montant ?? 0),
                 'currency_code' => $currency,
                 'paid_at' => $this->toDateTimeStart($p->date ?? $pur->date ?? now()),
-                'method' => isset($p->payment_method_id) ? 'طريقة #'.$p->payment_method_id : null,
+                'method' => isset($p->payment_method_id)
+                    ? PaymentMethod::normalize('طريقة #'.$p->payment_method_id)
+                    : null,
                 'bank_reference' => $ref,
                 'notes' => $this->truncate((string) ($p->notes ?? ''), 65535),
                 'recorded_by_user_id' => $this->mapUserId((int) ($p->user_id ?? 0)) ?? $recordedBy,

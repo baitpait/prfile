@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Livewire\Concerns\FiltersClientsForSelect;
 use App\Models\Client;
 use App\Models\ClientPayment;
+use App\Services\Finance\PaymentMethod;
 use Livewire\Component;
 
 class PaymentForm extends Component
@@ -40,7 +41,7 @@ class PaymentForm extends Component
             $this->amount = (string) $payment->amount;
             $this->currency_code = $payment->currency_code ?? 'ILS';
             $this->paid_at = $payment->paid_at?->format('Y-m-d') ?? '';
-            $this->payment_method = $payment->method ?? 'cash';
+            $this->payment_method = PaymentMethod::normalize($payment->method);
             $this->bank_reference = $payment->bank_reference ?? '';
             $this->notes = $payment->notes ?? '';
         } else {
@@ -56,7 +57,7 @@ class PaymentForm extends Component
             'amount' => 'required|numeric|min:0.01',
             'currency_code' => 'required|string|size:3',
             'paid_at' => 'required|date',
-            'payment_method' => 'required|in:cash,bank,check,transfer',
+            'payment_method' => PaymentMethod::validationRule(),
         ]);
 
         $data = [

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
+use App\Services\Finance\PaymentMethod;
 use Livewire\Component;
 
 class SupplierPaymentForm extends Component
@@ -34,7 +35,7 @@ class SupplierPaymentForm extends Component
             $this->amount = (string) $supplierPayment->amount;
             $this->currency_code = $supplierPayment->currency_code ?? 'ILS';
             $this->paid_at = $supplierPayment->paid_at?->format('Y-m-d') ?? '';
-            $this->payment_method = $supplierPayment->method ?? 'cash';
+            $this->payment_method = PaymentMethod::normalize($supplierPayment->method);
             $this->bank_reference = $supplierPayment->bank_reference ?? '';
             $this->notes = $supplierPayment->notes ?? '';
         } else {
@@ -53,7 +54,7 @@ class SupplierPaymentForm extends Component
             'amount' => 'required|numeric|min:0.01',
             'currency_code' => 'required|string|size:3',
             'paid_at' => 'required|date',
-            'payment_method' => 'required|in:cash,bank,check,transfer',
+            'payment_method' => PaymentMethod::validationRule(),
         ], [], [
             'supplier_id' => 'المورد',
             'amount' => 'المبلغ',

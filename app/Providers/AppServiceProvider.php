@@ -33,7 +33,10 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->singleton('files', fn () => new \App\Filesystem\Filesystem);
+    }
 
     public function boot(): void
     {

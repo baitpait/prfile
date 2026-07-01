@@ -24,6 +24,7 @@ class StorageDoctorCommand extends Command
 
         $this->info('Storage doctor — '.PHP_OS_FAMILY.' / PHP '.PHP_VERSION);
         $this->line('  process user: '.(function_exists('posix_getpwuid') ? (posix_getpwuid(posix_geteuid())['name'] ?? '?') : get_current_user()));
+        $this->line('  project owner: '.(function_exists('posix_getpwuid') ? (posix_getpwuid(fileowner(base_path()))['name'] ?? '?') : '?'));
         $this->newLine();
 
         $failed = false;
@@ -65,12 +66,14 @@ class StorageDoctorCommand extends Command
         $this->newLine();
 
         if ($failed) {
-            $this->error('Fix (replace webuzo with your PHP-FPM user from: ps aux | grep php-fpm):');
-            $this->line('  chown -R webuzo:webuzo storage bootstrap/cache');
+            $owner = function_exists('posix_getpwuid') ? (posix_getpwuid(fileowner(base_path()))['name'] ?? 'baitpait') : 'baitpait';
+            $this->error("Fix: chown storage to the PHP/web user (often site owner «{$owner}», not webuzo):");
+            $this->line("  chown -R {$owner}:{$owner} storage bootstrap/cache");
             $this->line('  chmod -R ug+rwx storage bootstrap/cache');
             $this->line('  php artisan optimize:clear');
             $this->line('  php artisan config:cache && php artisan route:cache');
-            $this->line('  chown -R webuzo:webuzo storage bootstrap/cache');
+            $this->line("  chown -R {$owner}:{$owner} storage bootstrap/cache");
+            $this->line("  su -s /bin/bash {$owner} -c 'touch ".storage_path('framework/views/.write-test')."'");
 
             return self::FAILURE;
         }

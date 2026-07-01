@@ -213,6 +213,7 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | `<select>` يظهر أبيض/فارغ على الإنتاج (البيانات موجودة في HTML) | Dark Mode + خلفية بيضاء للحقل | اسحب `2d18e7c+` ثم `npm run build && php artisan view:cache`. راجع `docs/troubleshooting/INCIDENT-003-select-white-text-dark-mode.md` |
 | `تعذّر إنشاء PDF من قالب الطباعة` (500 على `/pdf`) | Chromium غير محمّل، Node غير متاح لـ PHP، أو صلاحيات `root` على `node_modules` | راجع **§11.2**: `PUPPETEER_CACHE_DIR`، `npm run browsershot:install`، `BROWSERSHOT_NODE`، `chown` لمستخدم PHP، ثم `php artisan browsershot:check` |
 | `Route [invoices.pdf] not defined` (أو أي مسار PDF جديد) بعد `git pull` | **كاش المسارات قديم** — نفّذت `config:cache` دون `route:cache` | `php artisan route:clear && php artisan route:cache` (أو `php artisan optimize:clear` ثم أعد الكاش). تحقق: `php artisan route:list --name=invoices.pdf` |
+| `tempnam(): file created in the system's temporary directory` (500 على `/invoices` وغيرها) | `storage/framework/views` أو `bootstrap/cache` مملوكة لـ `root` وPHP يعمل كـ `webuzo` | `chown -R webuzo:webuzo storage bootstrap/cache` ثم `php artisan view:clear` وإعادة الكاش. لا تشغّل `artisan` كـ root دون `chown` بعده |
 
 ---
 
@@ -252,15 +253,22 @@ PUPPETEER_CACHE_DIR=/home/baitpait/public_html/profile/storage/app/puppeteer-cac
 BROWSERSHOT_NO_SANDBOX=true
 ```
 
-**صلاحيات (مهم):** إن نفّذت `npm` كـ `root`، عدّل ملكية المجلدات لمستخدم PHP (غالباً `www-data` أو `nobody`):
+**صلاحيات (مهم):** إن نفّذت `npm` أو `php artisan` كـ `root`، عدّل ملكية المجلدات لمستخدم PHP (على هذا السيرفر: **`webuzo`**):
 
 ```bash
 # اكتشف مستخدم PHP:
 ps aux | grep -E 'php-fpm|lsphp' | grep -v grep | head -1
 
-# مثال (استبدل www-data بالمستخدم الفعلي):
-chown -R www-data:www-data storage node_modules bootstrap/cache
+chown -R webuzo:webuzo storage bootstrap/cache
 chmod -R ug+rwx storage bootstrap/cache
+```
+
+**تحذير:** تشغيل `php artisan view:cache` كـ `root` ثم فتح الموقع كـ `webuzo` يسبب خطأ 500:
+`tempnam(): file created in the system's temporary directory` على صفحات Livewire (مثل `/invoices`).
+الحل: `php artisan view:clear` ثم إعادة الكاش **بعد** `chown`، أو نفّذ artisan كمستخدم الويب:
+
+```bash
+su -s /bin/bash webuzo -c 'cd /home/baitpait/public_html/profile && php artisan view:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache'
 ```
 
 ثم:
@@ -274,10 +282,35 @@ php artisan browsershot:check    # يجب أن ينجح قبل تجربة PDF م
 
 ### 11.2.1 تبعيات Linux لـ Chromium (إن فشل `browsershot:check`)
 
+**Ubuntu 24.04 (Noble)** — أسماء الحزم تنتهي بـ `t64`:
+
+```bash
+apt-get update
+apt-get install -y \
+  ca-certificates fonts-liberation fonts-noto-color-emoji \
+  libasound2t64 libatk-bridge2.0-0t64 libatk1.0-0t64 libc6 libcairo2 \
+  libcups2t64 libdbus-1-3 libdrm2 libexpat1 libfontconfig1 libgbm1 \
+  libglib2.0-0t64 libgtk-3-0t64 libnspr4 libnss3 libpango-1.0-0 \
+  libpangocairo-1.0-0 libatspi2.0-0t64 libx11-6 libx11-xcb1 libxcb1 \
+  libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 \
+  libxi6 libxrandr2 libxrender1 libxss1 libxtst6 wget xdg-utils
+```
+
+**Ubuntu 22.04 وأقدم:**
+
 ```bash
 apt-get install -y ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 \
   libatk1.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 libgtk-3-0 libnspr4 libnss3 \
   libx11-xcb1 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 xdg-utils
+```
+
+تحقق بعد التثبيت:
+
+```bash
+CHROME=/home/baitpait/public_html/profile/storage/app/puppeteer-cache/chrome/linux-*/chrome-linux64/chrome
+ldd "$CHROME" | grep "not found"    # يجب ألا يطبع شيئاً
+"$CHROME" --version
+php artisan browsershot:check
 ```
 
 ### 11.3 التحقق

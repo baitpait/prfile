@@ -99,7 +99,13 @@ class PrintViewPdfRenderer
 
     private function configureShot(Browsershot $shot): Browsershot
     {
+        $tmpDir = (string) config('browsershot.temp_path', storage_path('app/browsershot-tmp'));
+        if ($tmpDir !== '' && ! is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0775, true);
+        }
+
         $shot
+            ->setCustomTempPath($tmpDir)
             ->showBackground()
             ->emulateMedia('print')
             ->format('A4')

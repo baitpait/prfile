@@ -37,6 +37,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        foreach ([
+            storage_path('framework/views'),
+            storage_path('framework/cache/data'),
+            storage_path('framework/sessions'),
+            storage_path('logs'),
+            storage_path('app/browsershot-tmp'),
+            storage_path('app/puppeteer-cache'),
+        ] as $directory) {
+            if (! is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+        }
+
         Paginator::defaultView('vendor.pagination.tailwind');
 
         Gate::policy(ClientPayment::class, ClientPaymentPolicy::class);

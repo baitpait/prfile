@@ -132,3 +132,46 @@
 - **تنبيه:** على الإنتاج: `npm ci` (ليس `npm install --production` فقط) + `BROWSERSHOT_NO_SANDBOX=true` + `config:cache`.
 
 ---
+
+## [2026-07-01] - نشر PDF على الإنتاج + إصلاحات النشر (مكتمل ✅)
+- **الهدف:** تفعيل PDF المطابق للطباعة على `profile.baitpait.com` وإغلاق حوادث النشر.
+- **ما تم إنجازه:**
+
+### ميزات PDF والواجهة
+- PDF من **نفس قالب الطباعة** (Browsershot + `emulateMedia('print')`) للفواتير، أوامر الشراء، سندات العملاء والموردين.
+- أزرار **طباعة + PDF** في قوائم المستندات وصفحات الطباعة (`document-export-buttons`، `print-page-actions`).
+- إصلاح تراكب أزرار الطباعة/PDF (`position: fixed` مكرر).
+- إصلاح deadlock PDF محلياً: تضمين الشعار `base64` في HTML (لا طلب HTTP لنفس `artisan serve`).
+
+### نشر الإنتاج (`profile.baitpait.com`)
+- `git pull` + `composer install` + `npm ci` + `npm run browsershot:install` + `npm run build`.
+- متغيرات `.env`: `BROWSERSHOT_NODE`, `PUPPETEER_CACHE_DIR`, `BROWSERSHOT_NO_SANDBOX=true`.
+- تثبيت مكتبات Chromium على **Ubuntu 24.04** (حزم `*t64`: `libatk1.0-0t64`, `libasound2t64`, …).
+- Puppeteer **23** (متوافق Node 20 على السيرفر).
+- `php artisan browsershot:check` → **Test PDF generated successfully**.
+
+### حوادث مُغلقة
+| # | العرض | الحل |
+|---|--------|------|
+| — | `Route [invoices.pdf] not defined` | `php artisan route:cache` بعد `git pull` |
+| — | PDF 500 — مكتبات Chrome ناقصة | `apt-get install` حزم t64 + `browsershot:install` |
+| INCIDENT-004 | `tempnam()` 500 على `/invoices` | `chown -R baitpait:baitpait storage bootstrap/cache` (ليس webuzo) + `config/view.php` + `App\Filesystem\Filesystem` |
+
+### أوامر تشخيص جديدة
+- `php artisan browsershot:check`
+- `php artisan storage:doctor`
+
+### Commits
+- `a435cd5` — PDF Browsershot
+- `0f09fa6` — تشديد Linux + browsershot:check
+- `c298f37` — view config + storage:doctor
+- `76073fb` — tempnam PHP 8.4
+
+### توثيق
+- `docs/13_DOCUMENT_PDF_BROWSERSHOT_AR.md` (دليل شامل)
+- `docs/troubleshooting/INCIDENT-004-tempnam-storage-ownership-php84.md`
+- تحديث `docs/08_DEPLOYMENT_AND_OPERATIONS_AR.md` §11 و§8
+
+- **تنبيه:** بعد كل نشر كـ root: `chown -R baitpait:baitpait storage bootstrap/cache`. لا تفترض أن `webuzo` = مستخدم الموقع.
+
+---

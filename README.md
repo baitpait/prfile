@@ -98,6 +98,7 @@ php artisan export:mysql-data
 
 **النسخ الاحتياطي والاسترجاع:** `docs/DATABASE_BACKUP_AND_RESTORE_AR.md`  
 **النشر والتشغيل (إنتاج):** `docs/08_DEPLOYMENT_AND_OPERATIONS_AR.md`  
+**PDF المستندات (Browsershot):** `docs/13_DOCUMENT_PDF_BROWSERSHOT_AR.md`  
 **طرق الدفع وتطبيع البيانات القديمة:** `docs/12_PAYMENT_METHODS_AND_LEGACY_NORMALIZATION_AR.md`
 
 ---

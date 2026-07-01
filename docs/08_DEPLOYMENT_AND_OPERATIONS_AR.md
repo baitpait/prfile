@@ -213,7 +213,7 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | `<select>` يظهر أبيض/فارغ على الإنتاج (البيانات موجودة في HTML) | Dark Mode + خلفية بيضاء للحقل | اسحب `2d18e7c+` ثم `npm run build && php artisan view:cache`. راجع `docs/troubleshooting/INCIDENT-003-select-white-text-dark-mode.md` |
 | `تعذّر إنشاء PDF من قالب الطباعة` (500 على `/pdf`) | Chromium غير محمّل، Node غير متاح لـ PHP، أو صلاحيات `root` على `node_modules` | راجع **§11.2**: `PUPPETEER_CACHE_DIR`، `npm run browsershot:install`، `BROWSERSHOT_NODE`، `chown` لمستخدم PHP، ثم `php artisan browsershot:check` |
 | `Route [invoices.pdf] not defined` (أو أي مسار PDF جديد) بعد `git pull` | **كاش المسارات قديم** — نفّذت `config:cache` دون `route:cache` | `php artisan route:clear && php artisan route:cache` (أو `php artisan optimize:clear` ثم أعد الكاش). تحقق: `php artisan route:list --name=invoices.pdf` |
-| `tempnam(): file created in the system's temporary directory` (500 على `/invoices` وغيرها) | `storage/framework/views` أو `bootstrap/cache` مملوكة لـ `root` وPHP يعمل كـ `webuzo` | `chown -R webuzo:webuzo storage bootstrap/cache` ثم `php artisan view:clear` وإعادة الكاش. لا تشغّل `artisan` كـ root دون `chown` بعده |
+| `tempnam(): file created in the system's temporary directory` (500 على `/invoices` وغيرها) | `storage` مملوك لـ `root`/`webuzo` بينما PHP للموقع = **`baitpait`** | `chown -R baitpait:baitpait storage bootstrap/cache` ثم `php artisan optimize:clear` وإعادة الكاش. راجع `INCIDENT-004` |
 
 ---
 
@@ -253,22 +253,19 @@ PUPPETEER_CACHE_DIR=/home/baitpait/public_html/profile/storage/app/puppeteer-cac
 BROWSERSHOT_NO_SANDBOX=true
 ```
 
-**صلاحيات (مهم):** إن نفّذت `npm` أو `php artisan` كـ `root`، عدّل ملكية المجلدات لمستخدم PHP (على هذا السيرفر: **`webuzo`**):
+**صلاحيات (مهم — Webuzo):** مالك موقع `profile.baitpait.com` هو **`baitpait`** (وليس `webuzo` من pool عام):
 
 ```bash
-# اكتشف مستخدم PHP:
-ps aux | grep -E 'php-fpm|lsphp' | grep -v grep | head -1
-
-chown -R webuzo:webuzo storage bootstrap/cache
+chown -R baitpait:baitpait storage bootstrap/cache node_modules
 chmod -R ug+rwx storage bootstrap/cache
 ```
 
-**تحذير:** تشغيل `php artisan view:cache` كـ `root` ثم فتح الموقع كـ `webuzo` يسبب خطأ 500:
-`tempnam(): file created in the system's temporary directory` على صفحات Livewire (مثل `/invoices`).
-الحل: `php artisan view:clear` ثم إعادة الكاش **بعد** `chown`، أو نفّذ artisan كمستخدم الويب:
+**تحذير:** تشغيل `php artisan view:cache` كـ `root` ثم فتح الموقع يسبب 500:
+`tempnam(): file created in the system's temporary directory` — راجع `INCIDENT-004`.
 
 ```bash
-su -s /bin/bash webuzo -c 'cd /home/baitpait/public_html/profile && php artisan view:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache'
+su -s /bin/bash baitpait -c 'cd /home/baitpait/public_html/profile && php artisan optimize:clear && php artisan config:cache && php artisan route:cache'
+chown -R baitpait:baitpait storage bootstrap/cache
 ```
 
 ثم:
@@ -353,7 +350,9 @@ php artisan browsershot:check
 - `docs/07_SYSTEM_OVERVIEW_AR.md` — مخطط شامل (Mermaid ERD).
 - `docs/DATABASE_BACKUP_AND_RESTORE_AR.md` — تفاصيل النسخ الاحتياطي.
 - `docs/12_PAYMENT_METHODS_AND_LEGACY_NORMALIZATION_AR.md` — أكواد طرق الدفع وتطبيع البيانات القديمة.
+- `docs/13_DOCUMENT_PDF_BROWSERSHOT_AR.md` — PDF المستندات (Browsershot، نشر، تشخيص).
 - `docs/decisions/` — ADRs (قرارات معمارية).
 - `docs/troubleshooting/INCIDENT-001-supplier-list-utf8-bom-livewire.md` — RCA: BOM + Livewire + بحث الأطراف.
 - `docs/troubleshooting/INCIDENT-002-payment-method-invalid-on-edit.md` — RCA: طريقة دفع غير معيارية عند التعديل.
 - `docs/troubleshooting/INCIDENT-003-select-white-text-dark-mode.md` — RCA: select أبيض في Dark Mode.
+- `docs/troubleshooting/INCIDENT-004-tempnam-storage-ownership-php84.md` — RCA: tempnam + ملكية storage على Webuzo.

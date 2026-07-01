@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<title>فاتورة {{ $invoice->legacy_invoice_no ?? '#'.$invoice->id }}</title>
+<title>فاتورة مشتريات {{ $purchaseOrder->legacy_po_no ?? '#'.$purchaseOrder->id }}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -39,7 +39,7 @@
     direction: ltr;
   }
 
-  /* ── Header: فاتورة يسار | شعار وسط | بيانات الشركة يمين ── */
+  /* ── Header: فاتورة مشتريات يسار | شعار وسط | بيانات الشركة يمين ── */
   .header {
     margin-bottom: 28px;
     padding-bottom: 0;
@@ -56,7 +56,7 @@
     width: 100%;
   }
 
-  .header-side-invoice {
+  .header-side-purchaseOrder {
     flex: 0 0 auto;
     min-width: 120px;
     text-align: left;
@@ -87,7 +87,7 @@
   .brand-name { font-size: 16px; font-weight: 700; color: #3D3D3D; }
   .brand-sub  { font-size: 12px; color: #888; margin-top: 4px; }
 
-  .invoice-title {
+  .purchaseOrder-title {
     font-size: 42px;
     font-weight: 900;
     color: #C9A227;
@@ -116,14 +116,14 @@
   .info-box .lbl { font-size: 11px; color: #888; }
   .info-box .val { font-size: 13px; font-weight: 700; color: #3D3D3D; direction: ltr; }
 
-  /* ── Client + Summary row ── */
-  .client-row {
+  /* ── Supplier + Summary row ── */
+  .supplier-row {
     display: flex;
     gap: 12px;
     margin-bottom: 24px;
   }
 
-  .client-card {
+  .supplier-card {
     flex: 1;
     background: #FAFAFA;
     border: 1px solid #E2E4E9;
@@ -131,9 +131,9 @@
     padding: 14px 16px;
   }
 
-  .client-card .section-lbl { font-size: 11px; color: #C9A227; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-  .client-card .client-name { font-size: 16px; font-weight: 800; color: #3D3D3D; margin-bottom: 4px; }
-  .client-card .client-sub  { font-size: 12px; color: #666; line-height: 1.6; }
+  .supplier-card .section-lbl { font-size: 11px; color: #C9A227; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .supplier-card .supplier-name { font-size: 16px; font-weight: 800; color: #3D3D3D; margin-bottom: 4px; }
+  .supplier-card .supplier-sub  { font-size: 12px; color: #666; line-height: 1.6; }
 
   .summary-card {
     width: 220px;
@@ -279,7 +279,7 @@
     text-align: left;
   }
 
-  /* ── Print media ── */
+  /* ── Print button (screen only) ── */
   @media print {
     body { background: #fff; }
     .page { margin: 0; padding: 28px 32px; box-shadow: none; width: 100%; }
@@ -295,8 +295,8 @@
   {{-- ── Header ── --}}
   <div class="header">
     <div class="header-row">
-      <div class="header-side-invoice">
-        <div class="invoice-title">فاتورة</div>
+      <div class="header-side-purchaseOrder">
+        <div class="purchaseOrder-title">مشتريات</div>
       </div>
       <div class="header-logo">
         <img src="{{ asset('branding/logo.png') }}" alt="Logo">
@@ -313,48 +313,48 @@
   {{-- ── Info boxes ── --}}
   <div class="info-row">
     <div class="info-box">
-      <span class="lbl">رقم الفاتورة</span>
-      <span class="val">{{ $invoice->legacy_invoice_no ?? '#'.$invoice->id }}</span>
+      <span class="lbl">رقم المستند</span>
+      <span class="val">{{ $purchaseOrder->legacy_po_no ?? '#'.$purchaseOrder->id }}</span>
     </div>
     <div class="info-box">
-      <span class="lbl">تاريخ الفاتورة</span>
-      <span class="val">{{ $invoice->document_date?->format('Y-m-d') ?? '—' }}</span>
+      <span class="lbl">تاريخ الفاتورة مشتريات</span>
+      <span class="val">{{ $purchaseOrder->document_date?->format('Y-m-d') ?? '—' }}</span>
     </div>
-    @if($invoice->due_date)
+    @if($purchaseOrder->due_date)
     <div class="info-box">
       <span class="lbl">تاريخ الاستحقاق</span>
-      <span class="val">{{ $invoice->due_date->format('Y-m-d') }}</span>
+      <span class="val">{{ $purchaseOrder->due_date->format('Y-m-d') }}</span>
     </div>
     @endif
   </div>
 
-  {{-- ── Client + Summary ── --}}
-  <div class="client-row">
-    <div class="client-card">
-      <div class="section-lbl">بيانات العميل</div>
-      <div class="client-name">{{ $client?->displayName() ?? '—' }}</div>
-      @if($client?->phone_primary)
-      <div class="client-sub">📞 {{ $client->phone_primary }}</div>
+  {{-- ── Supplier + Summary ── --}}
+  <div class="supplier-row">
+    <div class="supplier-card">
+      <div class="section-lbl">بيانات المورد</div>
+      <div class="supplier-name">{{ $supplier?->displayName() ?? '—' }}</div>
+      @if($supplier?->phone_primary)
+      <div class="supplier-sub">📞 {{ $supplier->phone_primary }}</div>
       @endif
-      @if($client?->email)
-      <div class="client-sub" dir="ltr">{{ $client->email }}</div>
+      @if($supplier?->email)
+      <div class="supplier-sub" dir="ltr">{{ $supplier->email }}</div>
       @endif
-      @if($client?->city)
-      <div class="client-sub">{{ $client->city }}{{ $client->country_code ? ' — '.$client->country_code : '' }}</div>
+      @if($supplier?->city)
+      <div class="supplier-sub">{{ $supplier->city }}{{ $supplier->country_code ? ' — '.$supplier->country_code : '' }}</div>
       @endif
     </div>
 
     <div class="summary-card">
-      <div class="sum-header">مجموع الفاتورة</div>
+      <div class="sum-header">مجموع المستند</div>
       <div class="sum-row">
         <span class="sum-lbl" style="font-weight:700;color:#3D3D3D">الإجمالي</span>
-        <span class="sum-val">{{ number_format((float)$invoice->total_amount, 2) }} {{ $invoice->currency_code }}</span>
+        <span class="sum-val">{{ number_format((float)$purchaseOrder->total_amount, 2) }} {{ $purchaseOrder->currency_code }}</span>
       </div>
     </div>
   </div>
 
   {{-- ── Line items ── --}}
-  @if($invoice->lines->isNotEmpty())
+  @if($purchaseOrder->lines->isNotEmpty())
   <table>
     <thead>
       <tr>
@@ -367,7 +367,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach($invoice->lines as $line)
+      @foreach($purchaseOrder->lines as $line)
       <tr>
         <td class="center" style="color:#aaa">{{ $loop->iteration }}</td>
         <td class="line-title">{{ $line->title }}</td>
@@ -385,13 +385,13 @@
   <div class="totals-section">
     <table class="totals-table">
       <tr class="grand">
-        <td>مجموع الفاتورة</td>
-        <td>{{ number_format((float) $invoice->total_amount, 2) }} {{ $invoice->currency_code }}</td>
+        <td>مجموع المستند</td>
+        <td>{{ number_format((float) $purchaseOrder->total_amount, 2) }} {{ $purchaseOrder->currency_code }}</td>
       </tr>
-      @if($clientBalanceDue !== null)
+      @if($supplierBalanceDue !== null)
       <tr class="balance-due-row">
-        <td>المبلغ المستحق</td>
-        <td>{{ number_format((float) $clientBalanceDue, 2) }} {{ $invoice->currency_code }}</td>
+        <td>المبلغ المستحق للمورد</td>
+        <td>{{ number_format((float) $supplierBalanceDue, 2) }} {{ $purchaseOrder->currency_code }}</td>
       </tr>
       @endif
     </table>
@@ -400,9 +400,9 @@
   {{-- ── Amount in Arabic words ── --}}
   <div class="amount-words">{{ $amountInWords }}</div>
 
-  @if($invoice->notes)
+  @if($purchaseOrder->notes)
   <div style="margin-bottom:20px; padding:12px 16px; background:#FAFAFA; border:1px solid #E2E4E9; border-radius:6px; font-size:12px; color:#555;">
-    <span style="font-weight:700; color:#C9A227;">ملاحظات: </span>{{ $invoice->notes }}
+    <span style="font-weight:700; color:#C9A227;">ملاحظات: </span>{{ $purchaseOrder->notes }}
   </div>
   @endif
 

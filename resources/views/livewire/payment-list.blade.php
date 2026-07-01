@@ -42,6 +42,10 @@
                 <td>
                     <div class="flex items-center gap-1 justify-end">
                         <a href="{{ route('payments.show', $pay->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
+                        <x-document-export-buttons
+                            :print-url="route('payments.print', $pay->id)"
+                            :pdf-url="route('payments.pdf', $pay->id)"
+                        />
                         @if(auth()->user()->isAccountant())
                         <a href="{{ route('payments.edit', $pay->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                         @endif

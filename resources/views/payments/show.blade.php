@@ -57,10 +57,10 @@
 
         <div class="flex justify-end gap-2 pt-5 mt-2 border-t border-[#E2E4E9]">
             <a href="{{ route('payments.index') }}" wire:navigate class="btn btn-secondary" style="text-decoration:none;">رجوع</a>
-            <a href="{{ route('payments.print', $payment) }}" target="_blank" rel="noopener"
-               class="btn btn-ghost text-[#C9A227] hover:bg-amber-50" style="text-decoration:none;">
-                طباعة سند قبض
-            </a>
+            <x-document-export-buttons
+                :print-url="route('payments.print', $payment)"
+                :pdf-url="route('payments.pdf', $payment)"
+            />
             @if(auth()->user()->isAccountant())
             <a href="{{ route('payments.edit', $payment->id) }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">تعديل</a>
             @endif

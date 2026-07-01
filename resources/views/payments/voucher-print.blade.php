@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<title>سند قبض #{{ $payment->id }}</title>
+<title>{{ $voucherTitle }} #{{ $payment->id }}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -234,8 +234,7 @@
 <body>
 
 @php
-    $client = $payment->client;
-    $appName = config('app.name', 'بروفايل ميديا');
+    $party = $party ?? null;
 @endphp
 
 <div class="page">
@@ -243,15 +242,15 @@
   <div class="header">
     <div class="header-row">
       <div class="header-side-doc">
-        <div class="doc-title">سند قبض</div>
-        <div class="doc-subtitle">Receipt Voucher</div>
+        <div class="doc-title">{{ $voucherTitle }}</div>
+        <div class="doc-subtitle">{{ $voucherSubtitle }}</div>
       </div>
       <div class="header-logo">
         <img src="{{ asset('branding/logo.png') }}" alt="Logo" onerror="this.style.display='none'">
       </div>
       <div class="header-side-brand">
         <div class="brand-text">
-          <div class="brand-name">{{ $appName }}</div>
+          <div class="brand-name">{{ $companyName }}</div>
           <div class="brand-sub">شركة إنتاج إعلامي وتسويق رقمي</div>
         </div>
       </div>
@@ -264,7 +263,7 @@
       <span class="val">#{{ $payment->id }}</span>
     </div>
     <div class="info-box">
-      <span class="lbl">تاريخ القبض</span>
+      <span class="lbl">تاريخ الدفع</span>
       <span class="val">{{ $payment->paid_at?->format('Y-m-d') ?? '—' }}</span>
     </div>
     <div class="info-box">
@@ -274,18 +273,18 @@
   </div>
 
   <div class="client-card">
-    <div class="section-lbl">استلمنا من السيد / السادة</div>
-    <div class="client-name">{{ $client?->displayName() ?? '—' }}</div>
-    @if($client?->phone_primary)
-    <div class="client-sub" dir="ltr">{{ $client->phone_primary }}</div>
+    <div class="section-lbl">{{ $partyLabel }}</div>
+    <div class="client-name">{{ $partyName }}</div>
+    @if($party?->phone_primary)
+    <div class="client-sub" dir="ltr">{{ $party->phone_primary }}</div>
     @endif
-    @if($client?->email)
-    <div class="client-sub" dir="ltr">{{ $client->email }}</div>
+    @if($party?->email)
+    <div class="client-sub" dir="ltr">{{ $party->email }}</div>
     @endif
   </div>
 
   <div class="amount-box">
-    <div class="head">المبلغ المقبوض</div>
+    <div class="head">المبلغ</div>
     <div class="value">{{ number_format((float) $payment->amount, 2) }}</div>
     <div class="currency">{{ $payment->currency_code }}</div>
   </div>
@@ -295,7 +294,7 @@
   <table class="details-table">
     <tr>
       <td class="lbl">طريقة الدفع</td>
-      <td class="val">{{ $methods[$payment->method] ?? $payment->method ?? '—' }}</td>
+      <td class="val">{{ $methodLabel }}</td>
     </tr>
     @if($payment->bank_reference)
     <tr>
@@ -330,12 +329,12 @@
   </div>
 
   <div class="footer">
-    هذا السند إثبات لاستلام مبلغ من العميل المذكور أعلاه — {{ $appName }}
+    {{ $companyName }} — {{ $voucherTitle }} رسمي
   </div>
 
 </div>
 
-<button type="button" class="print-btn" onclick="window.print()">طباعة السند</button>
+<x-print-page-actions :pdf-url="$pdfUrl" />
 
 </body>
 </html>

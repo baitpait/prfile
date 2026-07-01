@@ -211,6 +211,65 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | البحث يعمل في صفحة ولا في أخرى (مثلاً عملاء ✓ / موردون ✗) | **UTF-8 BOM** في بداية `.blade.php` يكسر جذر `[wire:id]` | `xxd resources/views/livewire/<file>.blade.php \| head -1` — إن ظهر `efbb bf` أزل BOM واحفظ UTF-8 بدون BOM؛ `php artisan view:clear`. راجع `docs/troubleshooting/INCIDENT-001-supplier-list-utf8-bom-livewire.md` |
 | `The selected طريقة الدفع is invalid` عند تعديل دفعة | `method` مخزّن بنص عربي أو `طريقة #N` من استيراد قديم | اسحب `50ceee1+` ثم `php artisan payments:normalize-methods`. راجع `docs/troubleshooting/INCIDENT-002-payment-method-invalid-on-edit.md` |
 | `<select>` يظهر أبيض/فارغ على الإنتاج (البيانات موجودة في HTML) | Dark Mode + خلفية بيضاء للحقل | اسحب `2d18e7c+` ثم `npm run build && php artisan view:cache`. راجع `docs/troubleshooting/INCIDENT-003-select-white-text-dark-mode.md` |
+| `تعذّر إنشاء PDF من قالب الطباعة` | Node أو Puppeteer Chrome غير مثبت | `npm ci` على السيرفر (يشمل `puppeteer`)، ثم اضبط `BROWSERSHOT_NO_SANDBOX=true` في `.env` و`php artisan config:cache`. راجع **§11** أدناه |
+
+---
+
+## 11) PDF المستندات (Browsershot — تطابق 100% مع الطباعة)
+
+منذ اعتماد **Browsershot**، ملفات PDF (فواتير، أوامر شراء، سندات دفع) تُولَّد من **نفس قالب Blade للطباعة** عبر Headless Chrome مع `emulateMedia('print')` — أي ما تراه في `/print` هو ما يُحمَّل في `/pdf`.
+
+### 11.1 المتطلبات على السيرفر
+
+| البند | التفاصيل |
+|-------|----------|
+| Node.js | نفس إصدار التطوير تقريباً (لـ `npm ci`) |
+| Puppeteer | يُثبَّت تلقائياً عبر `npm ci` (`devDependency`) |
+| Chromium | يُحمَّل مع Puppeteer في `node_modules/puppeteer` |
+| PHP | حزمة `spatie/browsershot` عبر Composer |
+
+### 11.2 النشر بعد التحديث
+
+```bash
+cd /home/baitpait/public_html/profile
+git pull origin main
+composer install --no-dev --optimize-autoloader
+npm ci    # يشمل puppeteer — ضروري لـ PDF
+npm run build
+```
+
+أضف إلى `.env` على Linux المشترك:
+
+```env
+BROWSERSHOT_NO_SANDBOX=true
+# اختياري إن فشل اكتشاف Chrome تلقائياً:
+# BROWSERSHOT_CHROME_PATH=/home/baitpait/public_html/profile/node_modules/puppeteer/.cache/chrome/linux-.../chrome
+```
+
+ثم:
+
+```bash
+php artisan config:cache
+```
+
+### 11.3 التحقق
+
+1. افتح مثلاً `/invoices/{id}/print` — تأكد من التنسيق.
+2. افتح `/invoices/{id}/pdf` — يجب أن يطابق الطباعة (خط Cairo، ألوان، تخطيط).
+3. من القوائم: أزرار **طباعة** و**PDF** في عمود الإجراءات.
+
+### 11.4 المسارات والكود
+
+| المستند | طباعة | PDF |
+|---------|-------|-----|
+| فاتورة عميل | `invoices.print` | `invoices.pdf` |
+| أمر شراء | `purchase-orders.print` | `purchase-orders.pdf` |
+| سند دفع عميل | `payments.voucher-print` | `payments.pdf` |
+| سند دفع مورد | `supplier-payments.print` | `supplier-payments.pdf` |
+
+الخدمة: `App\Services\Documents\PrintViewPdfRenderer` — الإعداد: `config/browsershot.php`.
+
+**ملاحظة:** قوالب `resources/views/pdf/documents/` (mPDF القديمة) لم تعد تُستخدم من الـ controllers؛ يمكن حذفها لاحقاً بعد التأكد من الإنتاج.
 
 ---
 

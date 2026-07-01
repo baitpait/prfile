@@ -88,6 +88,10 @@
     </div>
 
     <div class="flex justify-end gap-2 mt-6">
+        <x-document-export-buttons
+            :print-url="route('purchase-orders.print', $purchaseOrder)"
+            :pdf-url="route('purchase-orders.pdf', $purchaseOrder)"
+        />
         @can('update', $purchaseOrder)
         <a href="{{ route('purchase-orders.edit', $purchaseOrder) }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">تعديل</a>
         @endcan

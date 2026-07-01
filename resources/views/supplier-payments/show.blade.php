@@ -56,6 +56,10 @@
 
         <div class="flex justify-end gap-2 pt-5 mt-2 border-t border-[#E2E4E9]">
             <a href="{{ route('supplier-payments.index', ['sp_supplier' => $supplierPayment->supplier_id]) }}" wire:navigate class="btn btn-secondary" style="text-decoration:none;">رجوع</a>
+            <x-document-export-buttons
+                :print-url="route('supplier-payments.print', $supplierPayment)"
+                :pdf-url="route('supplier-payments.pdf', $supplierPayment)"
+            />
             @if(auth()->user()->isAccountant())
             <a href="{{ route('supplier-payments.edit', $supplierPayment->id) }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">تعديل</a>
             @endif

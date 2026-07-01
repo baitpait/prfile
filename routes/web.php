@@ -5,8 +5,14 @@ use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\Reports\PeriodReportsController;
 use App\Http\Controllers\Reports\SupplierReceivablesAgingController;
 use App\Http\Controllers\ClientStatementController;
+use App\Http\Controllers\ClientPaymentPdfController;
 use App\Http\Controllers\ClientPaymentPrintController;
+use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\InvoicePrintController;
+use App\Http\Controllers\PurchaseOrderPdfController;
+use App\Http\Controllers\PurchaseOrderPrintController;
+use App\Http\Controllers\SupplierPaymentPdfController;
+use App\Http\Controllers\SupplierPaymentPrintController;
 use App\Http\Controllers\SupplierStatementController;
 use App\Models\Client;
 use App\Models\ClientBalanceAdjustment;
@@ -96,6 +102,8 @@ Route::middleware(['auth'])->group(function () {
 
         return view('purchase-orders.show', compact('purchaseOrder', 'paymentStatus'));
     })->name('purchase-orders.show');
+    Route::get('/purchase-orders/{purchaseOrder}/print', [PurchaseOrderPrintController::class, 'show'])->name('purchase-orders.print');
+    Route::get('/purchase-orders/{purchaseOrder}/pdf', [PurchaseOrderPdfController::class, 'show'])->name('purchase-orders.pdf');
 
     Route::get('/supplier-payments', fn () => view('supplier-payments.index'))->name('supplier-payments.index');
     Route::get('/supplier-payments/create', function () {
@@ -108,6 +116,8 @@ Route::middleware(['auth'])->group(function () {
 
         return view('supplier-payments.edit', compact('supplierPayment'));
     })->name('supplier-payments.edit');
+    Route::get('/supplier-payments/{supplierPayment}/print', [SupplierPaymentPrintController::class, 'show'])->name('supplier-payments.print');
+    Route::get('/supplier-payments/{supplierPayment}/pdf', [SupplierPaymentPdfController::class, 'show'])->name('supplier-payments.pdf');
     Route::get('/supplier-payments/{supplierPayment}', fn (SupplierPayment $supplierPayment) => view('supplier-payments.show', compact('supplierPayment')))->name('supplier-payments.show');
     Route::delete('/supplier-payments/{supplierPayment}', function (SupplierPayment $supplierPayment) {
         abort_unless(auth()->user()->isManager(), 403);
@@ -134,6 +144,7 @@ Route::middleware(['auth'])->group(function () {
         return view('invoices.show', compact('invoice', 'paymentStatus'));
     })->name('invoices.show');
     Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])->name('invoices.print');
+    Route::get('/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])->name('invoices.pdf');
 
     Route::get('/expenses', fn () => view('expenses.index'))->name('expenses.index');
     Route::get('/reports/client-receivables-aging', [ClientReceivablesAgingController::class, '__invoke'])
@@ -237,6 +248,7 @@ Route::middleware(['auth'])->group(function () {
         return view('payments.edit', compact('payment'));
     })->name('payments.edit');
     Route::get('/payments/{payment}/print', [ClientPaymentPrintController::class, 'show'])->name('payments.print');
+    Route::get('/payments/{payment}/pdf', [ClientPaymentPdfController::class, 'show'])->name('payments.pdf');
     Route::get('/payments/{payment}', fn (ClientPayment $payment) => view('payments.show', compact('payment')))->name('payments.show');
     Route::delete('/payments/{payment}', function (ClientPayment $payment) {
         abort_unless(auth()->user()->isManager(), 403);

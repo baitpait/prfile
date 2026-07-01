@@ -103,7 +103,10 @@
                 <td>
                     <div class="flex items-center gap-1 justify-end">
                         <a href="{{ route('invoices.show', $inv->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
-                        <a href="{{ route('invoices.print', $inv->id) }}" target="_blank" class="btn btn-ghost py-1 px-2 text-xs text-[#C9A227] hover:bg-amber-50">طباعة</a>
+                        <x-document-export-buttons
+                            :print-url="route('invoices.print', $inv->id)"
+                            :pdf-url="route('invoices.pdf', $inv->id)"
+                        />
                         @if(auth()->user()->isAccountant())
                         <a href="{{ route('invoices.edit', $inv->id) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                         @endif
@@ -221,7 +224,10 @@
 
             <div class="flex justify-end gap-2 pt-4 border-t border-[#E2E4E9] mt-4">
                 <button wire:click="closeView" class="btn btn-secondary text-xs">إغلاق</button>
-                <a href="{{ route('invoices.print', $inv->id) }}" target="_blank" class="btn text-xs bg-amber-50 text-[#C9A227] border border-[#C9A227]/30 hover:bg-amber-100">طباعة</a>
+                <x-document-export-buttons
+                    :print-url="route('invoices.print', $inv->id)"
+                    :pdf-url="route('invoices.pdf', $inv->id)"
+                />
                 @if(auth()->user()->isAccountant())
                 <a href="{{ route('invoices.edit', $inv->id) }}" wire:navigate class="btn btn-primary text-xs" style="text-decoration:none;">تعديل</a>
                 @endif

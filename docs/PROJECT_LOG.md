@@ -118,3 +118,17 @@
 - **تنبيه:** بعد النشر: `git pull && php artisan payments:normalize-methods && npm run build && php artisan view:cache`.
 
 ---
+
+## [2026-05-25] - PDF مطابق للطباعة 100% (Browsershot)
+- **الهدف:** إلغاء الفجوة بين معاينة الطباعة وملف PDF (كانت قوالب mPDF منفصلة بخط وتخطيط مختلفين).
+- **التغييرات:**
+  - `spatie/browsershot` + `puppeteer` (dev) + `PrintViewPdfRenderer` (نفس Blade + `emulateMedia('print')`).
+  - تحديث controllers PDF الأربعة لاستخدام قوالب الطباعة.
+  - مكوّن `<x-print-page-actions>` (طباعة + PDF) في صفحات الطباعة.
+  - `config/browsershot.php` + متغيرات `.env.example`.
+  - اختبارات `DocumentPdfTest` (تتخطى تلقائياً إن لم يتوفر Chrome).
+  - توثيق: `docs/08_DEPLOYMENT_AND_OPERATIONS_AR.md` §11.
+- **الأدوات:** Browsershot، Puppeteer، Headless Chrome.
+- **تنبيه:** على الإنتاج: `npm ci` (ليس `npm install --production` فقط) + `BROWSERSHOT_NO_SANDBOX=true` + `config:cache`.
+
+---

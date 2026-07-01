@@ -114,6 +114,10 @@
                 <td>
                     <div class="flex items-center gap-1 justify-end flex-wrap">
                         <button type="button" wire:click="openView({{ $po->id }})" class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50">عرض</button>
+                        <x-document-export-buttons
+                            :print-url="route('purchase-orders.print', $po->id)"
+                            :pdf-url="route('purchase-orders.pdf', $po->id)"
+                        />
                         @can('update', $po)
                         <a href="{{ route('purchase-orders.edit', $po) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                         @endcan

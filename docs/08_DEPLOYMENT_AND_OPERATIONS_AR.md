@@ -211,7 +211,8 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 | البحث يعمل في صفحة ولا في أخرى (مثلاً عملاء ✓ / موردون ✗) | **UTF-8 BOM** في بداية `.blade.php` يكسر جذر `[wire:id]` | `xxd resources/views/livewire/<file>.blade.php \| head -1` — إن ظهر `efbb bf` أزل BOM واحفظ UTF-8 بدون BOM؛ `php artisan view:clear`. راجع `docs/troubleshooting/INCIDENT-001-supplier-list-utf8-bom-livewire.md` |
 | `The selected طريقة الدفع is invalid` عند تعديل دفعة | `method` مخزّن بنص عربي أو `طريقة #N` من استيراد قديم | اسحب `50ceee1+` ثم `php artisan payments:normalize-methods`. راجع `docs/troubleshooting/INCIDENT-002-payment-method-invalid-on-edit.md` |
 | `<select>` يظهر أبيض/فارغ على الإنتاج (البيانات موجودة في HTML) | Dark Mode + خلفية بيضاء للحقل | اسحب `2d18e7c+` ثم `npm run build && php artisan view:cache`. راجع `docs/troubleshooting/INCIDENT-003-select-white-text-dark-mode.md` |
-| `تعذّر إنشاء PDF من قالب الطباعة` | Node أو Puppeteer Chrome غير مثبت | `npm ci` على السيرفر (يشمل `puppeteer`)، ثم اضبط `BROWSERSHOT_NO_SANDBOX=true` في `.env` و`php artisan config:cache`. راجع **§11** أدناه |
+| `تعذّر إنشاء PDF من قالب الطباعة` (500 على `/pdf`) | Chromium غير محمّل، Node غير متاح لـ PHP، أو صلاحيات `root` على `node_modules` | راجع **§11.2**: `PUPPETEER_CACHE_DIR`، `npm run browsershot:install`، `BROWSERSHOT_NODE`، `chown` لمستخدم PHP، ثم `php artisan browsershot:check` |
+| `Route [invoices.pdf] not defined` (أو أي مسار PDF جديد) بعد `git pull` | **كاش المسارات قديم** — نفّذت `config:cache` دون `route:cache` | `php artisan route:clear && php artisan route:cache` (أو `php artisan optimize:clear` ثم أعد الكاش). تحقق: `php artisan route:list --name=invoices.pdf` |
 
 ---
 
@@ -234,22 +235,49 @@ MAIL_MAILER=log              # log أثناء التشغيل التجريبي، 
 cd /home/baitpait/public_html/profile
 git pull origin main
 composer install --no-dev --optimize-autoloader
-npm ci    # يشمل puppeteer — ضروري لـ PDF
+
+# Puppeteer 23 متوافق مع Node 20 — لا تستخدم puppeteer 25 على السيرفر الحالي
+mkdir -p storage/app/puppeteer-cache
+export PUPPETEER_CACHE_DIR=/home/baitpait/public_html/profile/storage/app/puppeteer-cache
+npm ci
+npm run browsershot:install    # تحميل Chromium إلى storage (مرة بعد كل npm ci)
 npm run build
 ```
 
 أضف إلى `.env` على Linux المشترك:
 
 ```env
+BROWSERSHOT_NODE=/usr/bin/node
+PUPPETEER_CACHE_DIR=/home/baitpait/public_html/profile/storage/app/puppeteer-cache
 BROWSERSHOT_NO_SANDBOX=true
-# اختياري إن فشل اكتشاف Chrome تلقائياً:
-# BROWSERSHOT_CHROME_PATH=/home/baitpait/public_html/profile/node_modules/puppeteer/.cache/chrome/linux-.../chrome
+```
+
+**صلاحيات (مهم):** إن نفّذت `npm` كـ `root`، عدّل ملكية المجلدات لمستخدم PHP (غالباً `www-data` أو `nobody`):
+
+```bash
+# اكتشف مستخدم PHP:
+ps aux | grep -E 'php-fpm|lsphp' | grep -v grep | head -1
+
+# مثال (استبدل www-data بالمستخدم الفعلي):
+chown -R www-data:www-data storage node_modules bootstrap/cache
+chmod -R ug+rwx storage bootstrap/cache
 ```
 
 ثم:
 
 ```bash
+php artisan route:cache
 php artisan config:cache
+php artisan view:cache
+php artisan browsershot:check    # يجب أن ينجح قبل تجربة PDF من المتصفح
+```
+
+### 11.2.1 تبعيات Linux لـ Chromium (إن فشل `browsershot:check`)
+
+```bash
+apt-get install -y ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 \
+  libatk1.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 libgtk-3-0 libnspr4 libnss3 \
+  libx11-xcb1 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 xdg-utils
 ```
 
 ### 11.3 التحقق

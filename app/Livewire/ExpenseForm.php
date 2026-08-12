@@ -21,9 +21,8 @@ class ExpenseForm extends Component
 
     public function mount(?Expense $expense = null): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
-
         if ($expense && $expense->exists) {
+            $this->authorize('update', $expense);
             $this->recordId = $expense->id;
             $this->description = $expense->description ?? '';
             $this->amount = (string) $expense->amount;
@@ -31,6 +30,7 @@ class ExpenseForm extends Component
             $this->expense_date = $expense->expense_date?->format('Y-m-d') ?? '';
             $this->notes = $expense->notes ?? '';
         } else {
+            $this->authorize('create', Expense::class);
             $this->expense_date = now()->format('Y-m-d');
         }
     }

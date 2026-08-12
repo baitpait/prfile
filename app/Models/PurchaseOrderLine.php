@@ -23,4 +23,11 @@ class PurchaseOrderLine extends Model
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
+
+    public function displayDetails(): ?string
+    {
+        $description = trim((string) ($this->description ?? ''));
+
+        return $description !== '' ? $description : null;
+    }
 }

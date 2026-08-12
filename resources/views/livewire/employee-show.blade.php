@@ -11,6 +11,9 @@
         @can('create', App\Models\SalaryPayment::class)
         <a href="{{ route('salary-payments.create', ['employee_id' => $employee->id]) }}" wire:navigate class="btn btn-primary" style="text-decoration:none;">تسجيل راتب</a>
         @endcan
+        @can('create', App\Models\SalaryAdvance::class)
+        <a href="{{ route('salary-advances.create', ['employee_id' => $employee->id]) }}" wire:navigate class="btn btn-secondary" style="text-decoration:none;">تسجيل سلفة</a>
+        @endcan
     </div>
 </div>
 
@@ -61,6 +64,34 @@
             </tr>
             @empty
             <tr><td colspan="5" class="text-center py-8 text-gray-400">لا توجد رواتب مسجّلة</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
+<div class="card overflow-hidden mt-6">
+    <div class="px-4 py-3 border-b border-[#E2E4E9] font-bold text-sm">سجل السلف</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>التاريخ</th>
+                <th>المبلغ</th>
+                <th>الحالة</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($employee->salaryAdvances as $adv)
+            <tr>
+                <td dir="ltr">{{ $adv->paid_at?->format('Y-m-d') }}</td>
+                <td class="font-mono text-sm" dir="ltr">{{ number_format((float)$adv->amount, 2) }} {{ $adv->currency_code }}</td>
+                <td>{{ App\Models\SalaryAdvance::statusLabel($adv->status) }}</td>
+                <td>
+                    <a href="{{ route('salary-advances.show', $adv) }}" wire:navigate class="text-xs text-[#C9A227]">عرض</a>
+                </td>
+            </tr>
+            @empty
+            <tr><td colspan="4" class="text-center py-8 text-gray-400">لا توجد سلف مسجّلة</td></tr>
             @endforelse
         </tbody>
     </table>

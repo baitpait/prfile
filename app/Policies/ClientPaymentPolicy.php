@@ -19,16 +19,16 @@ class ClientPaymentPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAccountant();
+        return $user->is_active && $user->isAccountant();
     }
 
     public function update(User $user, ClientPayment $payment): bool
     {
-        return $user->isAccountant();
+        return $user->is_active && $user->isAccountant();
     }
 
     public function delete(User $user, ClientPayment $payment): bool
     {
-        return $user->isManager();
+        return $user->is_active && $user->isManager();
     }
 }

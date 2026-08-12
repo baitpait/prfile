@@ -5,11 +5,13 @@ namespace App\Livewire;
 use App\Livewire\Concerns\UsesCommittedSearchFilter;
 use App\Livewire\Concerns\WithPerPagePagination;
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class UserList extends Component
 {
+    use AuthorizesRequests;
     use UsesCommittedSearchFilter;
     use WithPagination;
     use WithPerPagePagination;
@@ -21,22 +23,15 @@ class UserList extends Component
     public function toggleActive(int $id): void
     {
         $user = User::findOrFail($id);
-        if ($user->id === auth()->id()) {
-            $this->dispatch('toast', message: 'لا يمكنك تعطيل حسابك الخاص', type: 'error');
-
-            return;
-        }
+        $this->authorize('toggleActive', $user);
         $user->update(['is_active' => ! $user->is_active]);
         $this->dispatch('toast', message: $user->is_active ? 'تم تفعيل المستخدم' : 'تم تعطيل المستخدم');
     }
 
     public function confirmDelete(int $id): void
     {
-        if ($id === auth()->id()) {
-            $this->dispatch('toast', message: 'لا يمكنك حذف حسابك الخاص', type: 'error');
-
-            return;
-        }
+        $user = User::findOrFail($id);
+        $this->authorize('delete', $user);
         $this->confirmDeleteId = $id;
     }
 
@@ -47,8 +42,10 @@ class UserList extends Component
 
     public function delete(): void
     {
-        if ($this->confirmDeleteId && $this->confirmDeleteId !== auth()->id()) {
-            User::findOrFail($this->confirmDeleteId)->delete();
+        if ($this->confirmDeleteId) {
+            $user = User::findOrFail($this->confirmDeleteId);
+            $this->authorize('delete', $user);
+            $user->delete();
             $this->confirmDeleteId = null;
             $this->dispatch('toast', message: 'تم حذف المستخدم');
         }
@@ -56,7 +53,7 @@ class UserList extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->isManager(), 403);
+        $this->authorize('viewAny', User::class);
     }
 
     public function render()

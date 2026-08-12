@@ -2,9 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\WithPendingReceivedCheckSelection;
 use App\Models\PurchaseOrder;
+use App\Models\ReceivedCheck;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
+use App\Services\Finance\PaymentMethod;
+use App\Services\Finance\ReceivedCheckEndorsementService;
 use App\Services\PurchaseOrderPaymentAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -13,6 +17,7 @@ use Livewire\Component;
 
 class PurchaseOrderForm extends Component
 {
+    use WithPendingReceivedCheckSelection;
     public ?int $purchaseOrderId = null;
 
     public string $supplier_id = '';
@@ -42,15 +47,15 @@ class PurchaseOrderForm extends Component
 
     public string $paid_at = '';
 
+    public string $bank_reference = '';
+
     /** @var array<int, array{title:string, description:string, unit_price:string, quantity:string, line_total:string}> */
     public array $lines = [];
 
     public function mount(?PurchaseOrder $purchaseOrder = null): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
-
         if ($purchaseOrder && $purchaseOrder->exists) {
-            Gate::authorize('update', $purchaseOrder);
+            $this->authorize('update', $purchaseOrder);
             $purchaseOrder->load('lines');
             $this->purchaseOrderId = $purchaseOrder->id;
             $this->supplier_id = (string) $purchaseOrder->supplier_id;
@@ -70,7 +75,7 @@ class PurchaseOrderForm extends Component
                 'line_total' => (string) $l->line_total,
             ])->toArray();
         } else {
-            Gate::authorize('create', PurchaseOrder::class);
+            $this->authorize('create', PurchaseOrder::class);
             $this->document_date = now()->format('Y-m-d');
             $this->paid_at = now()->format('Y-m-d');
             $this->status = 'issued';
@@ -120,7 +125,28 @@ class PurchaseOrderForm extends Component
             $this->payment_amount = $this->total_amount;
         } elseif ($this->payment_collection === 'unpaid') {
             $this->payment_amount = '';
+            $this->resetPendingCheckSelection();
         }
+    }
+
+    public function updatedPaymentMethod(string $value): void
+    {
+        if (PaymentMethod::normalize($value) !== PaymentMethod::CHECK) {
+            $this->resetPendingCheckSelection();
+            $this->bank_reference = '';
+        }
+    }
+
+    public function updatedCurrencyCode(): void
+    {
+        if ($this->check_source === 'register') {
+            $this->received_check_id = '';
+        }
+    }
+
+    public function updatedPaymentAmount(): void
+    {
+        $this->reconcileRegisterCheckWithFilterAmount();
     }
 
     public function updatedTotalAmount(): void
@@ -128,6 +154,40 @@ class PurchaseOrderForm extends Component
         if ($this->payment_collection === 'paid') {
             $this->payment_amount = $this->total_amount;
         }
+        $this->reconcileRegisterCheckWithFilterAmount();
+    }
+
+    public function canSelectPendingCheck(): bool
+    {
+        return ! $this->purchaseOrderId
+            && $this->isCheckPaymentMethod()
+            && in_array($this->payment_collection, ['partial', 'paid'], true);
+    }
+
+    protected function pendingCheckFilterAmount(): ?float
+    {
+        if ($this->payment_collection === 'paid') {
+            $total = (float) $this->total_amount;
+
+            return $total > 0 ? $total : null;
+        }
+
+        if ($this->payment_collection === 'partial' && $this->payment_amount !== '' && is_numeric($this->payment_amount)) {
+            return (float) $this->payment_amount;
+        }
+
+        return null;
+    }
+
+    protected function applyPendingCheckToForm(ReceivedCheck $check): void
+    {
+        $this->currency_code = $check->currency_code ?? 'ILS';
+        if ($this->payment_collection === 'partial') {
+            $this->payment_amount = number_format((float) $check->amount, 2, '.', '');
+        }
+        $this->bank_reference = $check->check_number;
+        $this->payment_method = PaymentMethod::CHECK;
+        $this->check_source = 'register';
     }
 
     private function recalcTotal(): void
@@ -271,7 +331,40 @@ class PurchaseOrderForm extends Component
             ? ($this->payment_collection === 'paid' ? $orderTotal : (float) $this->payment_amount)
             : null;
 
-        DB::transaction(function () use ($data, $titledLines, $collectPayment, $paymentAmount): void {
+        $usingRegisterCheck = $collectPayment
+            && $this->canSelectPendingCheck()
+            && $this->check_source === 'register';
+
+        if ($usingRegisterCheck) {
+            $this->validate([
+                'received_check_id' => 'required|integer|exists:received_checks,id',
+            ], [], [
+                'received_check_id' => 'الشيك',
+            ]);
+
+            $check = $this->selectedPendingCheck();
+            if (! $check) {
+                $this->addError('received_check_id', 'الشيك غير متاح للتظهير.');
+
+                return;
+            }
+
+            if ($check->currency_code !== $this->currency_code) {
+                $this->addError('received_check_id', 'عملة الشيك لا تطابق عملة أمر الشراء.');
+
+                return;
+            }
+
+            if ($paymentAmount === null || abs(round((float) $check->amount, 2) - round($paymentAmount, 2)) > 0.009) {
+                $this->addError('received_check_id', 'مبلغ الشيك يجب أن يساوي مبلغ الدفعة.');
+
+                return;
+            }
+        }
+
+        $endorseAfterCreate = $usingRegisterCheck;
+
+        DB::transaction(function () use ($data, $titledLines, $collectPayment, $paymentAmount, $endorseAfterCreate): void {
             if ($this->purchaseOrderId) {
                 $po = PurchaseOrder::findOrFail($this->purchaseOrderId);
                 $po->update($data);
@@ -292,22 +385,41 @@ class PurchaseOrderForm extends Component
             }
 
             if ($collectPayment && $paymentAmount !== null && $paymentAmount > 0) {
-                SupplierPayment::query()->create([
-                    'supplier_id' => $po->supplier_id,
-                    'amount' => $paymentAmount,
-                    'currency_code' => $po->currency_code,
-                    'paid_at' => $this->paid_at,
-                    'method' => $this->payment_method,
-                    'bank_reference' => null,
-                    'notes' => 'دفع عند إنشاء فاتورة المشتريات #'.($po->legacy_po_no ?? $po->id),
-                    'recorded_by_user_id' => auth()->id(),
-                ]);
+                if ($endorseAfterCreate) {
+                    $check = $this->selectedPendingCheck();
+                    if (! $check) {
+                        throw new \InvalidArgumentException('الشيك غير متاح للتظهير.');
+                    }
+
+                    $purchaseOrderLinkId = $this->payment_collection === 'paid' ? $po->id : null;
+
+                    app(ReceivedCheckEndorsementService::class)->endorseToSupplier(
+                        $check->fresh(),
+                        (int) $po->supplier_id,
+                        $purchaseOrderLinkId,
+                        auth()->id(),
+                    );
+                } else {
+                    SupplierPayment::query()->create([
+                        'supplier_id' => $po->supplier_id,
+                        'purchase_order_id' => $this->payment_collection === 'paid' ? $po->id : null,
+                        'amount' => $paymentAmount,
+                        'currency_code' => $po->currency_code,
+                        'paid_at' => $this->paid_at,
+                        'method' => $this->payment_method,
+                        'bank_reference' => PaymentMethod::normalize($this->payment_method) === PaymentMethod::CHECK
+                            ? ($this->bank_reference ?: null)
+                            : null,
+                        'notes' => 'دفع عند إنشاء فاتورة المشتريات #'.($po->legacy_po_no ?? $po->id),
+                        'recorded_by_user_id' => auth()->id(),
+                    ]);
+                }
             }
         });
 
         $toast = $this->purchaseOrderId ? 'تم تحديث فاتورة المشتريات' : 'تم إضافة فاتورة المشتريات بنجاح';
         if ($collectPayment) {
-            $toast .= ' وتسجيل الدفعة';
+            $toast .= $endorseAfterCreate ? ' وتظهير الشيك للمورد' : ' وتسجيل الدفعة';
         }
         session()->flash('toast', $toast);
         $this->redirect(route('purchase-orders.index'), navigate: true);
@@ -336,6 +448,14 @@ class PurchaseOrderForm extends Component
             'suppliers' => $suppliers,
             'subtotal' => $subtotal,
             'computedPaymentStatus' => $computedPaymentStatus,
+            'pendingChecks' => $this->pendingChecksForSelect(
+                $this->currency_code !== '' ? $this->currency_code : null,
+            ),
+            'selectedCheck' => $this->selectedPendingCheck(),
+            'canSelectPendingCheck' => $this->canSelectPendingCheck(),
+            'isCheckPayment' => $this->isCheckPaymentMethod(),
+            'currencyFilter' => $this->currency_code !== '',
+            'amountFilter' => $this->resolvePendingCheckFilterAmount() !== null,
         ]);
     }
 }

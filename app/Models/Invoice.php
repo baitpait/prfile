@@ -38,6 +38,11 @@ class Invoice extends Model
         return $this->hasMany(InvoiceLine::class)->orderBy('line_order');
     }
 
+    public function linkedPayments(): HasMany
+    {
+        return $this->hasMany(ClientPayment::class);
+    }
+
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by_user_id');

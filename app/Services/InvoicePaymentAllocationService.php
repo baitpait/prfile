@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\Client;
 use App\Models\ClientPayment;
 use App\Models\Invoice;
 use Illuminate\Support\Collection;
 
 /**
- * Business Purpose: Derive per-invoice payment status from client-level payments (FIFO).
+ * Business Purpose: Derive per-invoice payment status.
+ * Linked payments (invoice_id) cover that invoice fully; unlinked payments apply FIFO to the rest.
  * Balance adjustments are excluded — payment status reflects cash/bank collections only.
  */
 class InvoicePaymentAllocationService
@@ -62,20 +62,55 @@ class InvoicePaymentAllocationService
                 ->orderBy('id')
                 ->get();
 
-            $paymentPool = (float) ClientPayment::query()
+            $payments = ClientPayment::query()
                 ->where('client_id', $clientId)
                 ->where('currency_code', $currency)
                 ->whereNull('deleted_at')
+                ->get(['id', 'invoice_id', 'amount']);
+
+            $linkedByInvoice = $payments
+                ->filter(fn (ClientPayment $p) => $p->invoice_id !== null)
+                ->groupBy('invoice_id')
+                ->map(fn (Collection $rows) => (float) $rows->sum('amount'));
+
+            $generalPool = (float) $payments
+                ->filter(fn (ClientPayment $p) => $p->invoice_id === null)
                 ->sum('amount');
 
-            $allocations = $this->allocateFifo($clientInvoices, $paymentPool);
+            $unlinkedInvoices = $clientInvoices->filter(
+                fn (Invoice $inv) => ! $linkedByInvoice->has($inv->id)
+            )->values();
+
+            $fifo = $this->allocateFifo($unlinkedInvoices, $generalPool);
 
             foreach ($group as $invoice) {
-                if (! isset($allocations[$invoice->id])) {
+                $total = round((float) $invoice->total_amount, 4);
+
+                if ($linkedByInvoice->has($invoice->id)) {
+                    $allocated = min($total, round((float) $linkedByInvoice->get($invoice->id), 4));
+                    $remaining = round(max(0, $total - $allocated), 4);
+                    $status = self::UNPAID;
+                    if ($allocated > 0.00001 && $remaining > 0.00001) {
+                        $status = self::PARTIAL;
+                    } elseif ($remaining <= 0.00001) {
+                        $status = self::PAID;
+                    }
+                    $result[$invoice->id] = [
+                        'allocated' => $allocated,
+                        'remaining' => $remaining,
+                        'total' => $total,
+                        'status' => $status,
+                        'label' => self::label($status),
+                    ];
+
                     continue;
                 }
 
-                $row = $allocations[$invoice->id];
+                if (! isset($fifo[$invoice->id])) {
+                    continue;
+                }
+
+                $row = $fifo[$invoice->id];
                 $result[$invoice->id] = array_merge($row, [
                     'label' => self::label($row['status']),
                 ]);

@@ -12,7 +12,10 @@ class EmployeeShow extends Component
     public function mount(Employee $employee): void
     {
         $this->authorize('view', $employee);
-        $this->employee = $employee->load(['salaryPayments' => fn ($q) => $q->orderByDesc('period_year')->orderByDesc('period_month')->limit(24)]);
+        $this->employee = $employee->load([
+            'salaryPayments' => fn ($q) => $q->orderByDesc('period_year')->orderByDesc('period_month')->limit(24),
+            'salaryAdvances' => fn ($q) => $q->orderByDesc('paid_at')->limit(24),
+        ]);
     }
 
     public function render()

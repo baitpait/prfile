@@ -26,7 +26,7 @@ class ClientAdjustmentList extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        $this->authorize('viewAny', ClientBalanceAdjustment::class);
     }
 
     public function goCreate(): void

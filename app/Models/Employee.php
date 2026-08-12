@@ -69,6 +69,11 @@ class Employee extends Model
         return $this->hasMany(SalaryPayment::class);
     }
 
+    public function salaryAdvances(): HasMany
+    {
+        return $this->hasMany(SalaryAdvance::class);
+    }
+
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by_user_id');

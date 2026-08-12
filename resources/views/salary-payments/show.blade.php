@@ -32,6 +32,18 @@
             @if($salaryPayment->notes)
             <div class="py-3"><dt class="text-gray-500 mb-1">ملاحظات</dt><dd class="bg-amber-50 rounded-lg p-3">{{ $salaryPayment->notes }}</dd></div>
             @endif
+            @php $salaryPayment->loadMissing('receivedCheck'); @endphp
+            @if($salaryPayment->receivedCheck)
+            <div class="flex justify-between py-3">
+                <dt class="text-gray-500">شيك مُستلم (تظهير)</dt>
+                <dd>
+                    <a href="{{ route('received-checks.show', $salaryPayment->receivedCheck) }}" wire:navigate
+                       class="text-[#C9A227] font-semibold" style="text-decoration:none;">
+                        {{ $salaryPayment->receivedCheck->check_number }} — {{ $salaryPayment->receivedCheck->bank_name }}
+                    </a>
+                </dd>
+            </div>
+            @endif
         </dl>
 
         <div class="flex justify-end gap-2 pt-5 mt-2 border-t border-[#E2E4E9]">

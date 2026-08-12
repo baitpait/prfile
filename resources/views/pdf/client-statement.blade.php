@@ -339,7 +339,7 @@ body {
             @elseif($event['type'] === 'payment')
             @php
                 $pay = $event['model'];
-                $payNo = $pay->bank_reference ?? ('#'.$pay->id);
+                $payNo = $pay->statementReference();
                 $methodLabel = $methods[$pay->method] ?? $pay->method ?? '';
             @endphp
             <tr class="row-payment">

@@ -26,12 +26,11 @@ class ClientAdjustmentForm extends Component
 
     public function mount(Client $client, ?ClientBalanceAdjustment $adjustment = null): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
-
         $this->client = $client;
 
         if ($adjustment && $adjustment->exists) {
             abort_unless($adjustment->client_id === $client->id, 404);
+            $this->authorize('update', $adjustment);
             $this->recordId = $adjustment->id;
             $this->amount = (string) $adjustment->amount;
             $this->currency_code = $adjustment->currency_code ?? 'ILS';
@@ -40,6 +39,7 @@ class ClientAdjustmentForm extends Component
             $this->reason = $adjustment->reason ?? '';
             $this->notes = $adjustment->notes ?? '';
         } else {
+            $this->authorize('create', ClientBalanceAdjustment::class);
             $this->adjustment_date = now()->format('Y-m-d');
         }
     }

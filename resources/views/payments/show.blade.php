@@ -34,6 +34,21 @@
                 <dd class="text-sm font-semibold text-[#3D3D3D]">{{ $payment->client?->displayName() ?? '—' }}</dd>
             </div>
             <div class="flex justify-between py-3">
+                <dt class="text-sm text-gray-500">الربط</dt>
+                <dd class="text-sm font-medium text-[#3D3D3D]">
+                    @if($payment->invoice_id)
+                        @php
+                            $payment->loadMissing('invoice');
+                            $invNo = $payment->invoice?->legacy_invoice_no ?? '#'.$payment->invoice_id;
+                        @endphp
+                        على فاتورة
+                        <a href="{{ route('invoices.show', $payment->invoice_id) }}" wire:navigate class="text-[#C9A227] font-semibold" style="text-decoration:none;">{{ $invNo }}</a>
+                    @else
+                        عموم الحساب
+                    @endif
+                </dd>
+            </div>
+            <div class="flex justify-between py-3">
                 <dt class="text-sm text-gray-500">تاريخ الدفع</dt>
                 <dd class="text-sm font-medium text-[#3D3D3D]" dir="ltr">{{ $payment->paid_at?->format('Y-m-d') ?? '—' }}</dd>
             </div>
@@ -45,6 +60,19 @@
             <div class="flex justify-between py-3">
                 <dt class="text-sm text-gray-500">رقم المرجع</dt>
                 <dd class="text-sm font-mono font-medium text-[#3D3D3D]" dir="ltr">{{ $payment->bank_reference }}</dd>
+            </div>
+            @endif
+            @php $payment->loadMissing('receivedCheck'); @endphp
+            @if($payment->receivedCheck)
+            <div class="flex justify-between py-3">
+                <dt class="text-sm text-gray-500">الشيك</dt>
+                <dd class="text-sm">
+                    <a href="{{ route('received-checks.show', $payment->receivedCheck) }}" wire:navigate
+                       class="text-[#C9A227] font-semibold" style="text-decoration:none;">
+                        {{ $payment->receivedCheck->bank_name }} — {{ $payment->receivedCheck->check_number }}
+                        ({{ $payment->receivedCheck->statusLabel() }})
+                    </a>
+                </dd>
             </div>
             @endif
             @if($payment->notes)

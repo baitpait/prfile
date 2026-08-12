@@ -33,6 +33,21 @@
                 <dd class="text-sm font-semibold text-[#3D3D3D]">{{ $supplierPayment->supplier?->displayName() ?? '—' }}</dd>
             </div>
             <div class="flex justify-between py-3">
+                <dt class="text-sm text-gray-500">الربط</dt>
+                <dd class="text-sm font-medium text-[#3D3D3D]">
+                    @if($supplierPayment->purchase_order_id)
+                        @php
+                            $supplierPayment->loadMissing('purchaseOrder');
+                            $poNo = $supplierPayment->purchaseOrder?->legacy_po_no ?? '#'.$supplierPayment->purchase_order_id;
+                        @endphp
+                        على أمر شراء
+                        <a href="{{ route('purchase-orders.show', $supplierPayment->purchase_order_id) }}" wire:navigate class="text-[#C9A227] font-semibold" style="text-decoration:none;">{{ $poNo }}</a>
+                    @else
+                        عموم الحساب
+                    @endif
+                </dd>
+            </div>
+            <div class="flex justify-between py-3">
                 <dt class="text-sm text-gray-500">تاريخ الدفع</dt>
                 <dd class="text-sm font-medium text-[#3D3D3D]" dir="ltr">{{ $supplierPayment->paid_at?->format('Y-m-d') ?? '—' }}</dd>
             </div>
@@ -50,6 +65,18 @@
             <div class="py-3">
                 <dt class="text-sm text-gray-500 mb-1">ملاحظات</dt>
                 <dd class="text-sm text-[#3D3D3D] bg-amber-50 rounded-lg p-3 whitespace-pre-wrap">{{ $supplierPayment->notes }}</dd>
+            </div>
+            @endif
+            @php $supplierPayment->loadMissing('receivedCheck'); @endphp
+            @if($supplierPayment->receivedCheck)
+            <div class="flex justify-between py-3">
+                <dt class="text-sm text-gray-500">شيك مُستلم (تظهير)</dt>
+                <dd>
+                    <a href="{{ route('received-checks.show', $supplierPayment->receivedCheck) }}" wire:navigate
+                       class="text-sm text-[#C9A227] font-semibold" style="text-decoration:none;">
+                        {{ $supplierPayment->receivedCheck->check_number }} — {{ $supplierPayment->receivedCheck->bank_name }}
+                    </a>
+                </dd>
             </div>
             @endif
         </dl>

@@ -7,7 +7,7 @@
            style="{{ $inputStyle ?? '' }}"
            placeholder="ابحث بالاسم أو الهاتف أو البريد..."
            autocomplete="off">
-    <select wire:model="client_id" class="input select {{ $selectClass ?? '' }}" style="{{ $selectStyle ?? '' }}">
+    <select wire:model.live="client_id" class="input select {{ $selectClass ?? '' }}" style="{{ $selectStyle ?? '' }}">
         <option value="">{{ $placeholder ?? '— اختر العميل —' }}</option>
         @forelse($clients as $c)
             <option value="{{ $c->id }}">

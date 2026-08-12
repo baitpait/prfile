@@ -140,7 +140,7 @@ class ClientStatementService
                     ];
                 } elseif ($event['type'] === 'payment') {
                     $pay = $event['model'];
-                    $ref = $pay->bank_reference ?? "#{$pay->id}";
+                    $ref = $pay->statementReference();
                     $rows[] = [
                         $currency,
                         $event['date']->format('Y-m-d'),

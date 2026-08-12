@@ -3,11 +3,13 @@
 namespace App\Livewire;
 
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
 class UserForm extends Component
 {
+    use AuthorizesRequests;
     public ?int $userId = null;
 
     public string $full_name = '';
@@ -22,14 +24,16 @@ class UserForm extends Component
 
     public function mount(?User $user = null): void
     {
-        abort_unless(auth()->user()->isManager(), 403);
         if ($user && $user->exists) {
+            $this->authorize('update', $user);
             $this->userId = $user->id;
             $this->full_name = $user->full_name;
             $this->email = $user->email;
             $this->password = '';
             $this->role = $user->role;
             $this->is_active = (bool) $user->is_active;
+        } else {
+            $this->authorize('create', User::class);
         }
     }
 
@@ -54,6 +58,7 @@ class UserForm extends Component
 
         if ($this->userId) {
             $user = User::findOrFail($this->userId);
+            $this->authorize('update', $user);
             if ($user->id === auth()->id() && $this->role !== 'manager') {
                 $this->addError('role', 'لا يمكنك تغيير صلاحيتك الخاصة');
 
@@ -66,6 +71,7 @@ class UserForm extends Component
             $user->update($data);
             $msg = 'تم تحديث بيانات المستخدم';
         } else {
+            $this->authorize('create', User::class);
             User::create([
                 'full_name' => $this->full_name,
                 'email' => $this->email,

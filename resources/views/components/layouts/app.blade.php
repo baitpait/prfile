@@ -189,6 +189,15 @@
                 </x-slot>
             </x-nav-link>
 
+            <x-nav-link :route="route('salary-advances.index')" label="السلف" :active="request()->routeIs('salary-advances.*')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
             <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">المالية</div>
 
             <x-nav-link :route="route('financial-summary')" label="صناديق العملات"
@@ -209,6 +218,28 @@
                     </svg>
                 </x-slot>
             </x-nav-link>
+
+            <x-nav-link :route="route('received-checks.index')" label="صندوق الشيكات"
+                        :active="request()->routeIs('received-checks.index', 'received-checks.show')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+
+            @can('viewAny', App\Models\ReceivedCheck::class)
+            <x-nav-link :route="route('received-checks.due-report')" label="استحقاق الشيكات"
+                        :active="request()->routeIs('received-checks.due-report*')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </x-slot>
+            </x-nav-link>
+            @endcan
 
             @can('view-period-reports')
             <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">التقارير</div>

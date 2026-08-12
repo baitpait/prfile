@@ -10,6 +10,97 @@
 ---
 -->
 
+## [2026-08-12] - Sprint B: تظهير شيك عند إنشاء أمر شراء
+- **الهدف:** محاذاة `PurchaseOrderForm` مع `SupplierPaymentForm` — شيك من الصندوق أو يدوي.
+- **التغييرات:** `WithPendingReceivedCheckSelection` في `PurchaseOrderForm` + partial؛ تظهير عبر `ReceivedCheckEndorsementService` بعد إنشاء PO.
+- **اختبارات:** +2 في `PurchaseOrderFormPaymentCollectionTest`.
+
+## [2026-08-12] - Sprint A: استلام شيك عند إنشاء فاتورة
+- **الهدف:** إغلاق فجوة دخول الشيك للصندوق عند تحصيل الفاتورة.
+- **التغييرات:** `ClientPaymentReceivedCheckService` + `WithClientCheckIntake`؛ تكامل في `InvoiceForm`؛ refactor `PaymentForm`؛ partial `client-check-intake-fields`.
+- **اختبارات:** +2 في `InvoiceFormPaymentCollectionTest`.
+
+## [2026-08-12] - Sprint 6: اختبار PDF تقرير الاستحقاق
+- **التغييرات:** اختبار تحميل PDF للمحاسب (mPDF) + اختبار قالب Blade للصفوف.
+- **اختبارات:** +2 في `ReceivedCheckTest`.
+
+## [2026-08-12] - Sprint 5: رابط تقرير الاستحقاق في القائمة الجانبية
+- **التغييرات:** عنصر «استحقاق الشيكات» تحت قسم المالية في `app.blade.php`؛ تمييز نشط منفصل عن «صندوق الشيكات».
+- **اختبارات:** +1 في `ReceivedCheckTest`.
+
+## [2026-08-12] - Sprint 4: UserPolicy + صلاحية تصدير الشيكات
+- **الهدف:** توحيد صلاحيات إدارة المستخدمين؛ نقل تصدير تقرير الاستحقاق من Gate عام إلى `ReceivedCheckPolicy`.
+- **التغييرات:** `UserPolicy` (view/create/update/delete/toggleActive)؛ مسارات `/users/*` و `UserList`/`UserForm` تستخدم `authorize()`؛ `exportDueReport` في `ReceivedCheckPolicy` بدل `export-period-reports` لتقرير الاستحقاق.
+- **اختبارات:** `UserPolicyTest` (+11).
+
+## [2026-08-12] - Sprint 3 (تكملة): تصدير PDF/CSV لتقرير الاستحقاق
+- **التغييرات:** `ReceivedCheckDueReportController` + قالب PDF؛ `exportCsv()` وزرّا التصدير في تقرير الاستحقاق.
+- **اختبارات:** +3 في `ReceivedCheckTest` (صلاحيات التصدير).
+
+## [2026-08-12] - Sprint 3: فهرس DB + دمج اختبارات + تقرير الاستحقاق
+- **الهدف:** أداء استعلامات الصندوق، صيانة اختبارات موحّدة، تقرير سيولة للشيكات pending.
+- **التغييرات:** فهرس `(status, currency_code, due_date)`؛ `ReceivedCheckDueReportService` + `/received-checks/due-report`؛ دمج Phase 1–8 في `ReceivedCheckTest.php` + `tests/Helpers/ReceivedCheckHelpers.php`.
+- **اختبارات:** 31 اختباراً في `ReceivedCheckTest`.
+
+## [2026-08-12] - Sprint 2: UX صندوق الشيكات في نماذج الدفع
+- **الهدف:** تقليل أخطاء التظهير — فلترة بالمبلغ، تحذير الخصم/السلف، توضيح وضع التعديل.
+- **التغييرات:** فلترة `pendingFor` بالمبلغ في النماذج الثلاثة؛ إلغاء اختيار الشيك عند تغيّر المبلغ؛ منع «اقتراح خصم» مع مسار الصندوق؛ partial `pending-check-edit-notice`.
+- **اختبارات:** `ReceivedCheckPhase8Test`.
+
+## [2026-08-12] - Sprint 1: استقرار — Policies + middleware + تنظيف
+- **الهدف:** إصلاح اختبارات UI، توحيد الصلاحيات عبر Policies، قطع جلسة المستخدم المعطّل، إزالة كود IncomeEntry الميت.
+- **التغييرات:** `EnsureUserIsActive` middleware؛ `ExpensePolicy` + توسيع `ClientPolicy`/`SupplierPolicy`؛ المسارات والنماذج تستخدم `authorize()`/`can()`؛ حذف Livewire/Model/Views لـ `IncomeEntry` (المسارات القديمة تبقى redirect)؛ `DemoDataSeeder` يزرع دفعة عميل بدل income_entry.
+- **اختبارات:** إصلاح `ProductCatalogTest` و `SalesProductInvoiceTest`.
+
+## [2026-08-12] - المرحلة 7: اختيار شيك قيد المعالجة في نماذج الدفع الصادرة
+- **الهدف:** عند اختيار «شيك» في دفعات المورد/الراتب/السلفة، إتاحة اختيار شيك من صندوق الشيكات بدلاً من الإدخال اليدوي فقط.
+- **التغييرات:** `WithPendingReceivedCheckSelection`؛ `PendingReceivedCheckSelectService`؛ partial مشترك؛ تكامل في `SupplierPaymentForm`، `SalaryPaymentForm`، `SalaryAdvanceForm` (إنشاء فقط — التعديل يبقى يدوياً).
+- **اختبارات:** `ReceivedCheckPhase7Test`.
+
+## [2026-08-12] - محاذاة كشف حساب المورد مع العميل
+- **الهدف:** إغلاق فجوة العرض والترتيب بين `/clients/{id}/statement` و `/suppliers/{id}/statement`.
+- **التغييرات:** `HasStatementPaymentReference`؛ عنوان موحّد «كشف حساب»؛ مرجع دفعة من `notes`؛ أوصاف بنود DEMO-PO؛ اختبارات parity.
+- **اختبارات:** `SupplierStatementTest` (+2).
+
+## [2026-08-12] - المرحلة 6: صندوق الشيكات + عكس الدفعة
+- **الهدف:** سجل تشغيلي للشيكات (عملة، استحقاق، حركة) مع عكس دفعة العميل بضغطة واحدة عند «لم يُصرف».
+- **التغييرات:** `ReceivedCheckRegisterService`؛ فلاتر العملة/الاستحقاق في `/received-checks`؛ بطاقات ملخص قيد المعالجة؛ «سجل الحركة» في التفاصيل؛ زر «عكس دفعة العميل»؛ تسمية التنقل «صندوق الشيكات».
+- **اختبارات:** `ReceivedCheckPhase6Test`.
+
+## [2026-08-12] - المرحلة 5: سلفة + راتب (تكامل)
+- **الهدف:** CRUD للسلف، خصم تلقائي من الراتب، تكامل مع تظهير الشيك.
+- **التغييرات:** `/salary-advances`، `SalaryAdvanceSettlementService`، «اقتراح خصم» في نموذج الراتب، سجل السلف في ملف الموظف.
+- **اختبارات:** `SalaryAdvancePhase5Test`.
+
+## [2026-08-12] - المرحلة 4: كشف حساب مورد (PDF/CSV)
+- **الهدف:** محاذاة كشف المورد مع كشف الزبون — خط زمني + بنود أوامر الشراء + تسويات.
+- **التغييرات:** إعادة كتابة `pdf/supplier-statement.blade.php`؛ تحديث واجهة Livewire؛ توسيع `SupplierStatementTest`.
+- **اختبارات:** 10+ اختباراً في `SupplierStatementTest`.
+
+## [2026-08-12] - المرحلة 3: تظهير الشيك لموظف
+- **الهدف:** تحويل شيك `pending` إلى سلفة أو راتب شهر لموظف (جهة واحدة: مورد **أو** موظف).
+- **التغييرات:** جدول `salary_advances`؛ حقول `endorsed_employee_id` / `salary_*` على `received_checks`؛ `endorseToEmployee()`؛ واجهة «تحويل لموظف».
+- **اختبارات:** `ReceivedCheckPhase3Test`.
+
+## [2026-08-12] - المرحلة 2: تظهير الشيك لمورد
+- **الهدف:** تحويل شيك `pending` من عميل إلى دفعة مورد (عموم حساب أو أمر شراء بنفس المبلغ).
+- **التغييرات:** حقول `endorsed_*` على `received_checks`؛ `ReceivedCheckEndorsementService`؛ واجهة «تحويل لمورد» في تفاصيل الشيك.
+- **اختبارات:** `ReceivedCheckPhase2Test`.
+
+## [2026-08-12] - المرحلة 1: الشيكات المستلمة من العملاء
+- **الهدف:** تتبّع الشيك المستلم (بنك، صاحب، رقم، استحقاق، صورة اختيارية) مع حالات: قيد المعالجة / صُرف / لم يُصرف.
+- **التغييرات:** جدول `received_checks`؛ بلوك شيك في `PaymentForm`؛ قائمة `/received-checks`؛ إجراءات الحالة (إلغاء الدفعة يدوي عند «لم يُصرف»).
+- **اختبارات:** `ReceivedCheckPhase1Test`.
+- **تنبيه:** بعد النشر: `php artisan migrate --force`.
+
+## [2026-08-12] - ربط الدفعة بفاتورة/أمر شراء (كامل المبلغ)
+- **الهدف:** خياران عند تسجيل الدفعة — عموم الحساب أو مستند واحد بمبلغ يساوي الإجمالي (بدون توزيع).
+- **التغييرات:** `invoice_id` على `client_payments`، `purchase_order_id` على `supplier_payments`؛ نماذج Livewire راديو + قائمة مستندات مفتوحة؛ تحديث خدمات FIFO؛ تحصيل «مدفوع» من نموذج الفاتورة/المشتريات يربط المستند.
+- **الأدوات:** migration `2026_08_12_120000_*`، `PaymentDocumentLinkTest`.
+- **تنبيه:** بعد النشر: `php artisan migrate --force`.
+
+---
+
 ## [2026-05-10] - تهيئة حزمة المشروع والدستور
 - **الهدف:** تأسيس مجلد مستقل باسم بروفايل ميدا مع دستور معاد صياغته وتقارير ووثائق وبرومبت مبرمج.
 - **التغييرات:** إضافة `.cursorrules` ومجلد `docs/` و`database/README.md`.

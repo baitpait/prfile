@@ -19,7 +19,7 @@ test('المستخدم النشط يصل إلى صفحة أرشيف كتالوج
     $this->actingAs($user)
         ->get(route('legacy-catalog-products.index'))
         ->assertOk()
-        ->assertSee('كتالوج المنتجات')
+        ->assertSee('كتالوج الخدمات')
         ->assertSee('منتج تجريبي');
 });
 

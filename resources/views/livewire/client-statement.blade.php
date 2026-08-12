@@ -175,7 +175,8 @@
                             @elseif($event['type'] === 'payment')
                                 @php
                                     $pay = $event['model'];
-                                    $payRef = $pay->bank_reference ?? ('#'.$pay->id);
+                                    $payRef = $pay->statementReference();
+                                    $paySubNotes = $pay->statementSubNotes();
                                     $methodLabel = $payMethods[$pay->method] ?? $pay->method ?? '—';
                                 @endphp
                                 <tr class="bg-[#FFFDF5] border-b border-[#E0E0E0]">
@@ -183,8 +184,8 @@
                                     <td class="px-3 py-2">
                                         <span class="font-semibold text-[#3D3D3D]">دفعة {{ $payRef }}</span>
                                         <span class="text-xs text-gray-500 mr-2">({{ $methodLabel }})</span>
-                                        @if($pay->notes)
-                                        <p class="text-xs text-gray-400 mt-0.5">{{ $pay->notes }}</p>
+                                        @if($paySubNotes)
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ $paySubNotes }}</p>
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 font-mono font-semibold text-[#16A34A]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>

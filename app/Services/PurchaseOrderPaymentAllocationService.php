@@ -7,7 +7,8 @@ use App\Models\SupplierPayment;
 use Illuminate\Support\Collection;
 
 /**
- * Business Purpose: Derive per purchase-order payment status from supplier-level payments (FIFO).
+ * Business Purpose: Derive per purchase-order payment status.
+ * Linked payments (purchase_order_id) cover that PO fully; unlinked payments apply FIFO to the rest.
  * Balance adjustments are excluded — payment status reflects outbound cash/bank payments only.
  */
 class PurchaseOrderPaymentAllocationService
@@ -61,20 +62,55 @@ class PurchaseOrderPaymentAllocationService
                 ->orderBy('id')
                 ->get();
 
-            $paymentPool = (float) SupplierPayment::query()
+            $payments = SupplierPayment::query()
                 ->where('supplier_id', $supplierId)
                 ->where('currency_code', $currency)
                 ->whereNull('deleted_at')
+                ->get(['id', 'purchase_order_id', 'amount']);
+
+            $linkedByPo = $payments
+                ->filter(fn (SupplierPayment $p) => $p->purchase_order_id !== null)
+                ->groupBy('purchase_order_id')
+                ->map(fn (Collection $rows) => (float) $rows->sum('amount'));
+
+            $generalPool = (float) $payments
+                ->filter(fn (SupplierPayment $p) => $p->purchase_order_id === null)
                 ->sum('amount');
 
-            $allocations = $this->allocateFifo($supplierOrders, $paymentPool);
+            $unlinkedOrders = $supplierOrders->filter(
+                fn (PurchaseOrder $po) => ! $linkedByPo->has($po->id)
+            )->values();
+
+            $fifo = $this->allocateFifo($unlinkedOrders, $generalPool);
 
             foreach ($group as $purchaseOrder) {
-                if (! isset($allocations[$purchaseOrder->id])) {
+                $total = round((float) $purchaseOrder->total_amount, 4);
+
+                if ($linkedByPo->has($purchaseOrder->id)) {
+                    $allocated = min($total, round((float) $linkedByPo->get($purchaseOrder->id), 4));
+                    $remaining = round(max(0, $total - $allocated), 4);
+                    $status = self::UNPAID;
+                    if ($allocated > 0.00001 && $remaining > 0.00001) {
+                        $status = self::PARTIAL;
+                    } elseif ($remaining <= 0.00001) {
+                        $status = self::PAID;
+                    }
+                    $result[$purchaseOrder->id] = [
+                        'allocated' => $allocated,
+                        'remaining' => $remaining,
+                        'total' => $total,
+                        'status' => $status,
+                        'label' => self::label($status),
+                    ];
+
                     continue;
                 }
 
-                $row = $allocations[$purchaseOrder->id];
+                if (! isset($fifo[$purchaseOrder->id])) {
+                    continue;
+                }
+
+                $row = $fifo[$purchaseOrder->id];
                 $result[$purchaseOrder->id] = array_merge($row, [
                     'label' => self::label($row['status']),
                 ]);

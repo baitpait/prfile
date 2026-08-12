@@ -111,7 +111,7 @@
             </div>
             <div style="flex:1;min-width:min(100%,180px);">
                 <label class="label">طريقة الدفع <span class="text-red-400">*</span></label>
-                <select wire:model="payment_method" class="input select">
+                <select wire:model.live="payment_method" class="input select">
                     <option value="cash">نقدي</option>
                     <option value="bank">بنكي</option>
                     <option value="check">شيك</option>
@@ -120,6 +120,13 @@
                 @error('payment_method')<p class="field-error">{{ $message }}</p>@enderror
             </div>
         </div>
+
+        @if($payment_method === 'check')
+        <div style="padding-top:4px;">
+            @include('livewire.partials.client-check-intake-fields')
+        </div>
+        @endif
+
         <p style="font-size:11px;color:#9CA3AF;margin:0;">تُسجَّل الدفعة على حساب العميل — حالة الدفع تُعرض لاحقاً من مجموع الدفعات.</p>
         @endif
     </div>

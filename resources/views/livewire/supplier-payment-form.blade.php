@@ -32,27 +32,68 @@
 
         <div>
             <label class="label">المورد <span class="text-red-400">*</span></label>
-            <select wire:model="supplier_id" class="input select">
+            <select wire:model.live="supplier_id" class="input select">
                 <option value="">— اختر المورد —</option>
                 @foreach($suppliers as $s)<option value="{{ $s->id }}">{{ $s->displayName() }}</option>@endforeach
             </select>
             @error('supplier_id')<p class="field-error">{{ $message }}</p>@enderror
         </div>
 
+        <div>
+            <label class="label">ربط الدفعة <span class="text-red-400">*</span></label>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#3D3D3D;cursor:pointer;">
+                    <input type="radio" wire:model.live="allocation_mode" value="account">
+                    عموم الحساب
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#3D3D3D;cursor:pointer;">
+                    <input type="radio" wire:model.live="allocation_mode" value="purchase_order">
+                    على أمر شراء (المبلغ = إجمالي الأمر)
+                </label>
+            </div>
+            @error('allocation_mode')<p class="field-error">{{ $message }}</p>@enderror
+        </div>
+
+        @if($allocation_mode === 'purchase_order')
+        <div>
+            <label class="label">أمر الشراء <span class="text-red-400">*</span></label>
+            <select wire:model.live="purchase_order_id" class="input select">
+                <option value="">— اختر أمر شراء مفتوح —</option>
+                @foreach($openPurchaseOrders as $po)
+                    @php $poNo = $po->legacy_po_no ?? '#'.$po->id; @endphp
+                    <option value="{{ $po->id }}">
+                        {{ $poNo }} — {{ $po->document_date?->format('Y-m-d') }} — {{ number_format((float) $po->total_amount, 2) }} {{ $po->currency_code }}
+                    </option>
+                @endforeach
+            </select>
+            @error('purchase_order_id')<p class="field-error">{{ $message }}</p>@enderror
+            @if($supplier_id !== '' && $openPurchaseOrders->isEmpty())
+                <p class="text-xs text-amber-700 mt-1">لا توجد أوامر شراء صادرة متاحة بنفس العملة وغير مربوطة بدفعة.</p>
+            @endif
+        </div>
+        @endif
+
         <div style="display:flex;gap:16px;">
             <div style="flex:1;">
                 <label class="label">المبلغ <span class="text-red-400">*</span></label>
-                <input wire:model="amount" type="number" step="0.01" min="0.01" dir="ltr" class="input">
+                <input wire:model.live="amount" type="number" step="0.01" min="0.01" dir="ltr" class="input"
+                       @if($allocation_mode === 'purchase_order') readonly @endif>
                 @error('amount')<p class="field-error">{{ $message }}</p>@enderror
+                @if($allocation_mode === 'purchase_order')
+                    <p class="text-xs text-gray-400 mt-1">يُعبَّأ تلقائياً من إجمالي أمر الشراء ولا يُوزَّع.</p>
+                @endif
             </div>
             <div style="flex:1;">
                 <label class="label">العملة <span class="text-red-400">*</span></label>
-                <select wire:model="currency_code" class="input select">
+                <select wire:model.live="currency_code" class="input select" @if($allocation_mode === 'purchase_order' && $purchase_order_id !== '') disabled @endif>
                     <option value="ILS">ILS — شيكل</option>
                     <option value="USD">USD — دولار</option>
                     <option value="JOD">JOD — دينار</option>
                     <option value="EUR">EUR — يورو</option>
                 </select>
+                @if($allocation_mode === 'purchase_order' && $purchase_order_id !== '')
+                    <input type="hidden" wire:model="currency_code">
+                @endif
             </div>
         </div>
 
@@ -64,7 +105,7 @@
             </div>
             <div style="flex:1;">
                 <label class="label">طريقة الدفع <span class="text-red-400">*</span></label>
-                <select wire:model="payment_method" class="input select">
+                <select wire:model.live="payment_method" class="input select">
                     <option value="cash">نقدي</option>
                     <option value="bank">بنكي</option>
                     <option value="check">شيك</option>
@@ -74,10 +115,27 @@
             </div>
         </div>
 
+        @if($canSelectPendingCheck && $isCheckPayment)
+        @include('livewire.partials.pending-check-select', [
+            'pendingChecks' => $pendingChecks,
+            'selectedCheck' => $selectedCheck,
+            'currencyFilter' => $currencyFilter,
+            'amountFilter' => $amountFilter,
+        ])
+        @elseif($recordId && $isCheckPayment)
+        <div class="sm:col-span-2 space-y-3">
+            @include('livewire.partials.pending-check-edit-notice')
+            <div>
+                <label class="label">مرجع بنكي</label>
+                <input wire:model="bank_reference" type="text" dir="ltr" class="input">
+            </div>
+        </div>
+        @else
         <div>
             <label class="label">رقم المرجع / الشيك</label>
             <input wire:model="bank_reference" type="text" dir="ltr" class="input">
         </div>
+        @endif
 
         <div>
             <label class="label">ملاحظات</label>

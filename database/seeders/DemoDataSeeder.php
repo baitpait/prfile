@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Client;
 use App\Models\ClientPayment;
 use App\Models\Expense;
-use App\Models\IncomeEntry;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Product;
@@ -169,6 +168,7 @@ class DemoDataSeeder extends Seeder
                 'purchase_order_id' => $po->id,
                 'line_order' => 1,
                 'title' => 'ورق فاخر A3',
+                'description' => 'ورق A3 300gsm — طباعة أوفست',
                 'unit_price' => 1500,
                 'quantity' => 2,
                 'line_total' => 3000,
@@ -177,6 +177,7 @@ class DemoDataSeeder extends Seeder
                 'purchase_order_id' => $po->id,
                 'line_order' => 2,
                 'title' => 'تغليف وشحن',
+                'description' => 'تغليف كرتوني + توصيل للاستوديو',
                 'unit_price' => 1500,
                 'quantity' => 1,
                 'line_total' => 1500,
@@ -209,15 +210,16 @@ class DemoDataSeeder extends Seeder
                 ]
             );
 
-            IncomeEntry::query()->updateOrCreate(
+            ClientPayment::query()->updateOrCreate(
                 [
-                    'description' => 'عمولة منصة (تجريبي)',
-                    'income_date' => Carbon::now()->subDays(12)->toDateString(),
+                    'client_id' => $c2->id,
+                    'notes' => 'DEMO-INC-001',
                 ],
                 [
                     'amount' => 300,
                     'currency_code' => 'ILS',
-                    'notes' => 'DEMO-INC-001',
+                    'paid_at' => Carbon::now()->subDays(12),
+                    'method' => 'cash',
                     'recorded_by_user_id' => $user->id,
                 ]
             );

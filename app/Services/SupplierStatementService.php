@@ -119,6 +119,8 @@ class SupplierStatementService
     }
 
     /**
+     * Business Purpose: Build CSV rows mirroring on-screen timeline and per-currency summary totals.
+     *
      * @return list<list<string>>
      */
     public function toCsvRows(array $statement): array
@@ -138,7 +140,7 @@ class SupplierStatementService
                     ];
                 } elseif ($event['type'] === 'payment') {
                     $pay = $event['model'];
-                    $ref = $pay->bank_reference ?? "#{$pay->id}";
+                    $ref = $pay->statementReference();
                     $rows[] = [
                         $currency,
                         $event['date']->format('Y-m-d'),

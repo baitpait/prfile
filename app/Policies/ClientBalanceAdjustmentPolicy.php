@@ -9,7 +9,7 @@ class ClientBalanceAdjustmentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->is_active && $user->isAccountant();
     }
 
     public function view(User $user, ClientBalanceAdjustment $adjustment): bool

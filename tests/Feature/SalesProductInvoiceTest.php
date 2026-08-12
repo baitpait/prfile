@@ -9,7 +9,7 @@ test('قائمة منتجات المبيعات تظهر للمستخدم الن�
     $this->actingAs($user)
         ->get(route('products.index'))
         ->assertOk()
-        ->assertSee('المنتجات');
+        ->assertSee('الخدمات');
 });
 
 test('صفحة إنشاء فاتورة تعرض حقل بحث الأصناف', function () {

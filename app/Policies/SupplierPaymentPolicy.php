@@ -19,16 +19,16 @@ class SupplierPaymentPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAccountant();
+        return $user->is_active && $user->isAccountant();
     }
 
     public function update(User $user, SupplierPayment $payment): bool
     {
-        return $user->isAccountant();
+        return $user->is_active && $user->isAccountant();
     }
 
     public function delete(User $user, SupplierPayment $payment): bool
     {
-        return $user->isManager();
+        return $user->is_active && $user->isManager();
     }
 }

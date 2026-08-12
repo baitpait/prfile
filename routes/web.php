@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ReceivedCheckDueReportController;
 use App\Http\Controllers\ClientReceivablesAgingController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\Reports\PeriodReportsController;
@@ -23,6 +24,8 @@ use App\Models\Invoice;
 use App\Models\LegacyCatalogProduct;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\ReceivedCheck;
+use App\Models\SalaryAdvance;
 use App\Models\SalaryPayment;
 use App\Models\Supplier;
 use App\Models\SupplierBalanceAdjustment;
@@ -107,12 +110,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/supplier-payments', fn () => view('supplier-payments.index'))->name('supplier-payments.index');
     Route::get('/supplier-payments/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('create', SupplierPayment::class), 403);
 
         return view('supplier-payments.create');
     })->name('supplier-payments.create');
     Route::get('/supplier-payments/{supplierPayment}/edit', function (SupplierPayment $supplierPayment) {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('update', $supplierPayment), 403);
 
         return view('supplier-payments.edit', compact('supplierPayment'));
     })->name('supplier-payments.edit');
@@ -120,7 +123,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/supplier-payments/{supplierPayment}/pdf', [SupplierPaymentPdfController::class, 'show'])->name('supplier-payments.pdf');
     Route::get('/supplier-payments/{supplierPayment}', fn (SupplierPayment $supplierPayment) => view('supplier-payments.show', compact('supplierPayment')))->name('supplier-payments.show');
     Route::delete('/supplier-payments/{supplierPayment}', function (SupplierPayment $supplierPayment) {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('delete', $supplierPayment), 403);
         $supplierPayment->delete();
 
         return redirect()->route('supplier-payments.index')->with('toast', 'تم حذف الدفعة');
@@ -128,12 +131,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/invoices', fn () => view('invoices.index'))->name('invoices.index');
     Route::get('/invoices/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('create', Invoice::class), 403);
 
         return view('invoices.create');
     })->name('invoices.create');
     Route::get('/invoices/{invoice}/edit', function (Invoice $invoice) {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('update', $invoice), 403);
 
         return view('invoices.edit', compact('invoice'));
     })->name('invoices.edit');
@@ -192,18 +195,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/aggregated-supplier-statements', [PeriodReportsController::class, 'aggregatedSupplierStatements'])->name('reports.aggregated-supplier-statements');
     Route::get('/reports/aggregated-supplier-statements/pdf', [PeriodReportsController::class, 'aggregatedSupplierStatementsPdf'])->name('reports.aggregated-supplier-statements.pdf');
     Route::get('/expenses/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('create', Expense::class), 403);
 
         return view('expenses.create');
     })->name('expenses.create');
     Route::get('/expenses/{expense}/edit', function (Expense $expense) {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('update', $expense), 403);
 
         return view('expenses.edit', compact('expense'));
     })->name('expenses.edit');
     Route::get('/expenses/{expense}', fn (Expense $expense) => view('expenses.show', compact('expense')))->name('expenses.show');
     Route::delete('/expenses/{expense}', function (Expense $expense) {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('delete', $expense), 403);
         $expense->delete();
 
         return redirect()->route('expenses.index')->with('toast', 'تم حذف المصروف');
@@ -226,24 +229,24 @@ Route::middleware(['auth'])->group(function () {
         ->name('income-entries.destroy');
 
     Route::get('/client-adjustments', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('viewAny', ClientBalanceAdjustment::class), 403);
 
         return view('client-adjustments.index');
     })->name('client-adjustments.index');
     Route::get('/supplier-adjustments', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('viewAny', SupplierBalanceAdjustment::class), 403);
 
         return view('supplier-adjustments.index');
     })->name('supplier-adjustments.index');
 
     Route::get('/payments', fn () => view('payments.index'))->name('payments.index');
     Route::get('/payments/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('create', ClientPayment::class), 403);
 
         return view('payments.create');
     })->name('payments.create');
     Route::get('/payments/{payment}/edit', function (ClientPayment $payment) {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('update', $payment), 403);
 
         return view('payments.edit', compact('payment'));
     })->name('payments.edit');
@@ -251,24 +254,29 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payments/{payment}/pdf', [ClientPaymentPdfController::class, 'show'])->name('payments.pdf');
     Route::get('/payments/{payment}', fn (ClientPayment $payment) => view('payments.show', compact('payment')))->name('payments.show');
     Route::delete('/payments/{payment}', function (ClientPayment $payment) {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('delete', $payment), 403);
         $payment->delete();
 
         return redirect()->route('payments.index')->with('toast', 'تم حذف الدفعة');
     })->name('payments.destroy');
 
+    Route::get('/received-checks', fn () => view('received-checks.index'))->name('received-checks.index');
+    Route::get('/received-checks/due-report', fn () => view('received-checks.due-report'))->name('received-checks.due-report');
+    Route::get('/received-checks/due-report/pdf', [ReceivedCheckDueReportController::class, 'pdf'])->name('received-checks.due-report.pdf');
+    Route::get('/received-checks/{receivedCheck}', fn (ReceivedCheck $receivedCheck) => view('received-checks.show', compact('receivedCheck')))->name('received-checks.show');
+
     Route::get('/clients/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('create', Client::class), 403);
 
         return view('clients.create');
     })->name('clients.create');
     Route::get('/clients/{client}/edit', function (Client $client) {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('update', $client), 403);
 
         return view('clients.edit', compact('client'));
     })->name('clients.edit');
     Route::delete('/clients/{client}', function (Client $client) {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('delete', $client), 403);
         $client->delete();
 
         return redirect()->route('clients.index')->with('toast', 'تم حذف العميل');
@@ -280,7 +288,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('clients.show');
 
     Route::get('/suppliers/create', function () {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('create', Supplier::class), 403);
 
         return view('suppliers.create');
     })->name('suppliers.create');
@@ -305,7 +313,7 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('suppliers.statement', $supplier)->with('toast', 'تم حذف التسوية');
     })->name('suppliers.adjustments.destroy');
     Route::get('/suppliers/{supplier}/edit', function (Supplier $supplier) {
-        abort_unless(auth()->user()->isAccountant(), 403);
+        abort_unless(auth()->user()->can('update', $supplier), 403);
 
         return view('suppliers.edit', compact('supplier'));
     })->name('suppliers.edit');
@@ -318,7 +326,7 @@ Route::middleware(['auth'])->group(function () {
         return view('suppliers.show', compact('supplier'));
     })->name('suppliers.show');
     Route::delete('/suppliers/{supplier}', function (Supplier $supplier) {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('delete', $supplier), 403);
         $supplier->delete();
 
         return redirect()->route('suppliers.index')->with('toast', 'تم حذف المورد');
@@ -358,18 +366,35 @@ Route::middleware(['auth'])->group(function () {
         return view('salary-payments.show', compact('salaryPayment'));
     })->name('salary-payments.show');
 
+    Route::get('/salary-advances', fn () => view('salary-advances.index'))->name('salary-advances.index');
+    Route::get('/salary-advances/create', function () {
+        abort_unless(auth()->user()->can('create', SalaryAdvance::class), 403);
+
+        return view('salary-advances.create');
+    })->name('salary-advances.create');
+    Route::get('/salary-advances/{salaryAdvance}/edit', function (SalaryAdvance $salaryAdvance) {
+        abort_unless(auth()->user()->can('update', $salaryAdvance), 403);
+
+        return view('salary-advances.edit', compact('salaryAdvance'));
+    })->name('salary-advances.edit');
+    Route::get('/salary-advances/{salaryAdvance}', function (SalaryAdvance $salaryAdvance) {
+        abort_unless(auth()->user()->can('view', $salaryAdvance), 403);
+
+        return view('salary-advances.show', compact('salaryAdvance'));
+    })->name('salary-advances.show');
+
     Route::get('/users', function () {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('viewAny', User::class), 403);
 
         return view('users.index');
     })->name('users.index');
     Route::get('/users/create', function () {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('create', User::class), 403);
 
         return view('users.create');
     })->name('users.create');
     Route::get('/users/{user}/edit', function (User $user) {
-        abort_unless(auth()->user()->isManager(), 403);
+        abort_unless(auth()->user()->can('update', $user), 403);
 
         return view('users.edit', compact('user'));
     })->name('users.edit');

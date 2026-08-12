@@ -29,8 +29,8 @@ class SupplierForm extends Component
 
     public function mount(?Supplier $supplier = null): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
         if ($supplier && $supplier->exists) {
+            $this->authorize('update', $supplier);
             $this->supplierId = $supplier->id;
             $this->business_name = $supplier->business_name ?? '';
             $this->first_name = $supplier->first_name ?? '';
@@ -41,6 +41,8 @@ class SupplierForm extends Component
             $this->city = $supplier->city ?? '';
             $this->country_code = $supplier->country_code ?? 'PS';
             $this->notes = $supplier->notes ?? '';
+        } else {
+            $this->authorize('create', Supplier::class);
         }
     }
 

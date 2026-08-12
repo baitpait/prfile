@@ -62,6 +62,23 @@
         </div>
     </div>
 
+    @if($employee_id !== '' && $unsettledAdvanceTotal > 0)
+    <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
+        <span class="text-purple-900">
+            سلف غير مُسوّاة:
+            <span class="font-mono font-bold" dir="ltr">{{ number_format($unsettledAdvanceTotal, 2) }} {{ $currency_code }}</span>
+        </span>
+        @if($registerCheckBlocksDeduction ?? false)
+        <span class="text-xs text-amber-800">غير متاح مع «شيك من الصندوق» — الصافي = مبلغ الشيك</span>
+        @else
+        <button type="button" wire:click="suggestDeductionFromAdvances" class="btn btn-secondary py-1 px-3 text-xs">
+            اقتراح خصم من السلف
+        </button>
+        @endif
+    </div>
+    @error('deduction_amount')<p class="field-error">{{ $message }}</p>@enderror
+    @endif
+
     <div class="bg-amber-50 rounded-lg px-4 py-3 text-sm">
         <span class="text-gray-600">الصافي:</span>
         <span class="font-mono font-bold text-[#C9A227] mr-2" dir="ltr">{{ number_format($netPreview, 2) }} {{ $currency_code }}</span>
@@ -89,7 +106,7 @@
     <div class="grid sm:grid-cols-2 gap-4">
         <div>
             <label class="label">طريقة الدفع</label>
-            <select wire:model="method" class="input select">
+            <select wire:model.live="method" class="input select">
                 <option value="bank">بنك</option>
                 <option value="cash">نقد</option>
                 <option value="check">شيك</option>
@@ -97,10 +114,29 @@
             </select>
             @error('method')<p class="field-error">{{ $message }}</p>@enderror
         </div>
+        @if($canSelectPendingCheck && $isCheckPayment)
+        <div class="sm:col-span-2">
+            @include('livewire.partials.pending-check-select', [
+                'pendingChecks' => $pendingChecks,
+                'selectedCheck' => $selectedCheck,
+                'currencyFilter' => $currencyFilter,
+                'amountFilter' => $amountFilter,
+            ])
+        </div>
+        @elseif($recordId && $isCheckPayment)
+        <div class="sm:col-span-2 space-y-3">
+            @include('livewire.partials.pending-check-edit-notice')
+            <div>
+                <label class="label">مرجع بنكي</label>
+                <input wire:model="bank_reference" type="text" dir="ltr" class="input">
+            </div>
+        </div>
+        @else
         <div>
             <label class="label">مرجع بنكي</label>
             <input wire:model="bank_reference" type="text" dir="ltr" class="input">
         </div>
+        @endif
     </div>
     @endif
 

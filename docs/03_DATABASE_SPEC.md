@@ -90,14 +90,15 @@
 
 ---
 
-## 3) الدفعات (على الطرف — ليس على الفاتورة)
+## 3) الدفعات (عموم الحساب أو مستند واحد)
 
 ### `client_payments`
 | الحقل | الوصف |
 |--------|--------|
 | client_id | |
+| invoice_id | **nullable** — إن وُجد = الدفعة على هذه الفاتورة بمبلغ = `total_amount` كاملاً (لا توزيع). إن `NULL` = عموم الحساب. |
 | amount | |
-| currency_code | قد تختلف عن فاتورة معيّنة. |
+| currency_code | قد تختلف عن فاتورة معيّنة عند عموم الحساب فقط. |
 | paid_at | UTC. |
 | method | **كود معياري:** `cash` \| `bank` \| `check` \| `transfer` — لا تخزين نص عربي. التفاصيل: `docs/12_PAYMENT_METHODS_AND_LEGACY_NORMALIZATION_AR.md` |
 | bank_reference, notes | |
@@ -105,9 +106,35 @@
 | is_deleted | |
 
 ### `supplier_payments`
-- مطابق للمورد؛ نفس قواعد `method`.
+- مطابق للمورد؛ `purchase_order_id` nullable بدل `invoice_id`؛ نفس قواعد `method` ومبلغ = إجمالي أمر الشراء عند الربط.
 
-### `client_balance_adjustments`
+### `received_checks` — شيك مستلم من عميل (صندوق الشيكات)
+| الحقل | الوصف |
+|--------|--------|
+| client_id, client_payment_id | مصدر الاستلام (دفعة `method=check`) |
+| bank_name, drawer_name | بنك الساحب؛ صاحب الشيك (نص حر) |
+| check_number, due_date | رقم الشيك وتاريخ الاستحقاق |
+| amount, currency_code | يطابقان الدفعة — ILS / USD / JOD / EUR |
+| status | `pending` \| `cleared` \| `not_cleared` \| `endorsed` |
+| image_path | صورة اختيارية |
+| cleared_at, not_cleared_at | تواريخ الحسم |
+| endorsed_supplier_id, supplier_payment_id, endorsed_at | تظهير لمورد (المرحلة 2) |
+| endorsed_employee_id, salary_payment_id, salary_advance_id | تظهير لموظف (المرحلة 3) |
+| notes | يُضاف سطر عند عكس دفعة العميل |
+
+**صندوق الشيكات (تشغيلي):** `/received-checks` — فلاتر حالة/عملة/استحقاق، ملخص `pending` لكل عملة، سجل حركة في التفاصيل.
+
+> «لم يُصرف»: يُعلَّم الشيك أولاً — ثم **عكس دفعة العميل** من تفاصيل الشيك (soft delete للدفعة) ليعكس الصندوق المالي.
+| الحقل | الوصف |
+|--------|--------|
+| employee_id | FK |
+| amount, currency_code | |
+| paid_at, method, bank_reference | |
+| status | `paid` \| `settled` \| `cancelled` |
+| settled_salary_payment_id | راتب الخصم عند التسوية |
+| notes, recorded_by_user_id | |
+
+### `salary_advances` — سلف رواتب (المرحلة 3 minimal)
 | الحقل | الوصف |
 |--------|--------|
 | client_id | |

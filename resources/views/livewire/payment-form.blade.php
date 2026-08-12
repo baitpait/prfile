@@ -37,20 +37,61 @@
 
         @include('livewire.partials.client-select-with-search', ['clients' => $clients])
 
+        <div>
+            <label class="label">ربط الدفعة <span class="text-red-400">*</span></label>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#3D3D3D;cursor:pointer;">
+                    <input type="radio" wire:model.live="allocation_mode" value="account">
+                    عموم الحساب
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#3D3D3D;cursor:pointer;">
+                    <input type="radio" wire:model.live="allocation_mode" value="invoice">
+                    على فاتورة (المبلغ = إجمالي الفاتورة)
+                </label>
+            </div>
+            @error('allocation_mode')<p class="field-error">{{ $message }}</p>@enderror
+        </div>
+
+        @if($allocation_mode === 'invoice')
+        <div>
+            <label class="label">الفاتورة <span class="text-red-400">*</span></label>
+            <select wire:model.live="invoice_id" class="input select">
+                <option value="">— اختر فاتورة مفتوحة —</option>
+                @foreach($openInvoices as $inv)
+                    @php $invNo = $inv->legacy_invoice_no ?? '#'.$inv->id; @endphp
+                    <option value="{{ $inv->id }}">
+                        {{ $invNo }} — {{ $inv->document_date?->format('Y-m-d') }} — {{ number_format((float) $inv->total_amount, 2) }} {{ $inv->currency_code }}
+                    </option>
+                @endforeach
+            </select>
+            @error('invoice_id')<p class="field-error">{{ $message }}</p>@enderror
+            @if($client_id !== '' && $openInvoices->isEmpty())
+                <p class="text-xs text-amber-700 mt-1">لا توجد فواتير صادرة متاحة بنفس العملة وغير مربوطة بدفعة.</p>
+            @endif
+        </div>
+        @endif
+
         <div style="display:flex;gap:16px;">
             <div style="flex:1;">
                 <label class="label">المبلغ <span class="text-red-400">*</span></label>
-                <input wire:model="amount" type="number" step="0.01" min="0.01" dir="ltr" class="input">
+                <input wire:model="amount" type="number" step="0.01" min="0.01" dir="ltr" class="input"
+                       @if($allocation_mode === 'invoice') readonly @endif>
                 @error('amount')<p class="field-error">{{ $message }}</p>@enderror
+                @if($allocation_mode === 'invoice')
+                    <p class="text-xs text-gray-400 mt-1">يُعبَّأ تلقائياً من إجمالي الفاتورة ولا يُوزَّع.</p>
+                @endif
             </div>
             <div style="flex:1;">
                 <label class="label">العملة <span class="text-red-400">*</span></label>
-                <select wire:model="currency_code" class="input select">
+                <select wire:model.live="currency_code" class="input select" @if($allocation_mode === 'invoice' && $invoice_id !== '') disabled @endif>
                     <option value="ILS">ILS — شيكل</option>
                     <option value="USD">USD — دولار</option>
                     <option value="JOD">JOD — دينار</option>
                     <option value="EUR">EUR — يورو</option>
                 </select>
+                @if($allocation_mode === 'invoice' && $invoice_id !== '')
+                    <input type="hidden" wire:model="currency_code">
+                @endif
             </div>
         </div>
 
@@ -62,7 +103,7 @@
             </div>
             <div style="flex:1;">
                 <label class="label">طريقة الدفع <span class="text-red-400">*</span></label>
-                <select wire:model="payment_method" class="input select">
+                <select wire:model.live="payment_method" class="input select">
                     <option value="cash">نقدي</option>
                     <option value="bank">بنكي</option>
                     <option value="check">شيك</option>
@@ -72,13 +113,17 @@
             </div>
         </div>
 
+        @if($payment_method === 'check')
+        @include('livewire.partials.client-check-intake-fields')
+        @else
         <div>
             <label class="label">رقم المرجع / الشيك</label>
             <input wire:model="bank_reference" type="text" dir="ltr" class="input">
         </div>
+        @endif
 
         <div>
-            <label class="label">ملاحظات</label>
+            <label class="label">ملاحظات الدفعة</label>
             <textarea wire:model="notes" rows="3" class="input"></textarea>
         </div>
 

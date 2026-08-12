@@ -1,7 +1,7 @@
 <div>
     <div class="flex items-start justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-[#3D3D3D]">كشف حساب مورد</h1>
+            <h1 class="text-2xl font-bold text-[#3D3D3D]">كشف حساب</h1>
             <p class="text-[#C9A227] font-semibold mt-1">{{ $supplier->displayName() }}</p>
         </div>
         <div class="flex gap-2 flex-wrap">
@@ -93,9 +93,8 @@
                         <tr>
                             <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0] w-28">التاريخ</th>
                             <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0]">العملية</th>
-                            <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0] w-32" dir="ltr">المبلغ ({{ $currency }})</th>
-                            <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0] w-32" dir="ltr">المتبقي للمورد</th>
-                            <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0] w-36"></th>
+                            <th class="text-left px-3 py-2 font-semibold border-b border-[#E0E0E0] w-36" dir="ltr">المبلغ ({{ $currency }})</th>
+                            <th class="text-right px-3 py-2 font-semibold border-b border-[#E0E0E0] w-44"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -111,11 +110,11 @@
                                         <span class="font-bold text-[#3D3D3D]">أمر شراء {{ $poNo }}</span>
                                         <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded mr-2">صادر</span>
                                     </td>
-                                    <td class="px-3 py-2 font-mono font-semibold" dir="ltr">{{ number_format($event['amount'], 2) }}</td>
-                                    <td class="px-3 py-2 font-mono font-bold" dir="ltr">{{ number_format($event['running_balance'], 2) }}</td>
+                                    <td class="px-3 py-2 font-mono font-semibold" dir="ltr">+{{ number_format($event['amount'], 2) }}</td>
                                     <td class="px-3 py-2">
                                         <div class="flex items-center gap-1 justify-end flex-wrap">
                                             <a href="{{ route('purchase-orders.show', $po) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
+                                            <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" class="btn btn-ghost py-1 px-2 text-xs text-[#C9A227] hover:bg-amber-50" style="text-decoration:none;">طباعة</a>
                                             @if(auth()->user()->isAccountant())
                                             <a href="{{ route('purchase-orders.edit', $po) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                                             @endif
@@ -124,11 +123,12 @@
                                 </tr>
                                 @if($po->lines->isNotEmpty())
                                 <tr class="border-b border-[#E0E0E0]">
-                                    <td colspan="5" class="p-0">
+                                    <td colspan="4" class="p-0">
                                         <table class="w-full text-xs">
                                             <thead>
                                                 <tr class="bg-[#C9A227] text-white">
                                                     <th class="text-right px-3 py-1.5 font-semibold">البند</th>
+                                                    <th class="text-right px-3 py-1.5 font-semibold">التفاصيل</th>
                                                     <th class="text-center px-3 py-1.5 font-semibold w-20">الكمية</th>
                                                     <th class="text-left px-3 py-1.5 font-semibold w-28" dir="ltr">سعر الوحدة</th>
                                                     <th class="text-left px-3 py-1.5 font-semibold w-28" dir="ltr">الإجمالي</th>
@@ -139,9 +139,9 @@
                                                 <tr class="border-t border-[#E8E8E8] bg-white">
                                                     <td class="px-3 py-2">
                                                         <span class="font-medium text-[#3D3D3D]">{{ $line->title }}</span>
-                                                        @if($line->description)
-                                                        <span class="text-gray-400"> — {{ $line->description }}</span>
-                                                        @endif
+                                                    </td>
+                                                    <td class="px-3 py-2 text-gray-500">
+                                                        {{ $line->displayDetails() ?? '—' }}
                                                     </td>
                                                     <td class="px-3 py-2 text-center text-gray-500">
                                                         {{ rtrim(rtrim(number_format((float) $line->quantity, 2), '0'), '.') }}
@@ -161,7 +161,7 @@
                                 @endif
                                 @if($po->notes)
                                 <tr class="border-b border-[#E0E0E0] bg-amber-50/50">
-                                    <td colspan="5" class="px-3 py-2 text-xs text-amber-900">
+                                    <td colspan="4" class="px-3 py-2 text-xs text-amber-900">
                                         <span class="font-semibold">ملاحظات:</span> {{ $po->notes }}
                                     </td>
                                 </tr>
@@ -169,7 +169,8 @@
                             @elseif($event['type'] === 'payment')
                                 @php
                                     $pay = $event['model'];
-                                    $payRef = $pay->bank_reference ?? ('#'.$pay->id);
+                                    $payRef = $pay->statementReference();
+                                    $paySubNotes = $pay->statementSubNotes();
                                     $methodLabel = $payMethods[$pay->method] ?? $pay->method ?? '—';
                                 @endphp
                                 <tr class="bg-[#FFFDF5] border-b border-[#E0E0E0]">
@@ -177,11 +178,18 @@
                                     <td class="px-3 py-2">
                                         <span class="font-semibold text-[#3D3D3D]">دفعة {{ $payRef }}</span>
                                         <span class="text-xs text-gray-500 mr-2">({{ $methodLabel }})</span>
+                                        @if($paySubNotes)
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ $paySubNotes }}</p>
+                                        @endif
                                     </td>
                                     <td class="px-3 py-2 font-mono font-semibold text-[#16A34A]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>
-                                    <td class="px-3 py-2 font-mono font-bold" dir="ltr">{{ number_format($event['running_balance'], 2) }}</td>
                                     <td class="px-3 py-2">
-                                        <a href="{{ route('supplier-payments.show', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500" style="text-decoration:none;">عرض</a>
+                                        <div class="flex items-center gap-1 justify-end flex-wrap">
+                                            <a href="{{ route('supplier-payments.show', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-gray-500 hover:bg-gray-50" style="text-decoration:none;">عرض</a>
+                                            @if(auth()->user()->isAccountant())
+                                            <a href="{{ route('supplier-payments.edit', $pay) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @else
@@ -191,26 +199,20 @@
                                     <td class="px-3 py-2">
                                         <span class="font-semibold text-[#7C3AED]">تسوية #{{ $adj->id }}</span>
                                         <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded mr-2">{{ $adj->typeLabel() }}</span>
-                                        @if($adj->reason)<p class="text-xs text-gray-500 mt-0.5">{{ $adj->reason }}</p>@endif
+                                        @if($adj->reason)
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ $adj->reason }}</p>
+                                        @endif
                                     </td>
                                     <td class="px-3 py-2 font-mono font-semibold text-[#7C3AED]" dir="ltr">−{{ number_format($event['amount'], 2) }}</td>
-                                    <td class="px-3 py-2 font-mono font-bold" dir="ltr">{{ number_format($event['running_balance'], 2) }}</td>
                                     <td class="px-3 py-2">
                                         @if(auth()->user()->isAccountant())
-                                        <a href="{{ route('suppliers.adjustments.edit', [$supplier, $adj]) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600" style="text-decoration:none;">تعديل</a>
+                                        <a href="{{ route('suppliers.adjustments.edit', [$supplier, $adj]) }}" wire:navigate class="btn btn-ghost py-1 px-2 text-xs text-blue-600 hover:bg-blue-50" style="text-decoration:none;">تعديل</a>
                                         @endif
                                     </td>
                                 </tr>
                             @endif
                         @endforeach
                     </tbody>
-                    <tfoot>
-                        <tr class="bg-[#3D3D3D] text-white font-bold">
-                            <td colspan="3" class="px-3 py-2.5 text-right">المتبقي للمورد</td>
-                            <td class="px-3 py-2.5 font-mono" dir="ltr">{{ number_format($section['balance'], 2) }}</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>

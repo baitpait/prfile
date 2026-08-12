@@ -36,6 +36,11 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderLine::class)->orderBy('line_order');
     }
 
+    public function linkedPayments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
+
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by_user_id');

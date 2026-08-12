@@ -6,6 +6,7 @@
 
     @php
     $cards = [
+        ['route' => 'received-checks.due-report', 'title' => 'استحقاق الشيكات', 'desc' => 'شيكات قيد المعالجة حسب تاريخ الاستحقاق — متأخر و7/30 يوم', 'color' => 'border-amber-500'],
         ['route' => 'reports.financial-period', 'title' => 'لوحة الفترة المالية', 'desc' => 'ملخص مبيعات ومشتريات وصافي نقدي لكل عملة', 'color' => 'border-[#C9A227]'],
         ['route' => 'reports.activity-log', 'title' => 'سجل النشاط المالي', 'desc' => 'كل الحركات المالية في جدول زمني واحد', 'color' => 'border-gray-500'],
         ['route' => 'reports.cashflow', 'title' => 'كشف التدفق النقدي', 'desc' => 'دفعات العملاء والموردين والمصروفات في فترة واحدة', 'color' => 'border-teal-400'],

@@ -29,8 +29,8 @@ class ClientForm extends Component
 
     public function mount(?Client $client = null): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
         if ($client && $client->exists) {
+            $this->authorize('update', $client);
             $this->clientId = $client->id;
             $this->business_name = $client->business_name ?? '';
             $this->first_name = $client->first_name ?? '';
@@ -41,6 +41,8 @@ class ClientForm extends Component
             $this->city = $client->city ?? '';
             $this->country_code = $client->country_code ?? 'PS';
             $this->notes = $client->notes ?? '';
+        } else {
+            $this->authorize('create', Client::class);
         }
     }
 

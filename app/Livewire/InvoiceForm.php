@@ -3,19 +3,24 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\FiltersClientsForSelect;
+use App\Livewire\Concerns\WithClientCheckIntake;
 use App\Models\ClientPayment;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\ProductCurrencyPrice;
+use App\Services\Finance\PaymentMethod;
 use App\Services\InvoicePaymentAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class InvoiceForm extends Component
 {
     use FiltersClientsForSelect;
+    use WithClientCheckIntake;
+    use WithFileUploads;
 
     public ?int $invoiceId = null;
 
@@ -72,10 +77,8 @@ class InvoiceForm extends Component
 
     public function mount(?Invoice $invoice = null): void
     {
-        abort_unless(auth()->user()->isAccountant(), 403);
-
         if ($invoice && $invoice->exists) {
-            Gate::authorize('update', $invoice);
+            $this->authorize('update', $invoice);
             $invoice->load(['lines.product', 'client']);
             $this->invoiceId = $invoice->id;
             $this->client_id = (string) $invoice->client_id;
@@ -98,7 +101,7 @@ class InvoiceForm extends Component
                 'line_total' => (string) $l->line_total,
             ])->toArray();
         } else {
-            Gate::authorize('create', Invoice::class);
+            $this->authorize('create', Invoice::class);
             $this->document_date = now()->format('Y-m-d');
             $this->paid_at = now()->format('Y-m-d');
             $this->status = 'issued';
@@ -108,6 +111,21 @@ class InvoiceForm extends Component
         if (count($this->lines) === 0) {
             $this->addLine();
         }
+    }
+
+    public function updatedPaymentCollection(): void
+    {
+        if ($this->payment_collection === 'paid') {
+            $this->payment_amount = $this->total_amount;
+        } elseif ($this->payment_collection === 'unpaid') {
+            $this->payment_amount = '';
+            $this->resetClientCheckFields();
+        }
+    }
+
+    public function updatedPaymentMethod(string $value): void
+    {
+        $this->handleClientCheckPaymentMethodChanged($value);
     }
 
     public function updatedCurrencyCode(): void
@@ -341,15 +359,6 @@ class InvoiceForm extends Component
         }
     }
 
-    public function updatedPaymentCollection(): void
-    {
-        if ($this->payment_collection === 'paid') {
-            $this->payment_amount = $this->total_amount;
-        } elseif ($this->payment_collection === 'unpaid') {
-            $this->payment_amount = '';
-        }
-    }
-
     public function updatedTotalAmount(): void
     {
         if ($this->payment_collection === 'paid') {
@@ -432,13 +441,14 @@ class InvoiceForm extends Component
             if ($this->payment_collection === 'partial') {
                 $rules['payment_amount'] = 'required|numeric|min:0.01';
             }
+            $rules = $this->mergeClientCheckValidationRules($rules);
         }
 
         $this->validate($rules, [
             'lines.*.title.required_with' => 'اسم البند مطلوب',
             'lines.*.quantity.required_with' => 'الكمية مطلوبة',
             'lines.*.unit_price.required_with' => 'السعر مطلوب',
-        ], [
+        ], array_merge([
             'client_id' => 'العميل',
             'document_date' => 'تاريخ الفاتورة',
             'due_date' => 'تاريخ الاستحقاق',
@@ -448,7 +458,7 @@ class InvoiceForm extends Component
             'payment_amount' => 'مبلغ الدفعة',
             'payment_method' => 'طريقة الدفع',
             'paid_at' => 'تاريخ الدفع',
-        ]);
+        ], $this->clientCheckValidationAttributes()));
 
         foreach ($this->lines as $i => $line) {
             if (trim((string) ($line['title'] ?? '')) === '') {
@@ -547,16 +557,24 @@ class InvoiceForm extends Component
             }
 
             if ($collectPayment && $paymentAmount !== null && $paymentAmount > 0) {
-                ClientPayment::query()->create([
+                $payment = ClientPayment::query()->create([
                     'client_id' => $invoice->client_id,
+                    // Full collection links the payment to this invoice; partial stays on the account.
+                    'invoice_id' => $this->payment_collection === 'paid' ? $invoice->id : null,
                     'amount' => $paymentAmount,
                     'currency_code' => $invoice->currency_code,
                     'paid_at' => $this->paid_at,
                     'method' => $this->payment_method,
-                    'bank_reference' => null,
+                    'bank_reference' => PaymentMethod::normalize($this->payment_method) === PaymentMethod::CHECK
+                        ? $this->bankReferenceForCheckPayment()
+                        : null,
                     'notes' => 'تحصيل عند إنشاء الفاتورة #'.($invoice->legacy_invoice_no ?? $invoice->id),
                     'recorded_by_user_id' => auth()->id(),
                 ]);
+
+                if (PaymentMethod::normalize($this->payment_method) === PaymentMethod::CHECK) {
+                    $this->syncClientPaymentReceivedCheck($payment);
+                }
             }
         });
 
